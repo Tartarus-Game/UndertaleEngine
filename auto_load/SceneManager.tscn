@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0ns8ak62iimr"]
+
+[ext_resource type="Script" uid="uid://b86onmpys06k5" path="res://auto_load/SceneManager.gd" id="1_jhrt0"]
+
+[node name="SceneManager" type="CanvasLayer"]
+script = ExtResource("1_jhrt0")
+
+[node name="Fader" type="ColorRect" parent="."]
+visible = false
+modulate = Color(1, 1, 1, 0)
+offset_right = 640.0
+offset_bottom = 480.0
+color = Color(0, 0, 0, 1)
+
+[node name="EncounterAnimation" type="CanvasLayer" parent="."]
+
+[node name="Marker2D" type="Marker2D" parent="EncounterAnimation"]

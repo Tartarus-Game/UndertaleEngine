@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3 uid="uid://bsamhj17ompd1"]
+
+[ext_resource type="Script" uid="uid://balwa8g4vnq7v" path="res://dialogue/Dialogue.gd" id="1_3gguo"]
+[ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="2_43aub"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g0myu"]
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_bottom = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3gguo"]
+bg_color = Color(1, 1, 1, 0)
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+
+[node name="Dialogue" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_3gguo")
+
+[node name="Box" type="ColorRect" parent="."]
+clip_contents = true
+layout_mode = 0
+offset_left = -5.0
+offset_top = -35.0
+offset_right = 5.0
+offset_bottom = 35.0
+color = Color(1, 1, 1, 0.15686275)
+
+[node name="TextTyper" parent="Box" instance=ExtResource("2_43aub")]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 6.0
+offset_right = 5.0
+offset_bottom = 6.0
+
+[node name="anim" type="ColorRect" parent="Box"]
+layout_mode = 0
+offset_bottom = 70.0
+
+[node name="Left" type="Panel" parent="."]
+layout_mode = 0
+offset_left = -12.0
+offset_top = -42.0
+offset_bottom = 42.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_g0myu")
+
+[node name="Right" type="Panel" parent="."]
+layout_mode = 0
+offset_top = -42.0
+offset_right = 12.0
+offset_bottom = 42.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_3gguo")

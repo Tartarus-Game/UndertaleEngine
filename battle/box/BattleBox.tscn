@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://c0qxorkw2v8a7"]
+
+[ext_resource type="Script" uid="uid://ufcipaufi28o" path="res://battle/box/BattleBox.gd" id="1_f0r05"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mpfcq"]
+bg_color = Color(0, 0, 0, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v064s"]
+size = Vector2(5.5625, 49.9375)
+
+[node name="Box" type="CharacterBody2D" unique_id=476302587 node_paths=PackedStringArray("box", "Left", "Right", "Down", "Up")]
+script = ExtResource("1_f0r05")
+box = NodePath("Box")
+size = Vector2(50, 50)
+Left = NodePath("Left")
+Right = NodePath("Right")
+Down = NodePath("Down")
+Up = NodePath("Up")
+frame_width = 5.0
+
+[node name="Box" type="Panel" parent="." unique_id=199055799]
+offset_left = -25.0
+offset_top = -25.0
+offset_right = 25.0
+offset_bottom = 25.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_mpfcq")
+
+[node name="Left" type="CollisionShape2D" parent="." unique_id=1560426279]
+position = Vector2(-22.5, 0)
+shape = SubResource("RectangleShape2D_v064s")
+
+[node name="Right" type="CollisionShape2D" parent="." unique_id=497888897]
+position = Vector2(22.5, 0)
+shape = SubResource("RectangleShape2D_v064s")
+
+[node name="Up" type="CollisionShape2D" parent="." unique_id=757073393]
+position = Vector2(0, -22.5)
+rotation = 1.5707964
+shape = SubResource("RectangleShape2D_v064s")
+
+[node name="Down" type="CollisionShape2D" parent="." unique_id=497668278]
+position = Vector2(0, 22.5)
+rotation = 1.5707964
+shape = SubResource("RectangleShape2D_v064s")

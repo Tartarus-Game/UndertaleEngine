@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://1dk3s2g8pj5n"]
+
+[ext_resource type="Script" uid="uid://cej26ro85xcvn" path="res://battle/UI/BattleUI.gd" id="1_rgb2w"]
+[ext_resource type="AudioStream" uid="uid://b8mneg5yhg3v2" path="res://battle/UI/snd_squeak.wav" id="2_3wk2x"]
+[ext_resource type="PackedScene" uid="uid://bqmbxurh2ih0n" path="res://battle/button/BattleButtonManager.tscn" id="2_k28vt"]
+[ext_resource type="AudioStream" uid="uid://bcjcfirtnvg4s" path="res://battle/UI/snd_select.wav" id="3_pciu8"]
+[ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="4_5co24"]
+[ext_resource type="Texture2D" uid="uid://dlxuqjkjc7pk0" path="res://battle/UI/spr_hpname_0.png" id="6_oxe26"]
+
+[node name="BattleUI" type="Control" unique_id=211280362]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_rgb2w")
+button_choice_sound = ExtResource("2_3wk2x")
+button_accept = ExtResource("3_pciu8")
+
+[node name="BattleButtonManager" parent="." unique_id=1542088620 instance=ExtResource("2_k28vt")]
+
+[node name="PlayerInfo" type="Control" parent="." unique_id=1734205982]
+anchors_preset = 0
+offset_left = 15.0
+offset_top = 299.0
+offset_right = 240.0
+offset_bottom = 389.0
+
+[node name="TextureRect" type="TextureRect" parent="PlayerInfo" unique_id=947363132]
+layout_mode = 0
+offset_left = 229.0
+offset_top = 106.0
+offset_right = 252.0
+offset_bottom = 116.0
+texture = ExtResource("6_oxe26")
+
+[node name="LV" type="Label" parent="PlayerInfo" unique_id=708595890]
+layout_mode = 0
+offset_left = 132.0
+offset_top = 101.0
+offset_right = 204.0
+offset_bottom = 133.0
+theme_override_fonts/font = ExtResource("4_5co24")
+theme_override_font_sizes/font_size = 24
+text = "LV 1"
+
+[node name="Name" type="Label" parent="PlayerInfo" unique_id=206695141]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 100.0
+offset_right = 105.0
+offset_bottom = 124.0
+theme_override_fonts/font = ExtResource("4_5co24")
+theme_override_font_sizes/font_size = 24
+text = "UPIZPP"
+
+[node name="HPMax" type="ColorRect" parent="PlayerInfo" unique_id=1670644635]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 101.0
+offset_right = 285.0
+offset_bottom = 122.0
+color = Color(0.44705883, 0, 0, 1)
+
+[node name="HP" type="ColorRect" parent="PlayerInfo/HPMax" unique_id=652167773]
+layout_mode = 0
+offset_right = 25.0
+offset_bottom = 21.0
+color = Color(1, 1, 0, 1)
+
+[node name="Label" type="Label" parent="PlayerInfo" unique_id=1827105683]
+layout_mode = 0
+offset_left = 299.0
+offset_top = 101.0
+offset_right = 374.0
+offset_bottom = 125.0
+theme_override_fonts/font = ExtResource("4_5co24")
+theme_override_font_sizes/font_size = 24
+text = "20 / 20"

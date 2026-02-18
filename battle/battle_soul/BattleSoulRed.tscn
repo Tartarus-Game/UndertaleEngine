@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3 uid="uid://briv8nfvnye20"]
+
+[ext_resource type="Script" uid="uid://00leej5hfwal" path="res://battle/battle_soul/BattleSoulRed.gd" id="1_qshr3"]
+[ext_resource type="Texture2D" uid="uid://crwpuehmjvssy" path="res://battle/battle_soul/heart_red.png" id="2_juanj"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_s18mh"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_juanj")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="BattleSoul" type="CharacterBody2D"]
+collision_layer = 2
+script = ExtResource("1_qshr3")
+
+[node name="HitBox" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(-2, -2, -2, 2, 2, 2, 2, -2)
+
+[node name="sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_s18mh")
+
+[node name="Collision" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(-6, -8, -4, -8, -1, -6, 1, -6, 4, -8, 6, -8, 8, -6, 8, 2, 2, 8, -2, 8, -8, 2, -8, -6)
