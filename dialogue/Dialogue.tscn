@@ -1,11 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://bsamhj17ompd1"]
+[gd_scene format=3 uid="uid://bsamhj17ompd1"]
 
 [ext_resource type="Script" uid="uid://balwa8g4vnq7v" path="res://dialogue/Dialogue.gd" id="1_3gguo"]
 [ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="2_43aub"]
-[ext_resource type="Texture2D" uid="uid://dixrclj4v64f1" path="res://dialogue/对话框.png" id="3_5wdb6"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_43aub"]
-texture = ExtResource("3_5wdb6")
 texture_margin_left = 170.0
 texture_margin_right = 60.0
 region_rect = Rect2(0.8103676, 0, 342.18964, 103)
@@ -18,12 +16,12 @@ border_width_left = 2
 bg_color = Color(1, 1, 1, 0)
 border_width_right = 2
 
-[node name="Dialogue" type="Control"]
+[node name="Dialogue" type="Control" unique_id=1685372285]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_3gguo")
 
-[node name="Box" type="Panel" parent="."]
+[node name="Box" type="Panel" parent="." unique_id=146417821]
 clip_contents = true
 layout_mode = 0
 offset_right = 343.0
@@ -31,7 +29,7 @@ offset_bottom = 103.0
 scale = Vector2(1.5, 1.5)
 theme_override_styles/panel = SubResource("StyleBoxTexture_43aub")
 
-[node name="TextTyper" parent="Box" instance=ExtResource("2_43aub")]
+[node name="TextTyper" parent="Box" unique_id=697223295 instance=ExtResource("2_43aub")]
 layout_mode = 0
 offset_left = 120.0
 offset_top = 16.0
@@ -40,12 +38,12 @@ offset_bottom = 16.0
 visible_characters = 0
 visible_ratio = 0.0
 
-[node name="anim" type="ColorRect" parent="Box"]
+[node name="anim" type="ColorRect" parent="Box" unique_id=1500563815]
 visible = false
 layout_mode = 0
 offset_bottom = 70.0
 
-[node name="Left" type="Panel" parent="."]
+[node name="Left" type="Panel" parent="." unique_id=1015902820]
 visible = false
 layout_mode = 0
 offset_left = -12.0
@@ -53,7 +51,7 @@ offset_top = -42.0
 offset_bottom = 42.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_g0myu")
 
-[node name="Right" type="Panel" parent="."]
+[node name="Right" type="Panel" parent="." unique_id=971686966]
 visible = false
 layout_mode = 0
 offset_top = -42.0

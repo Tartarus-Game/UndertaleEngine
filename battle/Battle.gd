@@ -1,5 +1,8 @@
 class_name Battle extends Node
 
+@onready var box_typer = $BoxTyper;
+
+@export var enemy_selections :EnemySelections;
 @export var UImanager : BattleUIManager;
 @export var enemy_manager : EnemyManager;
 @export var soul : BattleSoulRed;
@@ -43,6 +46,9 @@ func battle_set_fight_enemy_choice(slot : int):
 	elif(_slot >= battle_get_enemy_count()):
 		_slot = battle_get_enemy_count()-1;
 	battle_fight_enemy_choice = _slot;
+	enemy_selections.hide_info(false);
+	enemy_selections.set_slot(_slot);
+	soul.position = enemy_selections.selections[_slot].position;
 	emit_signal("BattleEvent", EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED, _slot, -1);
 
 func battle_set_act_enemy_choice(slot : int):
@@ -52,6 +58,9 @@ func battle_set_act_enemy_choice(slot : int):
 	elif(_slot >= battle_get_enemy_count()):
 		_slot = battle_get_enemy_count()-1;
 	battle_act_enemy_choice = _slot;
+	enemy_selections.hide_info(true);
+	enemy_selections.set_slot(_slot);
+	soul.position = enemy_selections.selections[_slot].position;
 	emit_signal("BattleEvent", EVENT_TYPE.ACT_ENEMY_CHOICE_CHANGED, _slot, -1);
 
 func battle_set_act_choice(slot : int):
@@ -78,12 +87,39 @@ func battle_set_button(slot : int):
 	emit_signal("BattleEvent", EVENT_TYPE.BUTTON_CHANGED, slot, -1);
 	battle_menu_button = UImanager.get_ui().get_button_slot();
 	
+	
 func battle_set_menu(menu : BATTLE_MENU):
 	battle_menu = menu;
 	match menu:
+		BATTLE_MENU.BUTTON:
+			box_typer.visible = true;
+			for i in range(3):
+				enemy_selections.hide_enemy(i, true);
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
+			box_typer.skip();
+			box_typer.visible = false;
+			for i in range(3):
+				var enemys = enemy_manager.battle_get_enemys();
+				if(len(enemys)>i):
+					var enemy = enemy_manager.battle_get_enemy(i);
+					enemy_selections.hide_enemy(i, false);
+					enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
+						enemy.get_hp(), enemy.get_hp_max());
+				else:
+					enemy_selections.hide_enemy(i, true);
 			battle_set_fight_enemy_choice(battle_fight_enemy_choice);
 		BATTLE_MENU.ACT_ENEMY_CHOICE:
+			box_typer.skip();
+			box_typer.visible = false;
+			for i in range(3):
+				var enemys = enemy_manager.battle_get_enemys();
+				if(len(enemys)>i):
+					var enemy = enemy_manager.battle_get_enemy(i);
+					enemy_selections.hide_enemy(i, false);
+					enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
+						enemy.get_hp(), enemy.get_hp_max());
+				else:
+					enemy_selections.hide_enemy(i, true);
 			battle_set_act_enemy_choice(battle_act_enemy_choice);
 		BATTLE_MENU.ACT_CHOICE:
 			battle_set_act_choice(0);
@@ -114,18 +150,17 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if(battle_state == BATTLE_STATE.MENU):
-		var UI = UImanager.get_ui();
-		var slot = UI.get_button_slot();
-		match slot:
-			0:
-				soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-			1:
-				soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-			2:
-				soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-			3:
-				soul.position = UI.get_button(slot).global_position + Vector2(-39, 0);
 		if(battle_menu == BATTLE_MENU.BUTTON):
+			var UI = UImanager.get_ui();
+			match battle_menu_button:
+				0:
+					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-38, 0);
+				1:
+					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-38, 0);
+				2:
+					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-38, 0);
+				3:
+					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-39, 0);
 			if(Input.is_action_just_pressed("ui_right")): battle_set_button(battle_menu_button + 1);
 			if(Input.is_action_just_pressed("ui_left")): battle_set_button(battle_menu_button - 1);
 			if(Input.is_action_just_pressed("ui_accept")):
@@ -135,9 +170,9 @@ func _process(_delta: float) -> void:
 					1:
 						battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE);
 		elif(battle_menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE):
-			if(Input.is_action_just_pressed("ui_right")): battle_set_fight_enemy_choice(\
+			if(Input.is_action_just_pressed("ui_down")): battle_set_fight_enemy_choice(\
 														battle_fight_enemy_choice + 1);
-			if(Input.is_action_just_pressed("ui_left")): battle_set_fight_enemy_choice(\
+			if(Input.is_action_just_pressed("ui_up")): battle_set_fight_enemy_choice(\
 														battle_fight_enemy_choice - 1);
 			if(Input.is_action_just_pressed("ui_accept")):
 				battle_set_menu(BATTLE_MENU.FIGHT_AIM);
@@ -146,9 +181,9 @@ func _process(_delta: float) -> void:
 		elif(battle_menu == BATTLE_MENU.FIGHT_AIM):
 			pass;
 		elif(battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE):
-			if(Input.is_action_just_pressed("ui_right")): battle_set_act_enemy_choice(\
+			if(Input.is_action_just_pressed("ui_down")): battle_set_act_enemy_choice(\
 														battle_act_enemy_choice + 1);
-			if(Input.is_action_just_pressed("ui_left")): battle_set_act_enemy_choice(\
+			if(Input.is_action_just_pressed("ui_up")): battle_set_act_enemy_choice(\
 														battle_act_enemy_choice - 1);
 			if(Input.is_action_just_pressed("ui_accept")):
 				battle_set_menu(BATTLE_MENU.ACT_CHOICE);

@@ -1,6 +1,6 @@
 class_name EnemyManager extends Node;
 @export var battle : Battle;
-var enemys = [];
+var enemys : Array[BattleEnemy] = [];
 func _ready() -> void:
 	if(!SceneManager.is_battle()):queue_free();
 	var _enemys = EncounterManager.get_current_encounter();
@@ -16,7 +16,7 @@ func battle_get_enemy(slot : int):
 	if(slot>=len(enemys) and slot < 0):return;
 	return enemys[slot];
 
-func battle_get_enemys():
+func battle_get_enemys() -> Array[BattleEnemy]:
 	return enemys;
 
 func battle_set_enemy(slot : int, packed : PackedScene):
