@@ -1,4 +1,4 @@
-extends Item
+class_name ItemTest extends Item
 
 var _name : String = "";
 var _desc : String = \

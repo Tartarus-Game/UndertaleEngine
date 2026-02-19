@@ -9,8 +9,11 @@
 [ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="5_r8nfv"]
 [ext_resource type="Script" uid="uid://dgjryx8kkb80t" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
 [ext_resource type="Texture2D" uid="uid://b351xgcu6kmr1" path="res://battle/UI/HWY)OFN$1B]8{H]M`J])A59.png" id="6_jhxqk"]
+[ext_resource type="PackedScene" uid="uid://dlv4o7oqvx82r" path="res://battle/UI/EnemyActionSelection.tscn" id="8_4km6a"]
 [ext_resource type="Script" uid="uid://crl225nns03sg" path="res://battle/EnemySelectorManager.gd" id="8_d0b6a"]
+[ext_resource type="Script" uid="uid://cfowiuow5fvpm" path="res://battle/BattleActions.gd" id="8_ttuon"]
 [ext_resource type="PackedScene" uid="uid://ckde3myhb3drd" path="res://battle/UI/EnemySelector.tscn" id="9_d0b6a"]
+[ext_resource type="PackedScene" uid="uid://c8d06e42qucst" path="res://battle/UI/Items.tscn" id="12_bim3i"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v3re7"]
 shader = ExtResource("4_34q6o")
@@ -18,9 +21,11 @@ shader_parameter/size = Vector2(0, 0)
 shader_parameter/scale = 0.0
 shader_parameter/angle = 0.0
 
-[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("enemy_selections", "UImanager", "enemy_manager", "soul")]
+[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_selections", "enemy_actions", "UImanager", "enemy_manager", "soul")]
 script = ExtResource("1_hkniu")
+items = NodePath("Items")
 enemy_selections = NodePath("EnemySelections")
+enemy_actions = NodePath("Actions")
 UImanager = NodePath("UIManager")
 enemy_manager = NodePath("EnemyManager")
 soul = NodePath("BattleSoul")
@@ -55,9 +60,11 @@ size = Vector2(573, 140)
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1021386456]
 visible = false
-position = Vector2(319.99997, 239.74998)
+modulate = Color(1, 1, 1, 0.42745098)
+position = Vector2(320, 240.00002)
 scale = Vector2(0.49999997, 0.5005208)
 texture = ExtResource("6_jhxqk")
+metadata/_edit_lock_ = true
 
 [node name="BoxTyper" parent="." unique_id=1599626808 instance=ExtResource("5_r8nfv")]
 offset_left = 52.0
@@ -71,6 +78,61 @@ theme_override_font_sizes/italics_font_size = 27
 theme_override_font_sizes/mono_font_size = 27
 text = "*"
 tab_size = 2
+
+[node name="Actions" type="Control" parent="." unique_id=624805005]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("8_ttuon")
+
+[node name="EnemyActionSelection1" parent="Actions" unique_id=782377357 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 108.0
+offset_top = 286.0
+offset_right = 226.0
+offset_bottom = 321.0
+
+[node name="EnemyActionSelection2" parent="Actions" unique_id=1083416335 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 348.0
+offset_top = 286.0
+offset_right = 466.0
+offset_bottom = 321.0
+
+[node name="EnemyActionSelection3" parent="Actions" unique_id=1469802388 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 108.0
+offset_top = 318.0
+offset_right = 226.0
+offset_bottom = 353.0
+
+[node name="EnemyActionSelection4" parent="Actions" unique_id=1457302800 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 348.0
+offset_top = 318.0
+offset_right = 466.0
+offset_bottom = 353.0
+
+[node name="EnemyActionSelection5" parent="Actions" unique_id=583598866 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 108.0
+offset_top = 350.0
+offset_right = 226.0
+offset_bottom = 385.0
+
+[node name="EnemyActionSelection6" parent="Actions" unique_id=1493592512 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 348.0
+offset_top = 350.0
+offset_right = 466.0
+offset_bottom = 385.0
 
 [node name="EnemySelections" type="Control" parent="." unique_id=1379748109]
 layout_mode = 3
@@ -102,6 +164,12 @@ offset_left = 59.0
 offset_top = 350.0
 offset_right = 59.0
 offset_bottom = 350.0
+
+[node name="Items" parent="." unique_id=84777606 instance=ExtResource("12_bim3i")]
+offset_left = 37.0
+offset_top = 253.0
+offset_right = 37.0
+offset_bottom = 253.0
 
 [node name="BattleSoul" parent="." unique_id=1637236197 instance=ExtResource("3_5r4g4")]
 

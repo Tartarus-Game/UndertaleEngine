@@ -7,7 +7,7 @@ var choice_box_offset : Vector2 = Vector2(0, 0);
 var _checked : bool = false;
 var _hp : float = 0;
 var _hp_max : float = 0;
-var _actions = [];
+var _actions : Array[String] = [];
 var _name : String = "null";
 
 func _ready():
@@ -15,7 +15,7 @@ func _ready():
 
 func init():
 	battle.BattleEvent.connect(on_battle_menu_changed);
-	action_set(0, "检查", "[b]检查敌人的属性，获得准确的数值。");
+	action_set(0, "检查");
 
 func on_battle_menu_changed(_type, _state, _from):
 	pass;
@@ -42,18 +42,14 @@ func get_enemy_name():
 func action_get_count():
 	return _actions.size();
 
-func get_actions():
+func get_actions() -> Array[String]:
 	return _actions;
 
-func action_set(slot : int, text : String, desc : String):
+func action_set(slot : int, text : String):
 	if(action_get_count() < slot): return;
 	_actions.resize(_actions.size()+1);
-	_actions.set(slot, [text, desc]);
+	_actions.set(slot, text);
 	
 func action_get_name(slot : int):
 	if(action_get_count() <= slot): return;
-	return _actions[slot][0];
-	
-func action_get_desc(slot : int):
-	if(action_get_count() <= slot): return;
-	return _actions[slot][1];
+	return _actions[slot];

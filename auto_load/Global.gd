@@ -9,7 +9,12 @@ var player_data = {
 	items = player_data_items
 }
 
-var player_data_items = [];
+var player_data_items : Array[String] = [
+	"PROMISE",
+	"PROMISE",
+	"PROMISE",
+	"PROMISE"
+];
 
 func player_get_data(_name : String):
 	return player_data[_name];
@@ -17,6 +22,12 @@ func player_get_data(_name : String):
 func player_get_item(_slot : int):
 	if(!player_data_items.has(_slot)): return;
 	return player_data_items[_slot]
+
+func player_get_items():
+	return player_data_items;
+
+func player_get_item_count():
+	return len(player_data_items);
 
 func _ready() -> void:
 	if not InputMap.has_action("toggle_fullscreen"):

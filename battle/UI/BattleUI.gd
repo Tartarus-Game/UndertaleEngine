@@ -11,6 +11,7 @@ class_name BattleUI extends Control
 var fight_enemy_slot : int = 0;
 var act_enemy_slot : int = 0;
 var act_slot : int = 0;
+var item_slot : int = 0;
 
 func get_button(slot : int):
 	return button_manager.get_button(slot);
@@ -26,7 +27,7 @@ func get_button_slot():
 	return button_manager.get_button_slot();
 
 
-func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Variant) -> void:
+func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, _FROM: Variant) -> void:
 	match TYPE:
 		Battle.EVENT_TYPE.BUTTON_CHANGED:
 			set_button_slot(EVENT);
@@ -54,3 +55,7 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 			if(EVENT != act_slot):
 				AudioManager.play_sound_with_pitch(button_choice_sound, 1);
 			act_slot = EVENT;
+		Battle.EVENT_TYPE.ITEM_CHOICE_CHANGED:
+			if(EVENT != item_slot):
+				AudioManager.play_sound_with_pitch(button_choice_sound, 1);
+			item_slot = EVENT;

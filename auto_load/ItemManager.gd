@@ -14,3 +14,6 @@ func item_get(id: String):
 
 func item_save():
 	pass
+
+func _ready() -> void:
+	register("PROMISE", ItemTest.new());

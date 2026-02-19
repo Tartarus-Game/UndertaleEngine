@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://dlv4o7oqvx82r"]
+
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_4gm38"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="2_s0h1a"]
+[ext_resource type="Script" uid="uid://f34amk1qi5vl" path="res://battle/UI/EnemyActionSelection.gd" id="3_s0h1a"]
+
+[node name="EnemyActionSelection" type="Control" unique_id=1151202514]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("3_s0h1a")
+
+[node name="typer" type="RichTextLabel" parent="." unique_id=782377357]
+layout_mode = 0
+offset_left = -8.0
+offset_top = -17.0
+offset_right = 105.0
+offset_bottom = 17.0
+theme_override_fonts/normal_font = ExtResource("1_4gm38")
+theme_override_fonts/bold_font = ExtResource("2_s0h1a")
+theme_override_font_sizes/normal_font_size = 27
+theme_override_font_sizes/bold_font_size = 27
+theme_override_font_sizes/bold_italics_font_size = 27
+theme_override_font_sizes/italics_font_size = 27
+theme_override_font_sizes/mono_font_size = 27
+text = "* Check"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
