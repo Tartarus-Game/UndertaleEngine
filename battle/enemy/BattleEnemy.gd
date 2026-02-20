@@ -5,6 +5,8 @@ var battle : Battle;
 var choice_box_size : Vector2 = Vector2(100, 100);
 var choice_box_offset : Vector2 = Vector2(0, 0);
 var _checked : bool = false;
+var _spareable : bool = false;
+var _can_flee : bool = true;
 var _hp : float = 0;
 var _hp_max : float = 0;
 var _actions = [];
@@ -26,6 +28,15 @@ func set_checked(enable : bool):
 
 func get_is_checked():
 	return _checked;
+
+func set_spareable(enable: bool):
+	_spareable = enable;
+
+func get_spareable() -> bool:
+	return _spareable;
+
+func get_can_flee() -> bool:
+	return _can_flee;
 
 func get_hp():
 	return _hp;

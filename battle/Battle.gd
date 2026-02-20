@@ -128,6 +128,32 @@ func _use_selected_item():
 	battle_set_menu(BATTLE_MENU.BUTTON)
 
 func _confirm_mercy_choice():
+	match battle_mercy_choice:
+		0:
+			_do_spare()
+		1:
+			_do_flee()
+
+func _do_spare():
+	var enemys = battle_get_enemys()
+	var spared_any = false
+	for i in range(len(enemys) - 1, -1, -1):
+		var enemy = enemys[i]
+		if enemy.get_spareable():
+			battle_remove_enemy(i)
+			spared_any = true
+			
+	if spared_any:
+		if not battle_has_enemies():
+			# All enemies spared! End battle placeholder
+			pass
+		else:
+			battle_set_menu(BATTLE_MENU.BUTTON)
+	else:
+		battle_set_menu(BATTLE_MENU.BUTTON)
+
+func _do_flee():
+	# Transition to overworld placeholder
 	battle_set_menu(BATTLE_MENU.BUTTON)
 
 func battle_set_fight_enemy_choice(slot : int):
@@ -216,6 +242,12 @@ func battle_get_enemys():
 func battle_get_enemy_count():
 	return enemy_manager.battle_get_enemy_count();
 
+func battle_remove_enemy(slot: int):
+	enemy_manager.battle_remove_enemy(slot)
+
+func battle_has_enemies() -> bool:
+	return enemy_manager.battle_has_enemies()
+
 func battle_set_enemy(slot : int, packed : PackedScene):
 	return enemy_manager.battle_set_enemy(slot, packed);
 
@@ -227,16 +259,24 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if(battle_state == BATTLE_STATE.MENU):
 		var UI = UImanager.get_ui();
-		var slot = UI.get_button_slot();
-		match slot:
-			0:
-				soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-			1:
-				soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-			2:
-				soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-			3:
-				soul.position = UI.get_button(slot).global_position + Vector2(-39, 0);
+		
+		match battle_menu:
+			BATTLE_MENU.FIGHT_ENEMY_CHOICE, BATTLE_MENU.ACT_ENEMY_CHOICE, \
+			BATTLE_MENU.ACT_CHOICE, BATTLE_MENU.ITEM, BATTLE_MENU.MERCY:
+				var pos = UI.menu_renderer.get_option_position(_menu_selector.get_slot())
+				soul.position = lerp(soul.position, pos + Vector2(-20, 15), 1 - 0.001 ** _delta)
+			BATTLE_MENU.BUTTON:
+				var slot = UI.get_button_slot();
+				match slot:
+					0:
+						soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
+					1:
+						soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
+					2:
+						soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
+					3:
+						soul.position = UI.get_button(slot).global_position + Vector2(-39, 0);
+		
 		if(battle_menu == BATTLE_MENU.BUTTON):
 			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
 			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
