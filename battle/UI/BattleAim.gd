@@ -12,6 +12,7 @@ var _change_x: float = 0.0
 @onready var cursor = $Cursor
 
 func start():
+	# 进入瞄准阶段：重置游标并开始 90 帧线性移动。
 	_is_aiming = true
 	_frames_passed = 0
 	show()
@@ -27,6 +28,7 @@ func start():
 	cursor.modulate = Color(1, 1, 1)
 
 func _physics_process(_delta: float):
+	# 每帧推进游标；超时未按确认则判定 MISS。
 	if _is_aiming:
 		_frames_passed += 1
 		cursor.position.x = _start_x + _change_x * (float(_frames_passed) / duration_frames)
@@ -36,6 +38,7 @@ func _physics_process(_delta: float):
 			_miss()
 
 func stop_aim():
+	# 玩家按确认后停止瞄准，并按游标到中心距离计算倍率。
 	if not _is_aiming:
 		return
 	
@@ -60,8 +63,10 @@ func stop_aim():
 	_finish(precision, damage_mult, false)
 
 func _miss():
+	# 超时 miss 分支。
 	_finish(0.0, 0.0, true)
 
 func _finish(precision: float, damage_mult: float, miss: bool):
+	# 统一结束出口：关瞄准状态并把结果回调给 Battle.gd。
 	_is_aiming = false
 	emit_signal("aim_finished", precision, damage_mult, miss)

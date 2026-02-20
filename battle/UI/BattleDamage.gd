@@ -13,10 +13,12 @@ var _ystart: float = 0.0
 @onready var bar_fill: ColorRect = $BarBg/BarFill
 
 func _ready() -> void:
+	# 记录初始 Y 作为落地线，初始隐藏。
 	_ystart = position.y
 	hide()
 
 func start(damage: int, max_hp: int, current_hp: int) -> void:
+	# 初始化伤害弹字：支持 MISS 文本或数字 + HP 条。
 	show()
 	_ystart = position.y
 	
@@ -35,6 +37,7 @@ func start(damage: int, max_hp: int, current_hp: int) -> void:
 		bar_fill.size.x = bar_bg.size.x * fill_ratio
 
 func _physics_process(_delta: float) -> void:
+	# 按 tml233 参数做抛物线跳字，并在寿命结束后销毁。
 	if not visible:
 		return
 		

@@ -9,6 +9,7 @@ const BattleDamageClass = preload("res://battle/UI/BattleDamage.tscn")
 const ShakerClass = preload("res://battle/UI/Shaker.gd")
 
 enum EVENT_TYPE{
+	# 广播给 BattleUI 的事件类型。
 	MENU_CHANGED,
 	BUTTON_CHANGED,
 	FIGHT_ENEMY_CHOICE_CHANGED,
@@ -19,6 +20,7 @@ enum EVENT_TYPE{
 }
 
 enum BATTLE_MENU{
+	# 菜单层状态：底部四按钮、子菜单、攻击执行阶段。
 	BUTTON,
 	FIGHT_ENEMY_CHOICE,
 	FIGHT_AIM,
@@ -30,6 +32,7 @@ enum BATTLE_MENU{
 	MERCY
 }
 enum BATTLE_STATE{
+	# 战斗大状态：菜单、文本、敌方回合、结算。
 	MENU,
 	DIALOG,
 	TURN_PREPARATION,
@@ -39,6 +42,7 @@ enum BATTLE_STATE{
 }
 
 signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant);
+# 当前菜单/状态以及上一状态，用于 UI 过渡和状态回溯。
 var battle_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
 var _last_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
 var battle_state : BATTLE_STATE = BATTLE_STATE.MENU;
@@ -50,18 +54,22 @@ var battle_item_choice : int = 0;
 var battle_mercy_choice : int = 0;
 
 var battle_menu_button : int = 0;
+# 通用选择器：四按钮与各子菜单统一走这一份索引模型。
 var _menu_selector = BattleMenuSelectorClass.new()
 
+# FIGHT 执行阶段计时与最终伤害缓存。
 var _fight_anim_time: int = -1
 var _fight_damage_time: int = -1
 var _current_damage: int = 0
 
 func _clamp_choice(slot: int, size: int) -> int:
+	# 把选项索引限制在合法范围内，避免数组越界。
 	if size <= 0:
 		return 0
 	return clampi(slot, 0, size - 1)
 
 func _wrap_button_slot(slot: int) -> int:
+	# 四个主按钮使用循环切换：左越界回到 3，右越界回到 0。
 	if slot < 0:
 		return 3
 	if slot > 3:
@@ -69,6 +77,7 @@ func _wrap_button_slot(slot: int) -> int:
 	return slot
 
 func _build_menu_selector_options(menu: BATTLE_MENU) -> Array:
+	# 根据当前菜单类型，构建可选项列表，供通用 selector 使用。
 	match menu:
 		BATTLE_MENU.BUTTON:
 			return [0, 1, 2, 3]
@@ -92,6 +101,7 @@ func _build_menu_selector_options(menu: BATTLE_MENU) -> Array:
 	return []
 
 func _sync_selector_with_menu(keep_slot: bool = false):
+	# 让 selector 的 options/slot 与当前 battle_menu 状态保持一致。
 	_menu_selector.set_options(_build_menu_selector_options(battle_menu), keep_slot)
 	match battle_menu:
 		BATTLE_MENU.BUTTON:
@@ -108,6 +118,7 @@ func _sync_selector_with_menu(keep_slot: bool = false):
 			_menu_selector.set_slot(battle_mercy_choice)
 
 func _apply_selector_to_menu():
+	# 把 selector 当前选中项回写到具体业务字段（按钮、敌人、物品等）。
 	var selected_slot = _menu_selector.get_slot()
 	match battle_menu:
 		BATTLE_MENU.BUTTON:
@@ -124,12 +135,14 @@ func _apply_selector_to_menu():
 			battle_set_mercy_choice(selected_slot)
 
 func _menu_move(offset: int):
+	# 统一处理菜单移动逻辑（左右/上下最终都走这里）。
 	if _menu_selector.get_size() <= 0:
 		return
 	_menu_selector.move(offset)
 	_apply_selector_to_menu()
 
 func _do_act():
+	# 执行 ACT：读取行动描述并进入 DIALOG，文本结束后推进到敌方回合准备。
 	var enemy = battle_get_act_enemy_choice()
 	if enemy == null:
 		return
@@ -155,6 +168,7 @@ func _do_act():
 	typer.next_text()
 
 func _use_selected_item():
+	# 执行 ITEM：使用物品、从背包移除，并显示使用文本。
 	if Global.player_data_items.is_empty():
 		return
 	battle_item_choice = _clamp_choice(battle_item_choice, Global.player_data_items.size())
@@ -189,6 +203,7 @@ func _use_selected_item():
 	typer.next_text()
 
 func _confirm_mercy_choice():
+	# 执行 MERCY 确认入口，根据当前选择分发到 Spare/Flee。
 	match battle_mercy_choice:
 		0:
 			_do_spare()
@@ -196,6 +211,7 @@ func _confirm_mercy_choice():
 			_do_flee()
 
 func _do_spare():
+	# Spare：移除所有可饶恕敌人；若清场则进入 RESULT，否则继续战斗流程。
 	var enemys = battle_get_enemys()
 	var spared_any = false
 	for i in range(len(enemys) - 1, -1, -1):
@@ -229,10 +245,12 @@ func _do_spare():
 		battle_set_menu(BATTLE_MENU.BUTTON)
 
 func _do_flee():
+	# Flee：当前先回到按钮菜单（后续可接入完整逃跑判定）。
 	# Transition to overworld placeholder
 	battle_set_menu(BATTLE_MENU.BUTTON)
 
 func _on_aim_finished(precision: float, damage_mult: float, miss: bool):
+	# FIGHT 瞄准结束回调：计算伤害并切换到 FIGHT_ANIM 计时阶段。
 	if has_node("BattleAim"):
 		$BattleAim.hide()
 	if miss:
@@ -255,6 +273,7 @@ func _on_aim_finished(precision: float, damage_mult: float, miss: bool):
 	battle_set_menu(BATTLE_MENU.FIGHT_ANIM)
 
 func _end_menu_fight_anim():
+	# FIGHT_ANIM 结束：结算伤害、生成跳字/震动，再进入 FIGHT_DAMAGE。
 	battle_set_menu(BATTLE_MENU.FIGHT_DAMAGE)
 	
 	var enemy = battle_get_fight_enemy_choice()
@@ -273,10 +292,12 @@ func _end_menu_fight_anim():
 		dmg_popup.start(_current_damage, enemy.get_hp_max(), enemy.get_hp())
 
 func _end_menu_fight_damage():
+	# FIGHT_DAMAGE 展示结束后，推进到敌方回合准备阶段。
 	# Transition to enemy turn after damage finishes
 	battle_set_state(BATTLE_STATE.TURN_PREPARATION)
 ##攻击-敌人-选项的切换
 func battle_set_fight_enemy_choice(slot : int):
+	# 设置 FIGHT 目标敌人，并同步 selector 与 UI 事件。
 	var _slot = _clamp_choice(slot, battle_get_enemy_count())
 	battle_fight_enemy_choice = _slot;
 	if battle_menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE:
@@ -284,6 +305,7 @@ func battle_set_fight_enemy_choice(slot : int):
 	emit_signal("BattleEvent", EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED, _slot, -1);
 ##动作-敌人-敌人选项的切换
 func battle_set_act_enemy_choice(slot : int):
+	# 设置 ACT 目标敌人，并广播选择变更。
 	var _slot = _clamp_choice(slot, battle_get_enemy_count())
 	battle_act_enemy_choice = _slot;
 	if battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE:
@@ -291,6 +313,7 @@ func battle_set_act_enemy_choice(slot : int):
 	emit_signal("BattleEvent", EVENT_TYPE.ACT_ENEMY_CHOICE_CHANGED, _slot, -1);
 ##动作-敌人-动作选项的切换
 func battle_set_act_choice(slot : int):
+	# 设置 ACT 子菜单中的动作索引。
 	var enemy = battle_get_act_enemy_choice()
 	var _size = 0
 	if enemy != null:
@@ -302,6 +325,7 @@ func battle_set_act_choice(slot : int):
 	emit_signal("BattleEvent", EVENT_TYPE.ACT_CHOICE_CHANGED, _slot, -1);
 ##物品-物品选项的切换
 func battle_set_item_choice(slot : int):
+	# 设置 ITEM 子菜单中的物品索引。
 	var _slot = _clamp_choice(slot, Global.player_data_items.size())
 	battle_item_choice = _slot
 	if battle_menu == BATTLE_MENU.ITEM:
@@ -309,6 +333,7 @@ func battle_set_item_choice(slot : int):
 	emit_signal("BattleEvent", EVENT_TYPE.ITEM_CHOICE_CHANGED, _slot, -1)
 ##仁慈-仁慈选项的切换
 func battle_set_mercy_choice(slot : int):
+	# 设置 MERCY 子菜单中的选项索引（Spare/Flee）。
 	var _slot = _clamp_choice(slot, 2)
 	battle_mercy_choice = _slot
 	if battle_menu == BATTLE_MENU.MERCY:
@@ -316,21 +341,26 @@ func battle_set_mercy_choice(slot : int):
 	emit_signal("BattleEvent", EVENT_TYPE.MERCY_CHOICE_CHANGED, _slot, -1)
 
 func battle_get_fight_enemy_choice() -> BattleEnemy:
+	# 读取当前 FIGHT 选中的敌人实例。
 	return battle_get_enemy(battle_fight_enemy_choice);
 
 func battle_get_act_enemy_choice() -> BattleEnemy:
+	# 读取当前 ACT 选中的敌人实例。
 	return battle_get_enemy(battle_act_enemy_choice);
 
 func battle_get_act_choice_number() -> int:
+	# 读取 ACT 子菜单中当前动作索引。
 	return battle_act_choice;
 #按钮切换
 func battle_set_button(slot : int):
+	# 设置底部四大按钮高亮位置。
 	battle_menu_button = _wrap_button_slot(slot)
 	if battle_menu == BATTLE_MENU.BUTTON:
 		_menu_selector.set_slot(battle_menu_button)
 	emit_signal("BattleEvent", EVENT_TYPE.BUTTON_CHANGED, battle_menu_button, -1);
 	
 func battle_set_menu(menu : BATTLE_MENU):
+	# 菜单切换总入口：切状态、同步 selector、发 UI 事件。
 	battle_menu = menu;
 	match menu:
 		BATTLE_MENU.FIGHT_AIM:
@@ -353,30 +383,39 @@ func battle_set_menu(menu : BATTLE_MENU):
 	_last_menu = menu;
 
 func battle_get_menu():
+	# 当前细分菜单状态（按钮/目标选择/物品等）。
 	return battle_menu;
 	
 func battle_get_state():
+	# 当前战斗大状态（MENU/DIALOG/TURN 等）。
 	return battle_state;
 
 func battle_get_enemy(slot : int) -> BattleEnemy:
+	# 通过 EnemyManager 按索引读取敌人。
 	return enemy_manager.battle_get_enemy(slot);
 
 func battle_get_enemys():
+	# 读取当前敌人列表（按战场顺序）。
 	return enemy_manager.battle_get_enemys();
 
 func battle_get_enemy_count():
+	# 读取敌人数量，给 selector 和判定使用。
 	return enemy_manager.battle_get_enemy_count();
 
 func battle_remove_enemy(slot: int):
+	# 从战斗中移除指定敌人（queue_free + remove_at）。
 	enemy_manager.battle_remove_enemy(slot)
 
 func battle_has_enemies() -> bool:
+	# 是否还有存活敌人。
 	return enemy_manager.battle_has_enemies()
 
 func battle_set_enemy(slot : int, packed : PackedScene):
+	# 动态替换某个敌人槽位（调试/脚本切敌时用）。
 	return enemy_manager.battle_set_enemy(slot, packed);
 
 func battle_set_state(state: BATTLE_STATE):
+	# 战斗大状态切换（MENU/DIALOG/TURN 等）。
 	_last_state = battle_state
 	battle_state = state
 	
@@ -392,14 +431,14 @@ func battle_set_state(state: BATTLE_STATE):
 			await get_tree().create_timer(0.5).timeout
 			battle_set_state(BATTLE_STATE.BOARD_RESETTING)
 		BATTLE_STATE.IN_TURN:
-			# Placeholder: Bullets spawn, soul moves freely
+			# 敌方回合执行阶段：后续在这里处理子弹与受击判定。
 			pass
 		BATTLE_STATE.BOARD_RESETTING:
-			# Box returns to default menu size
+			# 敌方回合结束后，把战斗框恢复到菜单默认尺寸。
 			var default_size = Vector2(573, 140)
 			var default_pos = Vector2(320, 320)
 			$BattleBox.resize(default_size, default_pos, 0.4)
-			# Temporarily auto-progress back to MENU for testing
+			# 当前版本自动回到 MENU，便于快速联调四按钮循环。
 			await get_tree().create_timer(0.4).timeout
 			battle_set_state(BATTLE_STATE.MENU)
 			battle_set_menu(BATTLE_MENU.BUTTON)
@@ -407,11 +446,13 @@ func battle_set_state(state: BATTLE_STATE):
 			pass
 
 func _ready() -> void:
+	# 初始化：连接瞄准结束信号，同步菜单选择器。
 	$BattleAim.aim_finished.connect(_on_aim_finished)
 	_sync_selector_with_menu()
 	battle_set_button(0);
 
 func _is_action_pressed_no_echo(event: InputEvent, action: String) -> bool:
+	# 过滤按键连发（echo），只响应有效的按下事件。
 	if not event.is_action_pressed(action):
 		return false
 	if event is InputEventKey and event.echo:
@@ -419,6 +460,7 @@ func _is_action_pressed_no_echo(event: InputEvent, action: String) -> bool:
 	return true
 
 func _is_accept_pressed(event: InputEvent) -> bool:
+	# 统一确认键判断：支持 ui_accept，并兜底识别 Z。
 	if _is_action_pressed_no_echo(event, "ui_accept"):
 		return true
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -426,6 +468,7 @@ func _is_accept_pressed(event: InputEvent) -> bool:
 	return false
 
 func _input(event: InputEvent) -> void:
+	# 所有菜单输入总入口；根据当前 battle_menu 分发到具体逻辑。
 	if battle_state != BATTLE_STATE.MENU:
 		return
 
@@ -524,6 +567,7 @@ func _input(event: InputEvent) -> void:
 				return
 
 func _process(_delta: float) -> void:
+	# 每帧处理：更新 soul 光标位置，并处理 FIGHT_ANIM/FIGHT_DAMAGE 倒计时。
 	if(battle_state == BATTLE_STATE.MENU):
 		var UI = UImanager.get_ui();
 		

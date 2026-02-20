@@ -16,20 +16,25 @@ var item_slot : int = 0;
 var mercy_slot : int = 0;
 
 func get_button(slot : int):
+	# 获取底部按钮实例（用于 soul 跟随定位）。
 	return button_manager.get_button(slot);
 
 func tween_create():
+	# 统一 UI 补间配置（Expo + EaseOut）。
 	return create_tween().set_parallel(true).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT);
 	
 func set_button_slot(slot : int):
+	# 更新按钮高亮，并播放切换音效。
 	AudioManager.play_sound_with_pitch(button_choice_sound, 0.8);
 	button_manager.button_set(slot);
 
 func get_button_slot():
+	# 当前底部按钮高亮索引。
 	return button_manager.get_button_slot();
 
 
 func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Variant) -> void:
+	# Battle.gd 的唯一 UI 事件入口：菜单切换、选项切换都在这里驱动显示。
 	match TYPE:
 		Battle.EVENT_TYPE.BUTTON_CHANGED:
 			set_button_slot(EVENT);
