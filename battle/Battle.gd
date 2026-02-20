@@ -2,9 +2,9 @@ class_name Battle extends Node
 
 @onready var box_typer = $BoxTyper;
 
-@export var items : BattleItems;
-@export var enemy_selections :EnemySelections;
-@export var enemy_actions : EnemyActions;
+@export var items : BattleItemManager;
+@export var enemy_actions : BattleEnemyActions;
+@export var enemy_selections : BattleEnemySelections;
 @export var UImanager : BattleUIManager;
 @export var enemy_manager : EnemyManager;
 @export var soul : BattleSoulRed;
@@ -32,6 +32,7 @@ enum BATTLE_STATE{
 }
 
 signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant);
+
 var battle_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
 var _last_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
 var battle_state : BATTLE_STATE = BATTLE_STATE.MENU;

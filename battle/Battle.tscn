@@ -21,11 +21,11 @@ shader_parameter/size = Vector2(0, 0)
 shader_parameter/scale = 0.0
 shader_parameter/angle = 0.0
 
-[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_selections", "enemy_actions", "UImanager", "enemy_manager", "soul")]
+[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_actions", "enemy_selections", "UImanager", "enemy_manager", "soul")]
 script = ExtResource("1_hkniu")
 items = NodePath("Items")
-enemy_selections = NodePath("EnemySelections")
 enemy_actions = NodePath("Actions")
+enemy_selections = NodePath("EnemySelections")
 UImanager = NodePath("UIManager")
 enemy_manager = NodePath("EnemyManager")
 soul = NodePath("BattleSoul")
@@ -58,6 +58,98 @@ metadata/_edit_lock_ = true
 position = Vector2(320, 320)
 size = Vector2(573, 140)
 
+[node name="Actions" type="Control" parent="." unique_id=889049875]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("8_ttuon")
+
+[node name="EnemyActionSelection1" parent="Actions" unique_id=1151202514 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 108.0
+offset_top = 286.0
+offset_right = 226.0
+offset_bottom = 321.0
+
+[node name="EnemyActionSelection2" parent="Actions" unique_id=935416419 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 348.0
+offset_top = 286.0
+offset_right = 466.0
+offset_bottom = 321.0
+
+[node name="EnemyActionSelection3" parent="Actions" unique_id=839433233 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 108.0
+offset_top = 318.0
+offset_right = 226.0
+offset_bottom = 353.0
+
+[node name="EnemyActionSelection4" parent="Actions" unique_id=1562728387 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 348.0
+offset_top = 318.0
+offset_right = 466.0
+offset_bottom = 353.0
+
+[node name="EnemyActionSelection5" parent="Actions" unique_id=993962313 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 108.0
+offset_top = 350.0
+offset_right = 226.0
+offset_bottom = 385.0
+
+[node name="EnemyActionSelection6" parent="Actions" unique_id=474523192 instance=ExtResource("8_4km6a")]
+visible = false
+layout_mode = 0
+offset_left = 348.0
+offset_top = 350.0
+offset_right = 466.0
+offset_bottom = 385.0
+
+[node name="EnemySelections" type="Control" parent="." unique_id=707371837]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("8_d0b6a")
+
+[node name="EnemySelector1" parent="EnemySelections" unique_id=857764922 instance=ExtResource("9_d0b6a")]
+visible = false
+layout_mode = 0
+offset_left = 59.0
+offset_top = 287.0
+offset_right = 59.0
+offset_bottom = 287.0
+
+[node name="EnemySelector2" parent="EnemySelections" unique_id=1815747703 instance=ExtResource("9_d0b6a")]
+visible = false
+layout_mode = 0
+offset_left = 59.0
+offset_top = 318.0
+offset_right = 59.0
+offset_bottom = 318.0
+
+[node name="EnemySelector3" parent="EnemySelections" unique_id=429421664 instance=ExtResource("9_d0b6a")]
+visible = false
+layout_mode = 0
+offset_left = 59.0
+offset_top = 350.0
+offset_right = 59.0
+offset_bottom = 350.0
+
+[node name="Items" parent="." unique_id=84777606 instance=ExtResource("12_bim3i")]
+offset_left = 37.0
+offset_top = 253.0
+offset_right = 37.0
+offset_bottom = 253.0
+
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1021386456]
 visible = false
 modulate = Color(1, 1, 1, 0.42745098)
@@ -78,98 +170,6 @@ theme_override_font_sizes/italics_font_size = 27
 theme_override_font_sizes/mono_font_size = 27
 text = "*"
 tab_size = 2
-
-[node name="Actions" type="Control" parent="." unique_id=624805005]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("8_ttuon")
-
-[node name="EnemyActionSelection1" parent="Actions" unique_id=782377357 instance=ExtResource("8_4km6a")]
-visible = false
-layout_mode = 0
-offset_left = 108.0
-offset_top = 286.0
-offset_right = 226.0
-offset_bottom = 321.0
-
-[node name="EnemyActionSelection2" parent="Actions" unique_id=1083416335 instance=ExtResource("8_4km6a")]
-visible = false
-layout_mode = 0
-offset_left = 348.0
-offset_top = 286.0
-offset_right = 466.0
-offset_bottom = 321.0
-
-[node name="EnemyActionSelection3" parent="Actions" unique_id=1469802388 instance=ExtResource("8_4km6a")]
-visible = false
-layout_mode = 0
-offset_left = 108.0
-offset_top = 318.0
-offset_right = 226.0
-offset_bottom = 353.0
-
-[node name="EnemyActionSelection4" parent="Actions" unique_id=1457302800 instance=ExtResource("8_4km6a")]
-visible = false
-layout_mode = 0
-offset_left = 348.0
-offset_top = 318.0
-offset_right = 466.0
-offset_bottom = 353.0
-
-[node name="EnemyActionSelection5" parent="Actions" unique_id=583598866 instance=ExtResource("8_4km6a")]
-visible = false
-layout_mode = 0
-offset_left = 108.0
-offset_top = 350.0
-offset_right = 226.0
-offset_bottom = 385.0
-
-[node name="EnemyActionSelection6" parent="Actions" unique_id=1493592512 instance=ExtResource("8_4km6a")]
-visible = false
-layout_mode = 0
-offset_left = 348.0
-offset_top = 350.0
-offset_right = 466.0
-offset_bottom = 385.0
-
-[node name="EnemySelections" type="Control" parent="." unique_id=1379748109]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("8_d0b6a")
-
-[node name="EnemySelector1" parent="EnemySelections" unique_id=857764922 instance=ExtResource("9_d0b6a")]
-visible = false
-layout_mode = 0
-offset_left = 59.0
-offset_top = 287.0
-offset_right = 59.0
-offset_bottom = 287.0
-
-[node name="EnemySelector2" parent="EnemySelections" unique_id=882530374 instance=ExtResource("9_d0b6a")]
-visible = false
-layout_mode = 0
-offset_left = 59.0
-offset_top = 318.0
-offset_right = 59.0
-offset_bottom = 318.0
-
-[node name="EnemySelector3" parent="EnemySelections" unique_id=1970589351 instance=ExtResource("9_d0b6a")]
-visible = false
-layout_mode = 0
-offset_left = 59.0
-offset_top = 350.0
-offset_right = 59.0
-offset_bottom = 350.0
-
-[node name="Items" parent="." unique_id=84777606 instance=ExtResource("12_bim3i")]
-offset_left = 37.0
-offset_top = 253.0
-offset_right = 37.0
-offset_bottom = 253.0
 
 [node name="BattleSoul" parent="." unique_id=1637236197 instance=ExtResource("3_5r4g4")]
 

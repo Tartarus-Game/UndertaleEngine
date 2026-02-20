@@ -1,4 +1,4 @@
-class_name BattleItems extends Control
+class_name BattleItemManager extends Control
 
 @onready var selections : Array[RichTextLabel] = [
 	$TextTyper1,

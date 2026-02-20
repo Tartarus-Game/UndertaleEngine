@@ -1,4 +1,4 @@
-class_name EnemyActions extends Control
+class_name BattleEnemyActions extends Control
 @onready var selections : Array[EnemyActionSelection] = [
 	$EnemyActionSelection1,
 	$EnemyActionSelection2,

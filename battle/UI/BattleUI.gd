@@ -13,6 +13,7 @@ var act_enemy_slot : int = 0;
 var act_slot : int = 0;
 var item_slot : int = 0;
 
+
 func get_button(slot : int):
 	return button_manager.get_button(slot);
 
