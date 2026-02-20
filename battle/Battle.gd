@@ -5,6 +5,8 @@ class_name Battle extends Node
 @export var soul : BattleSoulRed;
 
 const BattleMenuSelectorClass = preload("res://battle/UI/BattleMenuSelector.gd")
+const BattleDamageClass = preload("res://battle/UI/BattleDamage.tscn")
+const ShakerClass = preload("res://battle/UI/Shaker.gd")
 
 enum EVENT_TYPE{
 	MENU_CHANGED,
@@ -236,6 +238,28 @@ func _on_aim_finished(precision: float, damage_mult: float, miss: bool):
 	_fight_damage_time = 45
 	battle_set_menu(BATTLE_MENU.FIGHT_ANIM)
 
+func _end_menu_fight_anim():
+	battle_set_menu(BATTLE_MENU.FIGHT_DAMAGE)
+	
+	var enemy = battle_get_fight_enemy_choice()
+	if enemy:
+		if _current_damage > 0:
+			enemy.set_hp(enemy.get_hp() - _current_damage)
+			
+			# Shaker logic for enemy
+			var shaker = ShakerClass.new(enemy, "position:x", 10.0, 1, 1.0, false)
+			add_child(shaker)
+		
+		# Spawn damage popup
+		var dmg_popup = BattleDamageClass.instantiate()
+		dmg_popup.position = enemy.global_position + Vector2(0, -60) # Above enemy center
+		add_child(dmg_popup)
+		dmg_popup.start(_current_damage, enemy.get_hp_max(), enemy.get_hp())
+
+func _end_menu_fight_damage():
+	# Transition to enemy turn after damage finishes
+	battle_set_state(BATTLE_STATE.TURN_PREPARATION)
+
 func battle_set_fight_enemy_choice(slot : int):
 	var _slot = _clamp_choice(slot, battle_get_enemy_count())
 	battle_fight_enemy_choice = _slot;
@@ -417,8 +441,14 @@ func _process(_delta: float) -> void:
 			if _fight_anim_time > 0:
 				_fight_anim_time -= 1
 			elif _fight_anim_time == 0:
-				battle_set_menu(BATTLE_MENU.FIGHT_ANIM) # Replace later with FIGHT_DAMAGE or proper transitions
+				_end_menu_fight_anim()
 				_fight_anim_time -= 1
+		elif(battle_menu == BATTLE_MENU.FIGHT_DAMAGE):
+			if _fight_damage_time > 0:
+				_fight_damage_time -= 1
+			elif _fight_damage_time == 0:
+				_end_menu_fight_damage()
+				_fight_damage_time -= 1
 		elif(battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE):
 			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
 			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)

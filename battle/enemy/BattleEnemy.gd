@@ -44,6 +44,9 @@ func get_hp():
 func get_hp_max():
 	return _hp_max;
 
+func set_hp(val: float):
+	_hp = clampf(val, 0, _hp_max)
+
 func set_enemy_name(__name : String):
 	_name = __name;
 
