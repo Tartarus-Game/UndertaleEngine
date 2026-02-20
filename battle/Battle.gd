@@ -28,6 +28,11 @@ enum BATTLE_MENU{
 }
 enum BATTLE_STATE{
 	MENU,
+	DIALOG,
+	TURN_PREPARATION,
+	IN_TURN,
+	BOARD_RESETTING,
+	RESULT
 }
 
 signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant);
@@ -117,15 +122,58 @@ func _menu_move(offset: int):
 	_menu_selector.move(offset)
 	_apply_selector_to_menu()
 
+func _do_act():
+	var enemy = battle_get_act_enemy_choice()
+	if enemy == null:
+		return
+	var desc = enemy.action_get_desc(battle_act_choice)
+	if desc == null:
+		desc = "* You acted."
+	
+	battle_set_state(BATTLE_STATE.DIALOG)
+	var ui = UImanager.get_ui()
+	if ui and ui.menu_renderer:
+		ui.menu_renderer.hide_menu()
+		
+	var typer = $TextTyper
+	typer.clear_text()
+	typer.pause = false
+	typer.text_add(desc, func(t): t.pause = true)
+	typer.text_add("", func(t):
+		t.clear_text()
+		t.pause = false
+		battle_set_state(BATTLE_STATE.TURN_PREPARATION)
+	)
+
 func _use_selected_item():
 	if Global.player_data_items.is_empty():
 		return
 	battle_item_choice = _clamp_choice(battle_item_choice, Global.player_data_items.size())
 	var selected_item = Global.player_data_items[battle_item_choice]
-	if selected_item is Item:
+	var item_name = ""
+	if typeof(selected_item) == TYPE_OBJECT and selected_item.has_method("name"):
+		item_name = selected_item.name()
+	else:
+		item_name = str(selected_item)
+	
+	if typeof(selected_item) == TYPE_OBJECT and selected_item.has_method("use"):
 		selected_item.use()
 	Global.player_data_items.remove_at(battle_item_choice)
-	battle_set_menu(BATTLE_MENU.BUTTON)
+	
+	battle_set_state(BATTLE_STATE.DIALOG)
+	var ui = UImanager.get_ui()
+	if ui and ui.menu_renderer:
+		ui.menu_renderer.hide_menu()
+		
+	var typer = $TextTyper
+	typer.clear_text()
+	typer.pause = false
+	typer.text_add("* You used the " + item_name + ".", func(t): t.pause = true)
+	typer.text_add("", func(t):
+		t.clear_text()
+		t.pause = false
+		battle_set_state(BATTLE_STATE.TURN_PREPARATION)
+	)
 
 func _confirm_mercy_choice():
 	match battle_mercy_choice:
@@ -146,15 +194,47 @@ func _do_spare():
 	if spared_any:
 		if not battle_has_enemies():
 			# All enemies spared! End battle placeholder
-			pass
+			battle_set_state(BATTLE_STATE.RESULT)
 		else:
-			battle_set_menu(BATTLE_MENU.BUTTON)
+			battle_set_state(BATTLE_STATE.DIALOG)
+			var ui = UImanager.get_ui()
+			if ui and ui.menu_renderer:
+				ui.menu_renderer.hide_menu()
+			
+			var typer = $TextTyper
+			typer.clear_text()
+			typer.pause = false
+			typer.text_add("* You spared the enemy.", func(t): t.pause = true)
+			typer.text_add("", func(t):
+				t.clear_text()
+				t.pause = false
+				battle_set_state(BATTLE_STATE.TURN_PREPARATION)
+			)
 	else:
 		battle_set_menu(BATTLE_MENU.BUTTON)
 
 func _do_flee():
 	# Transition to overworld placeholder
 	battle_set_menu(BATTLE_MENU.BUTTON)
+
+func _on_aim_finished(precision: float, damage_mult: float, miss: bool):
+	if miss:
+		_current_damage = -1
+	else:
+		var atk = 10 # Placeholder for Player_GetAtkTotal()
+		var enemy = battle_get_fight_enemy_choice()
+		var def = 0 # Placeholder for Battle_GetEnemyDEF
+		
+		var base_damage = atk - def + randf_range(0, 2)
+		var final_damage = base_damage * damage_mult
+		_current_damage = roundi(final_damage)
+		if _current_damage <= 0:
+			_current_damage = 1
+			
+	# Move to FIGHT_ANIM
+	_fight_anim_time = 50
+	_fight_damage_time = 45
+	battle_set_menu(BATTLE_MENU.FIGHT_ANIM)
 
 func battle_set_fight_enemy_choice(slot : int):
 	var _slot = _clamp_choice(slot, battle_get_enemy_count())
@@ -213,6 +293,11 @@ func battle_set_button(slot : int):
 func battle_set_menu(menu : BATTLE_MENU):
 	battle_menu = menu;
 	match menu:
+		BATTLE_MENU.FIGHT_AIM:
+			$BattleAim.start()
+			var ui = UImanager.get_ui()
+			if ui and ui.menu_renderer:
+				ui.menu_renderer.hide_menu()
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
 			battle_set_fight_enemy_choice(battle_fight_enemy_choice);
 		BATTLE_MENU.ACT_ENEMY_CHOICE:
@@ -251,8 +336,35 @@ func battle_has_enemies() -> bool:
 func battle_set_enemy(slot : int, packed : PackedScene):
 	return enemy_manager.battle_set_enemy(slot, packed);
 
-func _ready() -> void:
+func battle_set_state(state: BATTLE_STATE):
+	_last_state = battle_state
+	battle_state = state
 	
+	match battle_state:
+		BATTLE_STATE.MENU:
+			pass
+		BATTLE_STATE.DIALOG:
+			pass
+		BATTLE_STATE.TURN_PREPARATION:
+			# Placeholder: Box resizes to enemy's desired bullet board size
+			pass
+		BATTLE_STATE.IN_TURN:
+			# Placeholder: Bullets spawn, soul moves freely
+			pass
+		BATTLE_STATE.BOARD_RESETTING:
+			# Box returns to default menu size
+			var default_size = Vector2(573, 140)
+			var default_pos = Vector2(320, 320)
+			$BattleBox.resize(default_size, default_pos, 0.4)
+			# Temporarily auto-progress back to MENU for testing
+			await get_tree().create_timer(0.4).timeout
+			battle_set_state(BATTLE_STATE.MENU)
+			battle_set_menu(BATTLE_MENU.BUTTON)
+		BATTLE_STATE.RESULT:
+			pass
+
+func _ready() -> void:
+	$BattleAim.aim_finished.connect(_on_aim_finished)
 	_sync_selector_with_menu()
 	battle_set_button(0);
 
@@ -299,7 +411,14 @@ func _process(_delta: float) -> void:
 			elif(Input.is_action_just_pressed("ui_cancel")):
 				battle_set_menu(BATTLE_MENU.BUTTON);
 		elif(battle_menu == BATTLE_MENU.FIGHT_AIM):
-			pass;
+			if(Input.is_action_just_pressed("ui_accept")):
+				$BattleAim.stop_aim()
+		elif(battle_menu == BATTLE_MENU.FIGHT_ANIM):
+			if _fight_anim_time > 0:
+				_fight_anim_time -= 1
+			elif _fight_anim_time == 0:
+				battle_set_menu(BATTLE_MENU.FIGHT_ANIM) # Replace later with FIGHT_DAMAGE or proper transitions
+				_fight_anim_time -= 1
 		elif(battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE):
 			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
 			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
@@ -312,7 +431,7 @@ func _process(_delta: float) -> void:
 			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
 			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
 			if(Input.is_action_just_pressed("ui_accept")):
-				battle_set_menu(BATTLE_MENU.BUTTON)
+				_do_act()
 			elif(Input.is_action_just_pressed("ui_cancel")):
 				battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE);
 		elif(battle_menu == BATTLE_MENU.ITEM):

@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://cax2xyv8r7v1m"]
+
+[ext_resource type="Script" path="res://battle/UI/BattleAim.gd" id="1_script"]
+
+[node name="BattleAim" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 540.0
+offset_bottom = 120.0
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 540.0
+offset_bottom = 120.0
+color = Color(0, 0, 0, 1)
+
+[node name="Border" type="ReferenceRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+border_color = Color(1, 1, 1, 1)
+border_width = 2.0
+editor_only = false
+
+[node name="CenterMark" type="ColorRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -6.0
+offset_top = -60.0
+offset_right = 6.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 1, 0, 1)
+
+[node name="Cursor" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = -5.0
+offset_right = 6.0
+offset_bottom = 125.0
+color = Color(1, 1, 1, 1)
