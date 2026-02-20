@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://epbtohyb36ro"]
 
-[ext_resource type="Script" uid="uid://bsnnqtiv5ncun" path="res://overworld/test_level/test.gd" id="1_egkdu"]
+[ext_resource type="Script" uid="uid://e26dfeyrycx" path="res://overworld/test_level/test.gd" id="1_egkdu"]
 
 [node name="Test" type="Node2D" unique_id=1868602192]
 script = ExtResource("1_egkdu")

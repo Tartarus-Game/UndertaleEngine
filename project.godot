@@ -23,6 +23,7 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 OverworldManager="*res://auto_load/OverworldManager.gd"
 ItemManager="*res://auto_load/ItemManager.gd"
 Global="*res://auto_load/Global.gd"
+ScreenManager="*res://gui/ScreenManager.gd"
 SceneManager="*res://auto_load/SceneManager.tscn"
 AudioManager="*res://auto_load/audio/AudioManager.tscn"
 EncounterManager="*res://auto_load/encounter/EncounterManager.gd"

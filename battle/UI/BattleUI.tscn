@@ -1,11 +1,11 @@
-[gd_scene format=3 uid="uid://1dk3s2g8pj5n"]
+[gd_scene format=3 uid="uid://h6sti0sxvw8"]
 
-[ext_resource type="Script" uid="uid://cej26ro85xcvn" path="res://battle/UI/BattleUI.gd" id="1_rgb2w"]
-[ext_resource type="AudioStream" uid="uid://b8mneg5yhg3v2" path="res://battle/UI/snd_squeak.wav" id="2_3wk2x"]
+[ext_resource type="Script" path="res://battle/UI/BattleUI.gd" id="1_rgb2w"]
+[ext_resource type="AudioStream" path="res://battle/UI/snd_squeak.wav" id="2_3wk2x"]
 [ext_resource type="PackedScene" uid="uid://bqmbxurh2ih0n" path="res://battle/button/BattleButtonManager.tscn" id="2_k28vt"]
-[ext_resource type="AudioStream" uid="uid://bcjcfirtnvg4s" path="res://battle/UI/snd_select.wav" id="3_pciu8"]
-[ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="4_5co24"]
-[ext_resource type="Texture2D" uid="uid://dlxuqjkjc7pk0" path="res://battle/UI/spr_hpname_0.png" id="6_oxe26"]
+[ext_resource type="AudioStream" path="res://battle/UI/snd_select.wav" id="3_pciu8"]
+[ext_resource type="FontFile" path="res://font/Mars Needs Cunnilingus.ttf" id="4_5co24"]
+[ext_resource type="Texture2D" path="res://battle/UI/spr_hpname_0.png" id="6_oxe26"]
 
 [node name="BattleUI" type="Control" unique_id=211280362]
 layout_mode = 3

@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://u67fw77nym7w"
-path="res://.godot/imported/DTM-momo.otf-a31f5f20c02be280074a78e02ad784de.fontdata"
+path="res://.godot/imported/DTM-momo.otf-9e8f2f290030b23819bf2318eb8edf1b.fontdata"
 
 [deps]
 
-source_file="res://font/DTM-momo.otf"
-dest_files=["res://.godot/imported/DTM-momo.otf-a31f5f20c02be280074a78e02ad784de.fontdata"]
+source_file="res://resources/font/DTM-momo.otf"
+dest_files=["res://.godot/imported/DTM-momo.otf-9e8f2f290030b23819bf2318eb8edf1b.fontdata"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b351xgcu6kmr1"
-path="res://.godot/imported/HWY)OFN$1B]8{H]M`J])A59.png-fc2d713e884bdd202808fbddfa3451d2.ctex"
+path="res://.godot/imported/HWY)OFN$1B]8{H]M`J])A59.png-d14ab9624db897a5f5b3d5e837fe2dc1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle/UI/HWY)OFN$1B]8{H]M`J])A59.png"
-dest_files=["res://.godot/imported/HWY)OFN$1B]8{H]M`J])A59.png-fc2d713e884bdd202808fbddfa3451d2.ctex"]
+source_file="res://resources/battle/UI/HWY)OFN$1B]8{H]M`J])A59.png"
+dest_files=["res://.godot/imported/HWY)OFN$1B]8{H]M`J])A59.png-d14ab9624db897a5f5b3d5e837fe2dc1.ctex"]
 
 [params]
 

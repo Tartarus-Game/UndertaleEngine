@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://dvys0rsfosc1e"
-path="res://.godot/imported/SIMSUNB.TTF-bc25014d5072bcf9bbea35fa1d43947f.fontdata"
+path="res://.godot/imported/SIMSUNB.TTF-5e4474ca5468bedc273cdbc58d617288.fontdata"
 
 [deps]
 
-source_file="res://font/SIMSUNB.TTF"
-dest_files=["res://.godot/imported/SIMSUNB.TTF-bc25014d5072bcf9bbea35fa1d43947f.fontdata"]
+source_file="res://resources/font/SIMSUNB.TTF"
+dest_files=["res://.godot/imported/SIMSUNB.TTF-5e4474ca5468bedc273cdbc58d617288.fontdata"]
 
 [params]
 

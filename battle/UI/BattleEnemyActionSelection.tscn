@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dt32khs8sr34p"]
 
-[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_7ho2t"]
-[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="2_twtol"]
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://resources/font/DTM-momo.otf" id="1_7ho2t"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://resources/font/SIMSUNB.TTF" id="2_twtol"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ho2t"]
 bg_color = Color(0, 0, 0, 0.4)

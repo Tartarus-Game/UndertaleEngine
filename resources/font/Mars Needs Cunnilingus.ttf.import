@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://buo22dtclln2k"
-path="res://.godot/imported/Mars Needs Cunnilingus.ttf-64ddce0447f80c6297bb45b191776bda.fontdata"
+path="res://.godot/imported/Mars Needs Cunnilingus.ttf-6148b0d42b4454fa8fa751304364fb4d.fontdata"
 
 [deps]
 
-source_file="res://font/Mars Needs Cunnilingus.ttf"
-dest_files=["res://.godot/imported/Mars Needs Cunnilingus.ttf-64ddce0447f80c6297bb45b191776bda.fontdata"]
+source_file="res://resources/font/Mars Needs Cunnilingus.ttf"
+dest_files=["res://.godot/imported/Mars Needs Cunnilingus.ttf-6148b0d42b4454fa8fa751304364fb4d.fontdata"]
 
 [params]
 

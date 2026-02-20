@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dr2cggfapteix"
-path="res://.godot/imported/spr_sparebt_0.png-02b243595cd6f69fdc32b0c1eacf6f95.ctex"
+path="res://.godot/imported/spr_sparebt_0.png-7f0b0924a24c3fe15f4fee77e86509fc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://battle/button/mercy/spr_sparebt_0.png"
-dest_files=["res://.godot/imported/spr_sparebt_0.png-02b243595cd6f69fdc32b0c1eacf6f95.ctex"]
+source_file="res://resources/battle/button/mercy/spr_sparebt_0.png"
+dest_files=["res://.godot/imported/spr_sparebt_0.png-7f0b0924a24c3fe15f4fee77e86509fc.ctex"]
 
 [params]
 

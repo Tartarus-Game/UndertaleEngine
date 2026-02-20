@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://cy7jfgs0grt7r"]
 
-[ext_resource type="Script" uid="uid://dfepdpugbfqk1" path="res://battle/UI/EnemyActionSelector.gd" id="1_lw8d4"]
-[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="2_f05g4"]
-[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="3_f3ccq"]
-[ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="4_f3ccq"]
+[ext_resource type="Script" uid="uid://b22jhmvqcplq8" path="res://battle/UI/EnemyActionSelector.gd" id="1_lw8d4"]
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://resources/font/DTM-momo.otf" id="2_f05g4"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://resources/font/SIMSUNB.TTF" id="3_f3ccq"]
+[ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://resources/font/Mars Needs Cunnilingus.ttf" id="4_f3ccq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lw8d4"]
 bg_color = Color(1, 1, 1, 0.08235294)

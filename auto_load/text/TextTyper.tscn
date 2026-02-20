@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://dk8ai6o4jtqur"]
 
-[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_ot2r1"]
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://resources/font/DTM-momo.otf" id="1_ot2r1"]
 [ext_resource type="Script" uid="uid://b6kfnt5v6kydf" path="res://auto_load/text/TextTyper.gd" id="1_wshua"]
-[ext_resource type="AudioStream" uid="uid://b5togwmgiyest" path="res://auto_load/text/typer_sound/text2.wav" id="3_3b3lk"]
+[ext_resource type="AudioStream" uid="uid://b5togwmgiyest" path="res://resources/auto_load/text/typer_sound/text2.wav" id="3_3b3lk"]
 
 [node name="TextTyper" type="RichTextLabel" unique_id=1599626808]
 theme_override_fonts/normal_font = ExtResource("1_ot2r1")

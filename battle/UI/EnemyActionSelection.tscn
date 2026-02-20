@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dlv4o7oqvx82r"]
 
-[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_4gm38"]
-[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="2_s0h1a"]
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://resources/font/DTM-momo.otf" id="1_4gm38"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://resources/font/SIMSUNB.TTF" id="2_s0h1a"]
 [ext_resource type="Script" uid="uid://f34amk1qi5vl" path="res://battle/UI/EnemyActionSelection.gd" id="3_s0h1a"]
 
 [node name="EnemyActionSelection" type="Control" unique_id=1151202514]

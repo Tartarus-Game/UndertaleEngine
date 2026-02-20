@@ -1,5 +1,5 @@
 [gd_scene format=3 uid="uid://dxtews2spab1h"]
 
-[node name="EncounterAnimation" type="CanvasLayer"]
+[node name="EncounterAnimation" type="CanvasLayer" unique_id=1794756990]
 
-[node name="Marker2D" type="Marker2D" parent="."]
+[node name="Marker2D" type="Marker2D" parent="." unique_id=1729075433]

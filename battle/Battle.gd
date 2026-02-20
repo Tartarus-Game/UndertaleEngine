@@ -126,6 +126,11 @@ func battle_set_button(slot: int):
 	
 func battle_set_menu(menu: BATTLE_MENU):
 	battle_menu = menu;
+	
+	if menu in [BATTLE_MENU.FIGHT_ENEMY_CHOICE, BATTLE_MENU.ACT_ENEMY_CHOICE, BATTLE_MENU.ITEM]:
+		box_typer.skip();
+		box_typer.visible = false;
+
 	match menu:
 		BATTLE_MENU.BUTTON:
 			box_typer.visible = true;
@@ -134,44 +139,32 @@ func battle_set_menu(menu: BATTLE_MENU):
 			items.hide_all(true);
 				
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
-			box_typer.skip();
-			box_typer.visible = false;
-			for i in range(3):
-				var enemys = enemy_manager.battle_get_enemys();
-				if (len(enemys) > i):
-					var enemy = enemy_manager.battle_get_enemy(i);
-					enemy_selections.hide_enemy(i, false);
-					enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
-						enemy.get_hp(), enemy.get_hp_max());
-				else:
-					enemy_selections.hide_enemy(i, true);
+			_update_enemy_selections_ui();
 			battle_set_fight_enemy_choice(battle_fight_enemy_choice);
 		BATTLE_MENU.ACT_ENEMY_CHOICE:
 			enemy_actions.hide_all_actions(true);
-			box_typer.skip();
-			box_typer.visible = false;
-
-			for i in range(3):
-				var enemys = enemy_manager.battle_get_enemys();
-				if (len(enemys) > i):
-					var enemy = enemy_manager.battle_get_enemy(i);
-					enemy_selections.hide_enemy(i, false);
-					enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
-						enemy.get_hp(), enemy.get_hp_max());
-				else:
-					enemy_selections.hide_enemy(i, true);
+			_update_enemy_selections_ui();
 			battle_set_act_enemy_choice(battle_act_enemy_choice);
 		BATTLE_MENU.ACT_CHOICE:
 			for i in range(3):
 				enemy_selections.hide_enemy(i, true);
 			battle_set_act_choice(0);
 		BATTLE_MENU.ITEM:
-			box_typer.skip();
-			box_typer.visible = false;
 			items.set_items(Global.player_get_items());
 			battle_set_item_choice(0);
 	emit_signal("BattleEvent", EVENT_TYPE.MENU_CHANGED, menu, _last_menu);
 	_last_menu = menu;
+
+func _update_enemy_selections_ui() -> void:
+	for i in range(3):
+		var enemys = enemy_manager.battle_get_enemys();
+		if (len(enemys) > i):
+			var enemy = enemy_manager.battle_get_enemy(i);
+			enemy_selections.hide_enemy(i, false);
+			enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
+				enemy.get_hp(), enemy.get_hp_max());
+		else:
+			enemy_selections.hide_enemy(i, true);
 
 func battle_get_menu():
 	return battle_menu;

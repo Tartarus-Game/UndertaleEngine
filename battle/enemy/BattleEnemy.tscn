@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dn1mhqp4pnluh"]
 
-[ext_resource type="Script" uid="uid://216nihooed7h" path="res://battle/enemy/BattleEnemy.gd" id="1_ynhxk"]
-[ext_resource type="Texture2D" uid="uid://d3nh383u1otiu" path="res://icon.svg" id="2_d6yy6"]
+[ext_resource type="Script" uid="uid://clwppwcgpn550" path="res://battle/enemy/BattleEnemy.gd" id="1_ynhxk"]
+[ext_resource type="Texture2D" uid="uid://d3nh383u1otiu" path="res://resources/icon.svg" id="2_d6yy6"]
 
 [node name="BattleEnemy" type="Node2D" unique_id=420193188]
 script = ExtResource("1_ynhxk")

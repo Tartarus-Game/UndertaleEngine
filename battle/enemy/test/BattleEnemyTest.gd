@@ -7,6 +7,6 @@ func _ready():
 func init():
 	super();
 	set_enemy_name("test");
-	action_set(1, "嘲讽");
+	action_set(1, "笑话");
 	action_set(2, "祈祷");
-	action_set(3, "辱骂");
+	action_set(3, "拥抱");

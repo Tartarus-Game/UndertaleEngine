@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://briv8nfvnye20"]
 
 [ext_resource type="Script" uid="uid://00leej5hfwal" path="res://battle/battle_soul/BattleSoulRed.gd" id="1_qshr3"]
-[ext_resource type="Texture2D" uid="uid://crwpuehmjvssy" path="res://battle/battle_soul/heart_red.png" id="2_juanj"]
+[ext_resource type="Texture2D" uid="uid://crwpuehmjvssy" path="res://resources/battle/battle_soul/heart_red.png" id="2_juanj"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_s18mh"]
 animations = [{
