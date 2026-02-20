@@ -77,7 +77,7 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 							spare_color = Color(1,1,0)
 							break
 					menu_renderer.show_menu([{"text": "Spare", "color": spare_color}, "Flee"], battle.battle_mercy_choice)
-				Battle.BATTLE_MENU.FIGHT_AIM, Battle.BATTLE_MENU.FIGHT_ANIM:
+				Battle.BATTLE_MENU.FIGHT_AIM, Battle.BATTLE_MENU.FIGHT_ANIM, Battle.BATTLE_MENU.FIGHT_DAMAGE:
 					menu_renderer.hide_menu()
 		Battle.EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED:
 			if(EVENT != fight_enemy_slot):

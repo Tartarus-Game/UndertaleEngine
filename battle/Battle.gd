@@ -23,6 +23,7 @@ enum BATTLE_MENU{
 	FIGHT_ENEMY_CHOICE,
 	FIGHT_AIM,
 	FIGHT_ANIM,
+	FIGHT_DAMAGE,
 	ACT_ENEMY_CHOICE,
 	ACT_CHOICE,
 	ITEM,
@@ -50,6 +51,10 @@ var battle_mercy_choice : int = 0;
 
 var battle_menu_button : int = 0;
 var _menu_selector = BattleMenuSelectorClass.new()
+
+var _fight_anim_time: int = -1
+var _fight_damage_time: int = -1
+var _current_damage: int = 0
 
 func _clamp_choice(slot: int, size: int) -> int:
 	if size <= 0:
@@ -139,6 +144,7 @@ func _do_act():
 		
 	var typer = $TextTyper
 	typer.clear_text()
+	typer.texts.clear()
 	typer.pause = false
 	typer.text_add(desc, func(t): t.pause = true)
 	typer.text_add("", func(t):
@@ -146,15 +152,18 @@ func _do_act():
 		t.pause = false
 		battle_set_state(BATTLE_STATE.TURN_PREPARATION)
 	)
+	typer.next_text()
 
 func _use_selected_item():
 	if Global.player_data_items.is_empty():
 		return
 	battle_item_choice = _clamp_choice(battle_item_choice, Global.player_data_items.size())
 	var selected_item = Global.player_data_items[battle_item_choice]
-	var item_name = ""
+	var item_name = "item"
 	if typeof(selected_item) == TYPE_OBJECT and selected_item.has_method("name"):
-		item_name = selected_item.name()
+		var maybe_name = selected_item.name()
+		if maybe_name != null:
+			item_name = str(maybe_name)
 	else:
 		item_name = str(selected_item)
 	
@@ -169,6 +178,7 @@ func _use_selected_item():
 		
 	var typer = $TextTyper
 	typer.clear_text()
+	typer.texts.clear()
 	typer.pause = false
 	typer.text_add("* You used the " + item_name + ".", func(t): t.pause = true)
 	typer.text_add("", func(t):
@@ -176,6 +186,7 @@ func _use_selected_item():
 		t.pause = false
 		battle_set_state(BATTLE_STATE.TURN_PREPARATION)
 	)
+	typer.next_text()
 
 func _confirm_mercy_choice():
 	match battle_mercy_choice:
@@ -205,6 +216,7 @@ func _do_spare():
 			
 			var typer = $TextTyper
 			typer.clear_text()
+			typer.texts.clear()
 			typer.pause = false
 			typer.text_add("* You spared the enemy.", func(t): t.pause = true)
 			typer.text_add("", func(t):
@@ -212,6 +224,7 @@ func _do_spare():
 				t.pause = false
 				battle_set_state(BATTLE_STATE.TURN_PREPARATION)
 			)
+			typer.next_text()
 	else:
 		battle_set_menu(BATTLE_MENU.BUTTON)
 
@@ -220,6 +233,8 @@ func _do_flee():
 	battle_set_menu(BATTLE_MENU.BUTTON)
 
 func _on_aim_finished(precision: float, damage_mult: float, miss: bool):
+	if has_node("BattleAim"):
+		$BattleAim.hide()
 	if miss:
 		_current_damage = -1
 	else:
@@ -392,6 +407,116 @@ func _ready() -> void:
 	_sync_selector_with_menu()
 	battle_set_button(0);
 
+func _is_action_pressed_no_echo(event: InputEvent, action: String) -> bool:
+	if not event.is_action_pressed(action):
+		return false
+	if event is InputEventKey and event.echo:
+		return false
+	return true
+
+func _is_accept_pressed(event: InputEvent) -> bool:
+	if _is_action_pressed_no_echo(event, "ui_accept"):
+		return true
+	if event is InputEventKey and event.pressed and not event.echo:
+		return event.keycode == KEY_Z or event.physical_keycode == KEY_Z
+	return false
+
+func _input(event: InputEvent) -> void:
+	if battle_state != BATTLE_STATE.MENU:
+		return
+
+	match battle_menu:
+		BATTLE_MENU.BUTTON:
+			if _is_action_pressed_no_echo(event, "ui_right"):
+				_menu_move(1)
+				return
+			if _is_action_pressed_no_echo(event, "ui_left"):
+				_menu_move(-1)
+				return
+			if _is_accept_pressed(event):
+				match battle_menu_button:
+					0:
+						battle_set_menu(BATTLE_MENU.FIGHT_ENEMY_CHOICE)
+					1:
+						battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
+					2:
+						if not Global.player_data_items.is_empty():
+							battle_set_menu(BATTLE_MENU.ITEM)
+					3:
+						battle_set_menu(BATTLE_MENU.MERCY)
+				return
+		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
+			if _is_action_pressed_no_echo(event, "ui_right") or _is_action_pressed_no_echo(event, "ui_down"):
+				_menu_move(1)
+				return
+			if _is_action_pressed_no_echo(event, "ui_left") or _is_action_pressed_no_echo(event, "ui_up"):
+				_menu_move(-1)
+				return
+			if _is_accept_pressed(event):
+				battle_set_menu(BATTLE_MENU.FIGHT_AIM)
+				return
+			if _is_action_pressed_no_echo(event, "ui_cancel"):
+				battle_set_menu(BATTLE_MENU.BUTTON)
+				return
+		BATTLE_MENU.FIGHT_AIM:
+			if _is_accept_pressed(event):
+				$BattleAim.stop_aim()
+				return
+		BATTLE_MENU.ACT_ENEMY_CHOICE:
+			if _is_action_pressed_no_echo(event, "ui_right"):
+				_menu_move(1)
+				return
+			if _is_action_pressed_no_echo(event, "ui_left"):
+				_menu_move(-1)
+				return
+			if _is_accept_pressed(event):
+				var enemy = battle_get_act_enemy_choice()
+				if enemy != null and enemy.action_get_count() > 0:
+					battle_set_menu(BATTLE_MENU.ACT_CHOICE)
+				return
+			if _is_action_pressed_no_echo(event, "ui_cancel"):
+				battle_set_menu(BATTLE_MENU.BUTTON)
+				return
+		BATTLE_MENU.ACT_CHOICE:
+			if _is_action_pressed_no_echo(event, "ui_right"):
+				_menu_move(1)
+				return
+			if _is_action_pressed_no_echo(event, "ui_left"):
+				_menu_move(-1)
+				return
+			if _is_accept_pressed(event):
+				_do_act()
+				return
+			if _is_action_pressed_no_echo(event, "ui_cancel"):
+				battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
+				return
+		BATTLE_MENU.ITEM:
+			if _is_action_pressed_no_echo(event, "ui_right") or _is_action_pressed_no_echo(event, "ui_down"):
+				_menu_move(1)
+				return
+			if _is_action_pressed_no_echo(event, "ui_left") or _is_action_pressed_no_echo(event, "ui_up"):
+				_menu_move(-1)
+				return
+			if _is_accept_pressed(event):
+				_use_selected_item()
+				return
+			if _is_action_pressed_no_echo(event, "ui_cancel"):
+				battle_set_menu(BATTLE_MENU.BUTTON)
+				return
+		BATTLE_MENU.MERCY:
+			if _is_action_pressed_no_echo(event, "ui_right") or _is_action_pressed_no_echo(event, "ui_down"):
+				_menu_move(1)
+				return
+			if _is_action_pressed_no_echo(event, "ui_left") or _is_action_pressed_no_echo(event, "ui_up"):
+				_menu_move(-1)
+				return
+			if _is_accept_pressed(event):
+				_confirm_mercy_choice()
+				return
+			if _is_action_pressed_no_echo(event, "ui_cancel"):
+				battle_set_menu(BATTLE_MENU.BUTTON)
+				return
+
 func _process(_delta: float) -> void:
 	if(battle_state == BATTLE_STATE.MENU):
 		var UI = UImanager.get_ui();
@@ -413,68 +538,16 @@ func _process(_delta: float) -> void:
 					3:
 						soul.position = UI.get_button(slot).global_position + Vector2(-39, 0);
 		
-		if(battle_menu == BATTLE_MENU.BUTTON):
-			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
-			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
-			if(Input.is_action_just_pressed("ui_accept")):
-				match battle_menu_button:
-					0:
-						battle_set_menu(BATTLE_MENU.FIGHT_ENEMY_CHOICE);
-					1:
-						battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE);
-					2:
-						if !Global.player_data_items.is_empty():
-							battle_set_menu(BATTLE_MENU.ITEM)
-					3:
-						battle_set_menu(BATTLE_MENU.MERCY)
-		elif(battle_menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE):
-			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
-			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
-			if(Input.is_action_just_pressed("ui_accept")):
-				battle_set_menu(BATTLE_MENU.FIGHT_AIM);
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON);
-		elif(battle_menu == BATTLE_MENU.FIGHT_AIM):
-			if(Input.is_action_just_pressed("ui_accept")):
-				$BattleAim.stop_aim()
-		elif(battle_menu == BATTLE_MENU.FIGHT_ANIM):
-			if _fight_anim_time > 0:
-				_fight_anim_time -= 1
-			elif _fight_anim_time == 0:
-				_end_menu_fight_anim()
-				_fight_anim_time -= 1
-		elif(battle_menu == BATTLE_MENU.FIGHT_DAMAGE):
-			if _fight_damage_time > 0:
-				_fight_damage_time -= 1
-			elif _fight_damage_time == 0:
-				_end_menu_fight_damage()
-				_fight_damage_time -= 1
-		elif(battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE):
-			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
-			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
-			if(Input.is_action_just_pressed("ui_accept")):
-				if battle_get_act_enemy_choice() != null and battle_get_act_enemy_choice().action_get_count() > 0:
-					battle_set_menu(BATTLE_MENU.ACT_CHOICE)
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON);
-		elif(battle_menu == BATTLE_MENU.ACT_CHOICE):
-			if(Input.is_action_just_pressed("ui_right")): _menu_move(1)
-			if(Input.is_action_just_pressed("ui_left")): _menu_move(-1)
-			if(Input.is_action_just_pressed("ui_accept")):
-				_do_act()
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE);
-		elif(battle_menu == BATTLE_MENU.ITEM):
-			if(Input.is_action_just_pressed("ui_right") or Input.is_action_just_pressed("ui_down")): _menu_move(1)
-			if(Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("ui_up")): _menu_move(-1)
-			if(Input.is_action_just_pressed("ui_accept")):
-				_use_selected_item()
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON)
-		elif(battle_menu == BATTLE_MENU.MERCY):
-			if(Input.is_action_just_pressed("ui_right") or Input.is_action_just_pressed("ui_down")): _menu_move(1)
-			if(Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("ui_up")): _menu_move(-1)
-			if(Input.is_action_just_pressed("ui_accept")):
-				_confirm_mercy_choice()
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON)
+		match battle_menu:
+			BATTLE_MENU.FIGHT_ANIM:
+				if _fight_anim_time > 0:
+					_fight_anim_time -= 1
+				elif _fight_anim_time == 0:
+					_end_menu_fight_anim()
+					_fight_anim_time -= 1
+			BATTLE_MENU.FIGHT_DAMAGE:
+				if _fight_damage_time > 0:
+					_fight_damage_time -= 1
+				elif _fight_damage_time == 0:
+					_end_menu_fight_damage()
+					_fight_damage_time -= 1
