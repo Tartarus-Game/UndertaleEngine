@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://df7s2b2v0w1g2"]
+[gd_scene format=3 uid="uid://df7s2b2v0w1g2"]
 
 [ext_resource type="Script" path="res://battle/UI/BattleDamage.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="2_font"]

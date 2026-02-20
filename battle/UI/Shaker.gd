@@ -19,7 +19,7 @@ func _init(t_node: Node, prop: String, dist: float, speed: int = 0, decrease: fl
 	shake_speed = speed
 	shake_decrease = decrease
 	shake_random = is_random
-	_shake_base = target.get(target_property)
+	#_shake_base = target.get(target_property)
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(target) or shake_distance <= 0:

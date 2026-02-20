@@ -238,6 +238,7 @@ func _on_aim_finished(precision: float, damage_mult: float, miss: bool):
 	if miss:
 		_current_damage = -1
 	else:
+		
 		var atk = 10 # Placeholder for Player_GetAtkTotal()
 		var enemy = battle_get_fight_enemy_choice()
 		var def = 0 # Placeholder for Battle_GetEnemyDEF
@@ -274,21 +275,21 @@ func _end_menu_fight_anim():
 func _end_menu_fight_damage():
 	# Transition to enemy turn after damage finishes
 	battle_set_state(BATTLE_STATE.TURN_PREPARATION)
-
+##攻击-敌人-选项的切换
 func battle_set_fight_enemy_choice(slot : int):
 	var _slot = _clamp_choice(slot, battle_get_enemy_count())
 	battle_fight_enemy_choice = _slot;
 	if battle_menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE:
 		_menu_selector.set_slot(_slot)
 	emit_signal("BattleEvent", EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED, _slot, -1);
-
+##动作-敌人-敌人选项的切换
 func battle_set_act_enemy_choice(slot : int):
 	var _slot = _clamp_choice(slot, battle_get_enemy_count())
 	battle_act_enemy_choice = _slot;
 	if battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE:
 		_menu_selector.set_slot(_slot)
 	emit_signal("BattleEvent", EVENT_TYPE.ACT_ENEMY_CHOICE_CHANGED, _slot, -1);
-
+##动作-敌人-动作选项的切换
 func battle_set_act_choice(slot : int):
 	var enemy = battle_get_act_enemy_choice()
 	var _size = 0
@@ -299,14 +300,14 @@ func battle_set_act_choice(slot : int):
 	if battle_menu == BATTLE_MENU.ACT_CHOICE:
 		_menu_selector.set_slot(_slot)
 	emit_signal("BattleEvent", EVENT_TYPE.ACT_CHOICE_CHANGED, _slot, -1);
-
+##物品-物品选项的切换
 func battle_set_item_choice(slot : int):
 	var _slot = _clamp_choice(slot, Global.player_data_items.size())
 	battle_item_choice = _slot
 	if battle_menu == BATTLE_MENU.ITEM:
 		_menu_selector.set_slot(_slot)
 	emit_signal("BattleEvent", EVENT_TYPE.ITEM_CHOICE_CHANGED, _slot, -1)
-
+##仁慈-仁慈选项的切换
 func battle_set_mercy_choice(slot : int):
 	var _slot = _clamp_choice(slot, 2)
 	battle_mercy_choice = _slot
@@ -322,7 +323,7 @@ func battle_get_act_enemy_choice() -> BattleEnemy:
 
 func battle_get_act_choice_number() -> int:
 	return battle_act_choice;
-
+#按钮切换
 func battle_set_button(slot : int):
 	battle_menu_button = _wrap_button_slot(slot)
 	if battle_menu == BATTLE_MENU.BUTTON:
@@ -386,7 +387,10 @@ func battle_set_state(state: BATTLE_STATE):
 			pass
 		BATTLE_STATE.TURN_PREPARATION:
 			# Placeholder: Box resizes to enemy's desired bullet board size
-			pass
+			# TODO: 此处应实现敌人回合（子弹板）
+			# 暂时跳过敌人回合，直接进入 BOARD_RESETTING
+			await get_tree().create_timer(0.5).timeout
+			battle_set_state(BATTLE_STATE.BOARD_RESETTING)
 		BATTLE_STATE.IN_TURN:
 			# Placeholder: Bullets spawn, soul moves freely
 			pass
@@ -504,6 +508,8 @@ func _input(event: InputEvent) -> void:
 				battle_set_menu(BATTLE_MENU.BUTTON)
 				return
 		BATTLE_MENU.MERCY:
+		
+		
 			if _is_action_pressed_no_echo(event, "ui_right") or _is_action_pressed_no_echo(event, "ui_down"):
 				_menu_move(1)
 				return
@@ -525,18 +531,10 @@ func _process(_delta: float) -> void:
 			BATTLE_MENU.FIGHT_ENEMY_CHOICE, BATTLE_MENU.ACT_ENEMY_CHOICE, \
 			BATTLE_MENU.ACT_CHOICE, BATTLE_MENU.ITEM, BATTLE_MENU.MERCY:
 				var pos = UI.menu_renderer.get_option_position(_menu_selector.get_slot())
-				soul.position = lerp(soul.position, pos + Vector2(-20, 15), 1 - 0.001 ** _delta)
+				soul.position = pos + Vector2(11, 19)
 			BATTLE_MENU.BUTTON:
 				var slot = UI.get_button_slot();
-				match slot:
-					0:
-						soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-					1:
-						soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-					2:
-						soul.position = UI.get_button(slot).global_position + Vector2(-38, 0);
-					3:
-						soul.position = UI.get_button(slot).global_position + Vector2(-39, 0);
+				soul.position = UI.get_button(slot).global_position
 		
 		match battle_menu:
 			BATTLE_MENU.FIGHT_ANIM:
