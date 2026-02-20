@@ -44,6 +44,8 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, _FROM: Var
 					AudioManager.play_sound_with_pitch(button_accept, 1);
 				Battle.BATTLE_MENU.ITEM:
 					AudioManager.play_sound_with_pitch(button_accept, 1);
+				Battle.BATTLE_MENU.ITEM_INFO:
+					AudioManager.play_sound_with_pitch(button_accept, 1);
 		Battle.EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED:
 			if(EVENT != fight_enemy_slot):
 				AudioManager.play_sound_with_pitch(button_choice_sound, 1);

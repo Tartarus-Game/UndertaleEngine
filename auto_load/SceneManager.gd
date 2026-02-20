@@ -30,7 +30,7 @@ func fade(duration : float, intime : float, outtime : float):
 	return;
 
 func is_battle():
-	return current_scene.resource_path == "res://battle/Battle.tscn";
+	return true #current_scene.resource_path == "res://battle/Battle.tscn";
 
 func _encounter_animation_start():
 	goto_scene_to_path("res://battle/Battle.tscn");

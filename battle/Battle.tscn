@@ -10,8 +10,8 @@
 [ext_resource type="Script" uid="uid://dgjryx8kkb80t" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
 [ext_resource type="Texture2D" uid="uid://b351xgcu6kmr1" path="res://battle/UI/HWY)OFN$1B]8{H]M`J])A59.png" id="6_jhxqk"]
 [ext_resource type="PackedScene" uid="uid://dlv4o7oqvx82r" path="res://battle/UI/EnemyActionSelection.tscn" id="8_4km6a"]
-[ext_resource type="Script" uid="uid://crl225nns03sg" path="res://battle/EnemySelectorManager.gd" id="8_d0b6a"]
-[ext_resource type="Script" uid="uid://cfowiuow5fvpm" path="res://battle/BattleActions.gd" id="8_ttuon"]
+[ext_resource type="Script" uid="uid://bwatej5vd3pvd" path="res://battle/EnemySelectorManager.gd" id="8_d0b6a"]
+[ext_resource type="Script" uid="uid://dc3xwofrkxqph" path="res://battle/BattleActions.gd" id="8_ttuon"]
 [ext_resource type="PackedScene" uid="uid://ckde3myhb3drd" path="res://battle/UI/EnemySelector.tscn" id="9_d0b6a"]
 [ext_resource type="PackedScene" uid="uid://c8d06e42qucst" path="res://battle/UI/Items.tscn" id="12_bim3i"]
 
