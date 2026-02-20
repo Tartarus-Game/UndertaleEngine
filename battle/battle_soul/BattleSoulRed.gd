@@ -1,0 +1,1 @@
+class_name BattleSoulRed extends CharacterBody2D;

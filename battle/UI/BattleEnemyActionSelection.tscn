@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://dt32khs8sr34p"]
+
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_7ho2t"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="2_twtol"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7ho2t"]
+bg_color = Color(0, 0, 0, 0.4)
+skew = Vector2(1, 0)
+border_width_top = 1
+border_width_right = 2
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.40784314)
+expand_margin_right = 12.0
+shadow_color = Color(1, 1, 1, 0.4)
+shadow_size = 15
+shadow_offset = Vector2(0, 33)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_twtol"]
+
+[node name="BattleEnemyActionSelection" type="RichTextLabel" unique_id=864480218]
+clip_contents = false
+custom_minimum_size = Vector2(80, 32)
+offset_left = 34.0
+offset_right = 114.0
+offset_bottom = 32.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.654902)
+theme_override_constants/shadow_offset_x = 2
+theme_override_fonts/normal_font = ExtResource("1_7ho2t")
+theme_override_fonts/bold_font = ExtResource("2_twtol")
+theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/bold_font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_7ho2t")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_twtol")
+bbcode_enabled = true
+text = "嘲讽
+"
+horizontal_alignment = 2
+vertical_alignment = 1

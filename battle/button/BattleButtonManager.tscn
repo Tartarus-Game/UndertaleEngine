@@ -1,0 +1,115 @@
+[gd_scene format=3 uid="uid://bqmbxurh2ih0n"]
+
+[ext_resource type="Script" uid="uid://b3qvy63iq3jp3" path="res://battle/button/BattleButtonManager.gd" id="1_f2rfb"]
+[ext_resource type="Texture2D" uid="uid://ddyvpgk82n6fs" path="res://battle/button/fight/spr_fightbt_0.png" id="2_iq0mu"]
+[ext_resource type="Texture2D" uid="uid://db3bq4owd6x7r" path="res://battle/button/fight/spr_fightbt_1.png" id="3_y3igu"]
+[ext_resource type="Texture2D" uid="uid://bcq75hw3at1g8" path="res://battle/button/act/spr_actbt_center_0.png" id="4_iq0mu"]
+[ext_resource type="Texture2D" uid="uid://ci3mrp4eukom5" path="res://battle/button/act/spr_actbt_center_1.png" id="5_y3igu"]
+[ext_resource type="Texture2D" uid="uid://d4ar2lgd4x0k0" path="res://battle/button/item/spr_itembt_0.png" id="6_iq0mu"]
+[ext_resource type="Texture2D" uid="uid://chk2srr3r5mnb" path="res://battle/button/item/spr_itembt_1.png" id="7_y3igu"]
+[ext_resource type="Texture2D" uid="uid://dr2cggfapteix" path="res://battle/button/mercy/spr_sparebt_0.png" id="8_iq0mu"]
+[ext_resource type="Texture2D" uid="uid://b10jb6bpk2aa2" path="res://battle/button/mercy/spr_sparebt_1.png" id="9_y3igu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_144ox"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_iq0mu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_y3igu")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_f2rfb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_iq0mu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_y3igu")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_w81xk"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_iq0mu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_y3igu")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_xn1br"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_iq0mu")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_y3igu")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iq0mu"]
+bg_color = Color(0.51181746, 0.58444, 0.67860883, 0.34117648)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5676811, 0.6370163, 0.7270132, 1)
+border_blend = true
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="BattleButtonManager" type="Node2D" unique_id=1180124215]
+script = ExtResource("1_f2rfb")
+
+[node name="Fight" type="AnimatedSprite2D" parent="." unique_id=150304980]
+position = Vector2(87, 453)
+sprite_frames = SubResource("SpriteFrames_144ox")
+
+[node name="Act" type="AnimatedSprite2D" parent="." unique_id=157790277]
+position = Vector2(240, 453)
+sprite_frames = SubResource("SpriteFrames_f2rfb")
+
+[node name="Item" type="AnimatedSprite2D" parent="." unique_id=1361037950]
+position = Vector2(400, 453)
+sprite_frames = SubResource("SpriteFrames_w81xk")
+
+[node name="Mercy" type="AnimatedSprite2D" parent="." unique_id=1586381603]
+position = Vector2(555, 453)
+sprite_frames = SubResource("SpriteFrames_xn1br")
+
+[node name="Select" type="Panel" parent="." unique_id=37640433]
+visible = false
+offset_left = 22.0
+offset_top = 400.0
+offset_right = 147.0
+offset_bottom = 466.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_iq0mu")
+
+[node name="Select_out" type="Panel" parent="." unique_id=1137127693]
+visible = false
+offset_left = 662.0
+offset_top = 400.0
+offset_right = 787.0
+offset_bottom = 466.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_iq0mu")

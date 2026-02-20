@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cf5grhq8owmm6"]
+
+[ext_resource type="Script" uid="uid://ilnu4gaqqdlr" path="res://auto_load/BattleManager.gd" id="1_ragd4"]
+
+[node name="BattleManager" type="Node"]
+script = ExtResource("1_ragd4")
