@@ -19,16 +19,16 @@ An UNDERTALE fangame engine. But for Godot.
 
 ## TODO / 待补齐
 以下待办来自代码中的空实现与占位逻辑（仓库内无显式 TODO/FIXME 注释）：
-- 战斗：FIGHT_AIM / FIGHT_ANIM 分支未实现（`battle/Battle.gd`）
-- 战斗：MERCY 按钮未接入 `ui_accept` 逻辑（`battle/Battle.gd`）
-- 战斗：BATTLE_STATE 仅有 MENU，缺少敌方回合/结算等状态（`battle/Battle.gd`）
-- 战斗：红魂移动与碰撞未实现（`battle/battle_soul/BattleSoulRed.gd`）
-- 战斗：BattleManager 空实现（`auto_load/BattleManager.gd`）
-- 敌人：`on_battle_menu_changed()` 空实现（`battle/enemy/`）
+- [x] 战斗：FIGHT_AIM / FIGHT_ANIM 分支未实现（`battle/Battle.gd`）
+- [x] 战斗：MERCY 按钮未接入 `ui_accept` 逻辑（`battle/Battle.gd`）
+- [x] 战斗：BATTLE_STATE 仅有 MENU，缺少敌方回合/结算等状态（`battle/Battle.gd`）
+- [x] 战斗：红魂移动与碰撞未实现（`battle/battle_soul/BattleSoulRed.gd`）
+- [x] 战斗：BattleManager 空实现（`auto_load/BattleManager.gd`）
+- [x] 敌人：`on_battle_menu_changed()` 空实现（`battle/enemy/`）
 - 道具：`Item.use/drop/name/info` 空实现；示例道具 `drop()` 为空（`auto_load/items/`）
 - 道具：`ItemManager.item_save()` 空实现（`auto_load/ItemManager.gd`）
 - 遭遇：`EncounterManager.get_soul()` 空实现（`auto_load/encounter/EncounterManager.gd`）
 - 文本：`TextTyper._exit_tree()` 空实现（`auto_load/text/TextTyper.gd`）
 - Overworld：OverworldManager 空实现，当前仅测试场景直接触发战斗（`auto_load/OverworldManager.gd`，`overworld/test_level/`）
 - 对话：对话框仍为硬编码测试文本（`dialogue/Dialogue.gd`）
-- 场景淡出：`SceneManager.change_scene_to_path()` 中 `moudlate` 拼写错误导致淡出无效（`auto_load/SceneManager.gd`）
+- [x] 场景淡出：`SceneManager.change_scene_to_path()` 中 `moudlate` 拼写错误导致淡出无效（`auto_load/SceneManager.gd`）
