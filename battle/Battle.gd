@@ -165,7 +165,10 @@ func battle_set_menu(menu: BATTLE_MENU) -> void:
 		BATTLE_MENU.ITEM:
 			_box_typer.skip()
 			_box_typer.visible = false
-			items.set_items(Global.player_get_items())
+			var item_names: Array[String] = []
+			for it in Global.player_get_items():
+				item_names.append(it.name() if it else "未命名")
+			items.set_items(item_names)
 			battle_set_item_choice(0)
 		BATTLE_MENU.MERCY_CHOICE:
 			_box_typer.skip()
@@ -376,10 +379,14 @@ func _handle_item_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_down"):
 		battle_set_item_choice(battle_item_choice + 1)
 	elif event.is_action_pressed("ui_accept"):
-		print("Used item slot: " + str(battle_item_choice))
-		# NOTE: Item consuming logic goes here (e.g., healing)
-		battle_set_menu(BATTLE_MENU.BUTTON)
-		BattleManager.start_enemy_turn()
+		var item = Global.player_get_item(battle_item_choice)
+		if item:
+			# 原作中每次吃物品后它就会从背包里消失
+			Global.player_data_items.remove_at(battle_item_choice)
+			item.use()
+		else:
+			battle_set_menu(BATTLE_MENU.BUTTON)
+			BattleManager.start_enemy_turn()
 	elif event.is_action_pressed("ui_cancel"):
 		battle_set_menu(BATTLE_MENU.BUTTON)
 

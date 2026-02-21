@@ -1,20 +1,20 @@
 [gd_scene format=3 uid="uid://dcs23tbdg5ys2"]
 
-[ext_resource type="Script" uid="uid://cg3f1n66ys5th" path="res://battle/Battle.gd" id="1_hkniu"]
+[ext_resource type="Script" uid="uid://bepuq2tilap31" path="res://battle/Battle.gd" id="1_hkniu"]
 [ext_resource type="PackedScene" uid="uid://1dk3s2g8pj5n" path="res://battle/UI/ScreenBattle.tscn" id="2_pjid2"]
 [ext_resource type="PackedScene" uid="uid://c0qxorkw2v8a7" path="res://battle/box/BattleBox.tscn" id="2_wuq8c"]
 [ext_resource type="PackedScene" uid="uid://briv8nfvnye20" path="res://battle/battle_soul/BattleSoulRed.tscn" id="3_5r4g4"]
-[ext_resource type="Script" uid="uid://boucw2jtmh8lu" path="res://battle/BattleUIManager.gd" id="3_r8nfv"]
+[ext_resource type="Script" uid="uid://derayc7l5me4t" path="res://battle/BattleUIManager.gd" id="3_r8nfv"]
 [ext_resource type="Shader" uid="uid://dkklg6ag46pls" path="res://battle/motion_blur.gdshader" id="4_34q6o"]
 [ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="5_r8nfv"]
-[ext_resource type="Script" uid="uid://dy6lkyxc7oa66" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
+[ext_resource type="Script" uid="uid://ln0a3d1stufs" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
 [ext_resource type="Texture2D" uid="uid://b351xgcu6kmr1" path="res://resources/battle/UI/HWY)OFN$1B]8{H]M`J])A59.png" id="6_jhxqk"]
 [ext_resource type="PackedScene" uid="uid://dlv4o7oqvx82r" path="res://battle/UI/EnemyActionSelection.tscn" id="8_4km6a"]
-[ext_resource type="Script" uid="uid://bwatej5vd3pvd" path="res://battle/BattleEnemySelections.gd" id="8_d0b6a"]
-[ext_resource type="Script" uid="uid://dc3xwofrkxqph" path="res://battle/BattleEnemyActions.gd" id="8_ttuon"]
+[ext_resource type="Script" uid="uid://dmla8fdin1pr8" path="res://battle/BattleEnemySelections.gd" id="8_d0b6a"]
+[ext_resource type="Script" uid="uid://dud1qbnfxa84x" path="res://battle/BattleEnemyActions.gd" id="8_ttuon"]
 [ext_resource type="PackedScene" uid="uid://ckde3myhb3drd" path="res://battle/UI/EnemySelector.tscn" id="9_d0b6a"]
 [ext_resource type="PackedScene" uid="uid://c8d06e42qucst" path="res://battle/UI/Items.tscn" id="12_bim3i"]
-[ext_resource type="Script" path="res://battle/UI/FightAim.gd" id="FightAimScript"]
+[ext_resource type="Script" uid="uid://deo6intn8tblt" path="res://battle/UI/FightAim.gd" id="FightAimScript"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v3re7"]
 shader = ExtResource("4_34q6o")
@@ -190,7 +190,7 @@ offset_right = 99.68749
 offset_bottom = 100.0
 metadata/_edit_lock_ = true
 
-[node name="FightAim" type="Node2D" parent="."]
+[node name="FightAim" type="Node2D" parent="." unique_id=1507893036]
 position = Vector2(320, 320)
 script = ExtResource("FightAimScript")
 

@@ -10,36 +10,37 @@ var player_data: Dictionary = {
 	armor = null,
 }
 
-var player_data_items: Array[String] = [
-	"PROMISE",
-	"PROMISE",
-	"PROMISE",
-	"PROMISE"
-]
-
-func player_get_data(key: String) -> Variant:
-	return player_data.get(key)
-
-## 注意：has() 检测的是值而非索引，应改为索引范围检测
-func player_get_item(slot: int) -> String:
-	if slot < 0 or slot >= player_data_items.size():
-		return ""
-	return player_data_items[slot]
-
-func player_get_items() -> Array[String]:
-	return player_data_items
-
-func player_get_item_count() -> int:
-	return player_data_items.size()
-
-# ——— 输入/窗口 ———
+var player_data_items: Array[Item] = []
 
 func _ready() -> void:
+	# 初始测试：往玩家包里塞进实体 Item 对象
+	# 这些 ID 会被对应的 ItemManager 解析为注册时的名称与回调
+	var initial_item_ids = ["PIE", "SNOWPIECE", "SNOWPIECE"]
+	for id in initial_item_ids:
+		var item = ItemManager.item_get(id)
+		if item:
+			player_data_items.append(item)
+			
 	if not InputMap.has_action("toggle_fullscreen"):
 		InputMap.add_action("toggle_fullscreen")
 		var event := InputEventKey.new()
 		event.keycode = KEY_F4
 		InputMap.action_add_event("toggle_fullscreen", event)
+
+func player_get_data(key: String) -> Variant:
+	return player_data.get(key)
+
+func player_get_item(slot: int) -> Item:
+	if slot < 0 or slot >= player_data_items.size():
+		return null
+	return player_data_items[slot]
+
+func player_get_items() -> Array[Item]:
+	return player_data_items
+
+func player_get_item_count() -> int:
+	return player_data_items.size()
+
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_fullscreen"):
