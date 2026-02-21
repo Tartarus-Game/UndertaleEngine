@@ -8,7 +8,7 @@
 [ext_resource type="Shader" uid="uid://msjgj3necajq" path="res://battle/motion_blur.gdshader" id="4_34q6o"]
 [ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="5_r8nfv"]
 [ext_resource type="Script" uid="uid://dgjryx8kkb80t" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
-[ext_resource type="PackedScene" path="res://battle/UI/BattleAim.tscn" id="7_aim"]
+[ext_resource type="PackedScene" uid="uid://cax2xyv8r7v1m" path="res://battle/UI/BattleAim.tscn" id="7_aim"]
 [ext_resource type="Texture2D" uid="uid://bxd7qye4wwgg0" path="res://sprite/640 480 kr.png" id="9_t871k"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v3re7"]

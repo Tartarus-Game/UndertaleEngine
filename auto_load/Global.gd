@@ -14,6 +14,9 @@ var player_data_items = [];
 func player_get_data(_name : String):
 	return player_data[_name];
 
+func player_item_add(id : String):
+	player_data_items.append(id);
+
 func player_get_item(_slot : int):
 	if(!player_data_items.has(_slot)): return;
 	return player_data_items[_slot]

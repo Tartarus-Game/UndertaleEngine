@@ -57,6 +57,7 @@ func next_text():
 	current_text = texts[0];
 	text += texts[0].text;
 	texts[0].callable.call(self);
+	if(len(texts)==0): return;
 	texts.remove_at(0);
 	return;
 	

@@ -9,12 +9,16 @@ var _desc : String = \
 [color=darkgreen]+ 完全回复 HP
 """;
 
-func use():
+func use(index: int, inventory: Array):
 	Global.player_data.hp = Global.player_data.hp_max
+	DialogueManager.add_dialogue("* You ate Butterscotch Pie\n* 简直难吃,但是你的生命值满了.",\
+	func(t): t.pause = true)
+	inventory.remove_at(index)
 
-func drop():
-	pass
+func drop(index: int, inventory: Array):
+	inventory.remove_at(index)
+
 func name():
 	return _name;
-func info():
+func info(index: int, inventory: Array):
 	return _desc;

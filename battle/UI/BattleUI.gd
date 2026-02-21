@@ -2,8 +2,8 @@ class_name BattleUI extends Control
 
 @onready var player_info_node = $PlayerInfo;
 @onready var button_manager = $BattleButtonManager;
-@onready var menu_renderer:BattleMenuRenderer = $BattleMenuRenderer;
-@onready var fight_menu_renderer:BattleMenuRendererVertical = $BattleMenuRendererVertical;
+@onready var menu_renderer: BattleMenuRenderer = $BattleMenuRenderer;
+@onready var vertical_menu_renderer: BattleMenuRendererVertical = $BattleMenuRendererVertical;
 
 @export var button_choice_sound : AudioStream;
 @export var button_confirm : AudioStream;
@@ -36,7 +36,6 @@ func get_button_slot():
 	
 	return button_manager.get_button_slot();
 
-
 func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Variant) -> void:
 	# Battle.gd 的唯一 UI 事件入口：菜单切换、选项切换都在这里驱动显示。
 	match TYPE:
@@ -48,14 +47,15 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 				Battle.BATTLE_MENU.BUTTON:
 					#AudioManager.play_sound_with_pitch(button_confirm);
 					menu_renderer.hide_menu()
-					fight_menu_renderer.hide_menu()
+					vertical_menu_renderer.hide_menu()
 				
 				Battle.BATTLE_MENU.FIGHT_ENEMY_CHOICE:
+					AudioManager.play_sound_with_pitch(button_confirm)
 					var opts = []
 					for enemy in battle.battle_get_enemys():
 						var color = Color(1,1,1,1)
 						opts.append({"text": enemy.get_enemy_name(), "color": color, "hp": enemy.get_hp(), "hp_max": enemy.get_hp_max()})
-					fight_menu_renderer.show_menu(opts, battle.battle_fight_enemy_choice)
+					vertical_menu_renderer.show_menu(opts, battle.battle_fight_enemy_choice)
 				
 				Battle.BATTLE_MENU.ACT_ENEMY_CHOICE:
 					if FROM != Battle.BATTLE_MENU.ACT_CHOICE:
@@ -63,8 +63,9 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 					var opts = []
 					for enemy in battle.battle_get_enemys():
 						var color = Color(1,1,1) if enemy.get_spareable() else Color.WHITE
-						opts.append({"text": enemy.get_enemy_name(), "color": color})
-					menu_renderer.show_menu(opts, battle.battle_act_enemy_choice)
+						opts.append({"text": enemy.get_enemy_name(), "color": color});
+						menu_renderer.hide_menu()
+					vertical_menu_renderer.show_menu(opts, battle.battle_act_enemy_choice)
 				
 				Battle.BATTLE_MENU.ACT_CHOICE:
 					AudioManager.play_sound_with_pitch(button_confirm)
@@ -74,6 +75,7 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 						for action in enemy.get_actions():
 							opts.append(action[0])
 					menu_renderer.show_menu(opts, battle.battle_act_choice)
+					vertical_menu_renderer.hide_menu()
 				
 				Battle.BATTLE_MENU.ITEM:
 					AudioManager.play_sound_with_pitch(button_confirm)
@@ -92,22 +94,22 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 						if enemy.get_spareable():
 							spare_color = Color(1,1,0)
 							break
-					menu_renderer.show_menu([{"text": "Spare", "color": spare_color}, "Flee"], battle.battle_mercy_choice)
+					vertical_menu_renderer.show_menu([{"text": "Spare", "color": spare_color}, "Flee"], battle.battle_mercy_choice)
 				
 				Battle.BATTLE_MENU.FIGHT_AIM, Battle.BATTLE_MENU.FIGHT_ANIM, Battle.BATTLE_MENU.FIGHT_DAMAGE:
 					menu_renderer.hide_menu()
-					fight_menu_renderer.hide_menu()
+					vertical_menu_renderer.hide_menu()
 		Battle.EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED:
 			if(EVENT != fight_enemy_slot):
 				AudioManager.play_sound_with_pitch(button_choice_sound);
 			fight_enemy_slot = EVENT;
-			fight_menu_renderer.set_selected(EVENT)
+			vertical_menu_renderer.set_selected(EVENT)
 		
 		Battle.EVENT_TYPE.ACT_ENEMY_CHOICE_CHANGED:
 			if(EVENT != act_enemy_slot):
 				AudioManager.play_sound_with_pitch(button_choice_sound);
 			act_enemy_slot = EVENT;
-			menu_renderer.set_selected(EVENT)
+			vertical_menu_renderer.set_selected(EVENT)
 		
 		Battle.EVENT_TYPE.ACT_CHOICE_CHANGED:
 			if(EVENT != act_slot):
@@ -125,7 +127,7 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, FROM: Vari
 			if(EVENT != mercy_slot):
 				AudioManager.play_sound_with_pitch(button_choice_sound);
 			mercy_slot = EVENT;
-			menu_renderer.set_selected(EVENT)
+			vertical_menu_renderer.set_selected(EVENT)
 		
 		Battle.EVENT_TYPE.FIGHT_CONFIRMED, Battle.EVENT_TYPE.ACT_CONFIRMED, \
 		Battle.EVENT_TYPE.ITEM_USED, Battle.EVENT_TYPE.MERCY_CONFIRMED:

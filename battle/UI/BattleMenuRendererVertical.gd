@@ -8,6 +8,7 @@ class_name BattleMenuRendererVertical extends Control
 
 const ITEM_SPACING := 30
 const BASE_X := 40.0
+const BASE_Y := 5
 const ANIM_DURATION := 0.35
 const SOUL_OFFSET := Vector2(-28, 13)
 
@@ -46,15 +47,16 @@ func get_option_position(slot: int) -> Vector2:
 	## 返回指定选项的 soul 定位点（目标位置，不受动画进度影响）。
 	if _options.is_empty() or slot < 0 or slot >= _options.size():
 		return global_position
-	var offset = slot - _selected_slot
+	var offset = slot
 	var x: float
 	var y: float
 	if offset < 0:
 		x = -50.0
-		y = float(offset * ITEM_SPACING)
+		y = float(offset * ITEM_SPACING) + BASE_Y
 	else:
-		x = float(offset * 5) + BASE_X
-		y = float(offset * ITEM_SPACING)
+		#x = float(offset * 5) + BASE_X
+		x = BASE_X
+		y = float(offset * ITEM_SPACING) + BASE_Y
 	return _options_container.global_position + Vector2(x, y) + SOUL_OFFSET
 
 func _rebuild_options() -> void:
@@ -72,12 +74,14 @@ func _rebuild_options() -> void:
 		var color = Color.WHITE
 		var hp: float = -1.0
 		var hp_max: float = -1.0
+		var is_hide : bool = false;
 
 		if typeof(opt) == TYPE_DICTIONARY:
 			text = opt.get("text", "")
 			color = opt.get("color", Color.WHITE)
 			hp = opt.get("hp", -1.0)
 			hp_max = opt.get("hp_max", -1.0)
+			is_hide = opt.get("hide", false);
 		else:
 			text = str(opt)
 
@@ -85,6 +89,7 @@ func _rebuild_options() -> void:
 		var label = Label.new()
 		label.text = "* " + text
 		label.modulate = color
+		label.visible = !is_hide;
 		if option_font:
 			label.add_theme_font_override("font", option_font)
 		label.add_theme_font_size_override("font_size", option_font_size)
@@ -99,7 +104,7 @@ func _rebuild_options() -> void:
 			container.add_child(hp_bg)
 
 			var hp_fg = ColorRect.new()
-			hp_fg.color = Color(1, 1, 0, 1)
+			hp_fg.color = Color(0, 1, 0, 1)
 			hp_fg.size = Vector2(maxf(0, hp) * HP_BAR_SCALE, HP_BAR_HEIGHT)
 			hp_bg.add_child(hp_fg)
 

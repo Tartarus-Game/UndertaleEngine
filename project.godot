@@ -26,6 +26,7 @@ ItemManager="*res://auto_load/ItemManager.gd"
 SceneManager="*res://auto_load/SceneManager.tscn"
 AudioManager="*res://auto_load/audio/AudioManager.tscn"
 EncounterManager="*res://auto_load/encounter/EncounterManager.gd"
+DialogueManager="*uid://ctfi8n4ahu6e7"
 
 [display]
 

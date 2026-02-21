@@ -11,9 +11,9 @@ var _desc : String = \
 [color=darkred]- 不能吃
 """;
 
-func drop():
+func drop(index: int, inventory: Array):
 	pass
 func name():
 	return _name;
-func info():
+func info(index: int, inventory: Array):
 	return _desc;

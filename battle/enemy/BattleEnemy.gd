@@ -1,6 +1,7 @@
 class_name BattleEnemy extends Node2D
 
 var battle : Battle;
+var enemy_slot : int = -1;
 
 var choice_box_size : Vector2 = Vector2(100, 100);
 var choice_box_offset : Vector2 = Vector2(0, 0);
@@ -12,17 +13,23 @@ var _hp_max : float = 200;
 var _actions = [];
 var _name : String = "null";
 
+
 func _ready():
 	position = Vector2(320, 120);
 
 func init():
 	# 敌人初始化：订阅 Battle 事件并注入默认 ACT 文本。
 	battle.BattleEvent.connect(on_battle_menu_changed);
-	action_set(0, "检查", "* 检查敌人的属性，获得准确的数值。");
+	action_set(0, "检查", "");
 
 func on_battle_menu_changed(_type, _state, _from):
 	# 给子类重写：根据菜单变化更新敌人的行为/动画。
-	pass;
+	if(_type == Battle.EVENT_TYPE.ACT_CONFIRMED):
+		match(battle.battle_act_choice):
+			0:
+				if(self == battle.battle_get_act_enemy_choice()):
+					DialogueManager.add_dialogue("* 检查敌人的属性，获得准确的数值。",\
+						func(t): t.pause = true);
 
 func set_checked(enable : bool):
 	_checked = enable;
@@ -82,6 +89,3 @@ func action_get_desc(slot : int)-> String:
 func get_turn_dialog() -> String:
 	# 返回该敌人本回合要显示的台词，子类可覆写。
 	return ""
-## 返回该敌人遇到时的介绍文本，子类可覆写。
-func get_encounter_dialog() -> String:
-	return "";

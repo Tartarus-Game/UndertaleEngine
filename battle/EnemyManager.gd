@@ -1,14 +1,14 @@
 class_name EnemyManager extends Node;
 @export var battle : Battle;
 var enemys:Array[BattleEnemy] = [];
-func _ready() -> void:
-	# 进入战斗场景时根据 EncounterManager 实例化敌人列表。
-	if(!SceneManager.is_battle()):queue_free();
-	var _enemys = EncounterManager.get_current_encounter();
+
+#加载敌人
+func battle_load_enemy(_enemys):
 	if(!_enemys): return;
 	for i in _enemys:
 		var enemy = i.instantiate() as BattleEnemy;
 		enemy.battle = battle;
+		enemy.enemy_slot = len(enemys)
 		enemy.init();
 		add_child(enemy);
 		enemys.append(enemy);
