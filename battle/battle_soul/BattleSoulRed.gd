@@ -2,10 +2,8 @@ class_name BattleSoulRed extends CharacterBody2D
 
 var speed: float = 150.0
 
-# 玩家战斗数据（通常这里会从Global读取并同步回去）
+# 玩家战斗数据（直接从 Global 读取）
 var player_name: String = "CHARA"
-var hp: float = 20.0
-var max_hp: float = 20.0
 
 # 无敌时间与闪烁
 var invuln_timer: float = 0.0
@@ -13,13 +11,10 @@ var blink_timer: float = 0.0
 var is_invulnerable: bool = false
 
 func _ready() -> void:
-	# 初始化时尝试从Global获取当前数据，若缺失则给初始值
-	if Global.player_data.has("hp_max") and Global.player_data.hp_max > 0:
-		max_hp = Global.player_data.hp_max
-		hp = Global.player_data.hp
-	else:
-		Global.player_data.hp_max = max_hp
-		Global.player_data.hp = hp
+	# 初始化时确保如果有缺省值可以补齐
+	if not Global.player_data.has("hp_max") or Global.player_data.hp_max <= 0:
+		Global.player_data.hp_max = 20.0
+		Global.player_data.hp = 20.0
 
 func take_damage(attack_power: float) -> float:
 	if is_invulnerable:
@@ -29,20 +24,17 @@ func take_damage(attack_power: float) -> float:
 	var def = Global.player_data.get("def", 0.0)
 	var damage = max(1.0, attack_power - def) # 至少扣1点血
 	
-	hp -= damage
-	if hp < 0:
-		hp = 0
+	Global.player_data.hp -= damage
+	if Global.player_data.hp < 0:
+		Global.player_data.hp = 0
 	
-	# 同步回全局
-	Global.player_data.hp = hp
-	
-	print(player_name, " 受到了 ", damage, " 点伤害！当前血量：", hp, "/", max_hp)
+	print(player_name, " 受到了 ", damage, " 点伤害！当前血量：", Global.player_data.hp, "/", Global.player_data.hp_max)
 	
 	# 触发 0.5 秒无敌
 	is_invulnerable = true
 	invuln_timer = 0.5
 	
-	if hp <= 0:
+	if Global.player_data.hp <= 0:
 		# TODO: 玩家死亡逻辑 (GAME OVER)
 		print("GAME OVER")
 		
