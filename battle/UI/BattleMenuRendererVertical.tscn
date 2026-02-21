@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://dv7menu_vert1"]
+
+[ext_resource type="Script" path="res://battle/UI/BattleMenuRendererVertical.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="3_momo"]
+
+[node name="BattleMenuRendererVertical" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+option_font = ExtResource("3_momo")
+option_font_size = 26
+
+[node name="Options" type="Node2D" parent="."]
+position = Vector2(60, 245)
+
+[node name="PageIndicator" type="Label" parent="."]
+layout_mode = 0
+offset_left = 496.0
+offset_top = 370.0
+offset_right = 636.0
+offset_bottom = 395.0
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+text = "1 / 1"

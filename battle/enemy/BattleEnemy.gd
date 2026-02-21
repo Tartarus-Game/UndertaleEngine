@@ -18,7 +18,7 @@ func _ready():
 func init():
 	# 敌人初始化：订阅 Battle 事件并注入默认 ACT 文本。
 	battle.BattleEvent.connect(on_battle_menu_changed);
-	action_set(0, "检查", "[b]检查敌人的属性，获得准确的数值。");
+	action_set(0, "检查", "* 检查敌人的属性，获得准确的数值。");
 
 func on_battle_menu_changed(_type, _state, _from):
 	# 给子类重写：根据菜单变化更新敌人的行为/动画。
@@ -77,3 +77,11 @@ func action_get_name(slot : int):
 func action_get_desc(slot : int):
 	if(action_get_count() <= slot): return;
 	return _actions[slot][1];
+## 返回该敌人本回合要显示的台词，子类可覆写。
+func get_turn_dialog() -> String:
+	# 返回该敌人本回合要显示的台词，子类可覆写。
+	return ""
+## 返回该敌人遇到时的介绍文本，子类可覆写。
+func get_encounter_dialog() -> String:
+	
+	return "";

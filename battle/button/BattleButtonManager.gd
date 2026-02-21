@@ -21,7 +21,11 @@ func get_button(slot : int):
 			return item;
 		3:
 			return mercy;
-	return;
+	return slot;
+func get_button_position(slot : int):
+	var button = get_button(slot);
+
+	return button.get_node("Position").global_position;
 
 func get_button_slot():
 	return button_slot;

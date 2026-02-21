@@ -1,9 +1,11 @@
 [gd_scene format=3 uid="uid://bgrd6jdlalrtp"]
 
 [ext_resource type="Script" uid="uid://co7ksetqmxd48" path="res://battle/UI/BattleMenuRenderer.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bxd7qye4wwgg0" path="res://sprite/640 480 kr.png" id="2_eg2fk"]
 [ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="2_font"]
+[ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="2_wdfg2"]
 
-[node name="BattleMenuRenderer" type="Control" unique_id=544573956]
+[node name="BattleMenuRenderer" type="Control" unique_id=2035987809]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,72 +14,102 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Option0" type="Label" parent="." unique_id=1287534552]
-layout_mode = 0
-offset_left = 50.0
-offset_top = 270.0
-offset_right = 290.0
-offset_bottom = 300.0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
-text = "* Option 0"
+[node name="640480Kr" type="Sprite2D" parent="." unique_id=1319777473]
+visible = false
+modulate = Color(1, 1, 1, 0.2627451)
+texture = ExtResource("2_eg2fk")
+centered = false
 
-[node name="Option1" type="Label" parent="." unique_id=1736821727]
-layout_mode = 0
-offset_left = 300.0
-offset_top = 270.0
-offset_right = 540.0
-offset_bottom = 300.0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
-text = "* Option 1"
-
-[node name="Option2" type="Label" parent="." unique_id=1451706303]
-layout_mode = 0
-offset_left = 50.0
-offset_top = 305.0
-offset_right = 290.0
+[node name="Option0" type="Label" parent="." unique_id=2008402896]
+layout_mode = 1
+offset_left = 100.0
+offset_top = 239.0
+offset_right = 340.0
 offset_bottom = 335.0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
-text = "* Option 2"
+theme_override_fonts/font = ExtResource("2_wdfg2")
+theme_override_font_sizes/font_size = 26
+text = "* "
+vertical_alignment = 1
 
-[node name="Option3" type="Label" parent="." unique_id=1361851917]
-layout_mode = 0
-offset_left = 300.0
-offset_top = 305.0
-offset_right = 540.0
-offset_bottom = 335.0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
-text = "* Option 3"
+[node name="Position" type="Marker2D" parent="Option0" unique_id=53536097]
+position = Vector2(-28, 49)
 
-[node name="Option4" type="Label" parent="." unique_id=1330737339]
+[node name="Option1" type="Label" parent="." unique_id=395994571]
 layout_mode = 0
-offset_left = 50.0
-offset_top = 340.0
-offset_right = 290.0
-offset_bottom = 370.0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
-text = "* Option 4"
+offset_left = 340.0
+offset_top = 238.0
+offset_right = 580.0
+offset_bottom = 334.0
+theme_override_fonts/font = ExtResource("2_wdfg2")
+theme_override_font_sizes/font_size = 26
+text = "* "
+vertical_alignment = 1
 
-[node name="Option5" type="Label" parent="." unique_id=416421067]
-layout_mode = 0
-offset_left = 300.0
-offset_top = 340.0
-offset_right = 540.0
-offset_bottom = 370.0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 24
-text = "* Option 5"
+[node name="Position" type="Marker2D" parent="Option1" unique_id=947818291]
+position = Vector2(-22, 49)
 
-[node name="PageIndicator" type="Label" parent="." unique_id=1971702677]
+[node name="Option2" type="Label" parent="." unique_id=1243613601]
 layout_mode = 0
-offset_left = 400.0
-offset_top = 240.0
-offset_right = 540.0
-offset_bottom = 265.0
+offset_left = 100.0
+offset_top = 270.0
+offset_right = 340.0
+offset_bottom = 366.0
+theme_override_fonts/font = ExtResource("2_wdfg2")
+theme_override_font_sizes/font_size = 26
+text = "* "
+vertical_alignment = 1
+
+[node name="Position" type="Marker2D" parent="Option2" unique_id=1802346924]
+position = Vector2(-28, 49)
+
+[node name="Option3" type="Label" parent="." unique_id=813180581]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 270.0
+offset_right = 580.0
+offset_bottom = 366.0
+theme_override_fonts/font = ExtResource("2_wdfg2")
+theme_override_font_sizes/font_size = 26
+text = "* "
+vertical_alignment = 1
+
+[node name="Position" type="Marker2D" parent="Option3" unique_id=2145726854]
+position = Vector2(-22, 49)
+
+[node name="Option4" type="Label" parent="." unique_id=746056874]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 302.0
+offset_right = 340.0
+offset_bottom = 398.0
+theme_override_fonts/font = ExtResource("2_wdfg2")
+theme_override_font_sizes/font_size = 26
+text = "* "
+vertical_alignment = 1
+
+[node name="Position" type="Marker2D" parent="Option4" unique_id=1084952978]
+position = Vector2(-28, 49)
+
+[node name="Option5" type="Label" parent="." unique_id=568675298]
+layout_mode = 0
+offset_left = 340.0
+offset_top = 302.0
+offset_right = 580.0
+offset_bottom = 398.0
+theme_override_fonts/font = ExtResource("2_wdfg2")
+theme_override_font_sizes/font_size = 26
+text = "* "
+vertical_alignment = 1
+
+[node name="Position" type="Marker2D" parent="Option5" unique_id=1836712678]
+position = Vector2(-22, 49)
+
+[node name="PageIndicator" type="Label" parent="." unique_id=1645088988]
+layout_mode = 0
+offset_left = 496.0
+offset_top = 370.0
+offset_right = 636.0
+offset_bottom = 395.0
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 16
 text = "PAGE 1 / 1"

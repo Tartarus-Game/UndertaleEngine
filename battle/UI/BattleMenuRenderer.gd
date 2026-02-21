@@ -24,14 +24,16 @@ func set_selected(slot: int) -> void:
 	if _options.is_empty(): return
 	_selected_slot = clampi(slot, 0, maxi(0, _options.size() - 1))
 	_rebuild_labels()
-
+func _input(event: InputEvent) -> void:
+	if event.is_action_released("ui_page_up"):
+		print($Option0.global_position)
 func get_option_position(slot: int) -> Vector2:
 	if _options.is_empty(): return global_position
 	var page = slot / OPTIONS_PER_PAGE
 	var current_page = _selected_slot / OPTIONS_PER_PAGE
 	if page != current_page: return global_position
 	var index = slot % OPTIONS_PER_PAGE
-	return labels[index].global_position
+	return labels[index].get_node("Position").global_position
 
 func _rebuild_labels() -> void:
 	var current_page = _selected_slot / OPTIONS_PER_PAGE
@@ -53,7 +55,7 @@ func _rebuild_labels() -> void:
 			labels[i].text = "* " + text
 			
 			if opt_idx == _selected_slot:
-				labels[i].modulate = Color(1, 1, 0) # Yellow for selected
+				labels[i].modulate = Color(1, 1, 1) # Yellow for selected
 			else:
 				labels[i].modulate = color
 			labels[i].show()

@@ -2,7 +2,7 @@ extends Node
 
 var current_id : int = -1;
 var encounters = {
-	-1: [load("res://battle/enemy/BattleEnemy.tscn"), load("res://battle/enemy/test/battle_enemy_test.tscn")]
+	-1: [load("res://battle/enemy/BattleEnemy.tscn"),load("res://battle/enemy/test/battle_enemy_test.tscn")]
 }
 
 var battle_soul : BattleSoulRed = null;

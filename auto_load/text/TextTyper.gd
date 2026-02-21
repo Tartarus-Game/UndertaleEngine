@@ -40,13 +40,17 @@ func _process(_delta: float) -> void:
 		delta_timer = 0;
 		visible_characters += 1
 	if(skip_able):
-		if(Input.is_action_just_pressed("ui_cancel")): skip();
+		if(Input.is_action_pressed("ui_cancel")): 
+			skip();
 		
 		
 func skip():
-	while(len(texts)>0 and !pause):
-		next_text();
-		visible_characters = get_total_character_count();
+	# 先把当前正在滚动的文字立即显示完整。
+	visible_characters = get_total_character_count()
+	# 再穿透所有不需要暂停的后续条目。
+	while len(texts) > 0 and not pause:
+		next_text()
+		visible_characters = get_total_character_count()
 
 func next_text():
 	if(len(texts)==0): return;
@@ -68,6 +72,7 @@ func pause_text():
 func sleep_text(time : float):
 	sleep = time;
 	return;
+
 
 func _exit_tree() -> void:
 	pass;

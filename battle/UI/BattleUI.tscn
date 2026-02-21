@@ -1,21 +1,30 @@
 [gd_scene format=3 uid="uid://1dk3s2g8pj5n"]
 
 [ext_resource type="Script" uid="uid://cej26ro85xcvn" path="res://battle/UI/BattleUI.gd" id="1_rgb2w"]
-[ext_resource type="AudioStream" uid="uid://b8mneg5yhg3v2" path="res://battle/UI/snd_squeak.wav" id="2_3wk2x"]
+[ext_resource type="AudioStream" uid="uid://b8mneg5yhg3v2" path="res://sound/snd_squeak.wav" id="2_3wk2x"]
 [ext_resource type="PackedScene" uid="uid://bqmbxurh2ih0n" path="res://battle/button/BattleButtonManager.tscn" id="2_k28vt"]
-[ext_resource type="AudioStream" uid="uid://bcjcfirtnvg4s" path="res://battle/UI/snd_select.wav" id="3_pciu8"]
+[ext_resource type="AudioStream" uid="uid://bcjcfirtnvg4s" path="res://sound/snd_select.wav" id="3_pciu8"]
+[ext_resource type="Texture2D" uid="uid://bxd7qye4wwgg0" path="res://sprite/640 480 kr.png" id="4_3wk2x"]
 [ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="4_5co24"]
-[ext_resource type="PackedScene" path="res://battle/UI/BattleMenuRenderer.tscn" id="5_renderer"]
-[ext_resource type="Texture2D" uid="uid://dlxuqjkjc7pk0" path="res://battle/UI/spr_hpname_0.png" id="6_oxe26"]
+[ext_resource type="PackedScene" uid="uid://bgrd6jdlalrtp" path="res://battle/UI/BattleMenuRenderer.tscn" id="5_renderer"]
+[ext_resource type="Texture2D" uid="uid://dlxuqjkjc7pk0" path="res://sprite/spr_hpname_0.png" id="6_oxe26"]
 
 [node name="BattleUI" type="Control" unique_id=211280362]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_rgb2w")
 button_choice_sound = ExtResource("2_3wk2x")
-button_accept = ExtResource("3_pciu8")
+button_confirm = ExtResource("3_pciu8")
 
-[node name="BattleMenuRenderer" parent="." instance=ExtResource("5_renderer")]
+[node name="640480Kr" type="Sprite2D" parent="." unique_id=1000162653]
+visible = false
+modulate = Color(1, 1, 1, 0.54901963)
+texture = ExtResource("4_3wk2x")
+centered = false
+
+[node name="BattleMenuRenderer" parent="." unique_id=1438218568 instance=ExtResource("5_renderer")]
+visible = false
+layout_mode = 1
 
 [node name="BattleButtonManager" parent="." unique_id=1542088620 instance=ExtResource("2_k28vt")]
 
@@ -52,7 +61,7 @@ offset_right = 105.0
 offset_bottom = 124.0
 theme_override_fonts/font = ExtResource("4_5co24")
 theme_override_font_sizes/font_size = 24
-text = "UPIZPP"
+text = "LFJ"
 
 [node name="HPMax" type="ColorRect" parent="PlayerInfo" unique_id=1670644635]
 layout_mode = 0
