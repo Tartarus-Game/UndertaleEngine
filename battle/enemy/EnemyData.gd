@@ -1,6 +1,7 @@
 class_name EnemyData extends Resource
 
 @export var name: String = "Unexcepted Enemy!!"
+@export var desc: String = "她本不应于此"
 @export var hp_max: float = 1.0
 @export var hp: float = 1.0
 @export var attack: float = 1.0

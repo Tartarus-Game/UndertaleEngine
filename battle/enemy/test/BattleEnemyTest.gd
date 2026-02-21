@@ -9,6 +9,7 @@ func _ready():
 func init():
 	super ();
 	data.name = "test"
+	data.desc = "这是这是一个为了测试而生的沙包。"
 	data.hp = 100
 	data.hp_max = 100
 	action_set(1, "笑话", Callable(self , "_on_joke"));

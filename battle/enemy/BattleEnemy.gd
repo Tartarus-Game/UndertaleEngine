@@ -77,8 +77,9 @@ func _on_act_check() -> void:
 	var hp = data.hp if data else 0
 	var hp_max = data.hp_max if data else 0
 	var def = data.defense if data else 0
+	var desc = data.desc if data else "她本不应于此"
 	
-	var text = "%s - HP %d/%d DEF %d\n* 这是一个为了测试而生的沙包。" % [enemy_name, hp, hp_max, def]
+	var text = "%s - HP %d/%d DEF %d\n* %s" % [enemy_name, hp, hp_max, def, desc]
 	
 	if battle:
 		battle.start_dialogue(text, func():
