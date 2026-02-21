@@ -1,5 +1,8 @@
 extends BattleEnemy
 
+const TestBulletScene = preload("res://battle/enemy/test/TestBullet.gd")
+var _current_bullet: Node2D = null
+var _turn_started: bool = false
 func _ready():
 	choice_box_size = Vector2(120, 230);
 
@@ -34,6 +37,26 @@ func _on_hug():
 	
 
 func process_turn(time_elapsed: float) -> void:
-	if time_elapsed > +1.0:
-		print("test 敌人的攻击结束了！等待一秒后回到菜单")
+	if not _turn_started:
+		_turn_started = true
+		_current_bullet = TestBulletScene.new()
+		# Add to battle or enemy so it renders properly inside the box
+		# The box is centered at (320, 320), size 140x140 during shrinking.
+		# Let's spawn near the top of the box.
+		if battle:
+			battle.add_child(_current_bullet)
+			_current_bullet.position = Vector2(320, 270)
+		else:
+			add_child(_current_bullet)
+			_current_bullet.position = Vector2(0, -50)
+		
+	# Simple bullet movement: fall down slowly
+	if _current_bullet and is_instance_valid(_current_bullet):
+		_current_bullet.position.y += 60.0 * get_process_delta_time()
+
+	if time_elapsed > +3.0:
+		_turn_started = false
+		if _current_bullet and is_instance_valid(_current_bullet):
+			_current_bullet.queue_free()
+			_current_bullet = null
 		BattleManager.stop_enemy_turn()

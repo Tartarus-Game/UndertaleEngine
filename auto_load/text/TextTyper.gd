@@ -22,6 +22,8 @@ func text_add(_text: String, function: Callable) -> TextTyper:
 	return self ;
 
 func _process(_delta: float) -> void:
+	if not visible:
+		return
 	if (get_total_character_count() == visible_characters and !pause):
 		if (len(texts) > 0):
 			next_text();

@@ -13,6 +13,44 @@ func _ready() -> void:
 	ScreenManager.register_screen(self )
 	ScreenManager.set_active_screen(self )
 
+func _process(delta: float) -> void:
+	if not is_active():
+		return
+	_update_player_info()
+
+func _update_player_info() -> void:
+	if not player_info_node:
+		return
+		
+	var hp = Global.player_data.get("hp", 20)
+	var hp_max = Global.player_data.get("hp_max", 20)
+	var lv = Global.player_data.get("lv", 1)
+	var player_name = Global.player_data.get("name", "CHARA")
+	
+	player_info_node.get_node("Name").text = player_name
+	player_info_node.get_node("LV").text = "LV " + str(lv)
+	
+	# 原作中 1 HP = 1.25 px 的宽度（例如 20 HP_MAX 为 25px）
+	var max_bar_width = float(hp_max) * 1.25
+	var cur_bar_width = float(hp) * 1.25
+	
+	var hp_max_rect = player_info_node.get_node("HPMax") as ColorRect
+	var hp_rect = hp_max_rect.get_node("HP") as ColorRect
+	var hp_label = player_info_node.get_node("Label") as Label
+	
+	hp_max_rect.size.x = max_bar_width
+	hp_rect.size.x = cur_bar_width
+	
+	# 文字的横坐标要跟随血条的变化而推移
+	hp_label.position.x = hp_max_rect.position.x + max_bar_width + 15.0
+	
+	# 不足两位数时为了排版补上空格
+	var hp_str = str(int(hp))
+	var hp_max_str = str(int(hp_max))
+	if hp < 10: hp_str = "0" + hp_str
+	
+	hp_label.text = hp_str + " / " + hp_max_str
+
 func _exit_tree() -> void:
 	ScreenManager.unregister_screen(self )
 
@@ -39,7 +77,7 @@ func handle_input(event: InputEvent) -> void:
 func _can_navigate_buttons() -> bool:
 	if battle == null:
 		return false
-	return battle.battle_get_menu() == Battle.BATTLE_MENU.BUTTON
+	return battle.battle_get_state() == Battle.BATTLE_STATE.MENU and battle.battle_get_menu() == Battle.BATTLE_MENU.BUTTON
 
 func _on_button_selected(slot: int) -> void:
 	if battle == null:
