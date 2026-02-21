@@ -1,4 +1,5 @@
 extends Node2D
+class_name BattleButtonManager
 
 @onready var fight = $Fight;
 @onready var act = $Act;

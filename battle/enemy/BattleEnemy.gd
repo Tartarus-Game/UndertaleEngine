@@ -7,8 +7,8 @@ var choice_box_offset : Vector2 = Vector2(0, 0);
 var _checked : bool = false;
 var _spareable : bool = false;
 var _can_flee : bool = true;
-var _hp : float = 0;
-var _hp_max : float = 0;
+var _hp : float = 200;
+var _hp_max : float = 200;
 var _actions = [];
 var _name : String = "null";
 
@@ -28,7 +28,7 @@ func set_checked(enable : bool):
 	_checked = enable;
 	return;
 
-func get_is_checked():
+func get_is_checked() -> bool:
 	return _checked;
 
 func set_spareable(enable: bool):
@@ -42,10 +42,10 @@ func get_can_flee() -> bool:
 	# 当前敌人是否允许玩家 Flee。
 	return _can_flee;
 
-func get_hp():
+func get_hp() -> int:
 	return _hp;
 
-func get_hp_max():
+func get_hp_max() -> int:
 	return _hp_max;
 
 func set_hp(val: float):
@@ -55,10 +55,10 @@ func set_hp(val: float):
 func set_enemy_name(__name : String):
 	_name = __name;
 
-func get_enemy_name():
+func get_enemy_name() -> String:
 	return _name;
 
-func action_get_count():
+func action_get_count() -> int:
 	return _actions.size();
 
 func get_actions():
@@ -70,18 +70,18 @@ func action_set(slot : int, text : String, desc : String):
 	_actions.resize(_actions.size()+1);
 	_actions.set(slot, [text, desc]);
 	
-func action_get_name(slot : int):
-	if(action_get_count() <= slot): return;
+func action_get_name(slot : int) -> String:
+	if(action_get_count() <= slot): return "";
 	return _actions[slot][0];
 	
-func action_get_desc(slot : int):
-	if(action_get_count() <= slot): return;
+func action_get_desc(slot : int)-> String:
+	if(action_get_count() <= slot): return "";
 	return _actions[slot][1];
+
 ## 返回该敌人本回合要显示的台词，子类可覆写。
 func get_turn_dialog() -> String:
 	# 返回该敌人本回合要显示的台词，子类可覆写。
 	return ""
 ## 返回该敌人遇到时的介绍文本，子类可覆写。
 func get_encounter_dialog() -> String:
-	
 	return "";

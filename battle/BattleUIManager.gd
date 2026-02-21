@@ -5,5 +5,5 @@ func add_UI(packed : PackedScene):
 	UI = packed.instantiate()
 	add_child(UI);
 
-func get_ui():
+func get_ui() -> BattleUI:
 	return UI;

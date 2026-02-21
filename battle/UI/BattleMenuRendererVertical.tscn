@@ -1,10 +1,10 @@
-[gd_scene format=3 uid="uid://dv7menu_vert1"]
+[gd_scene format=3 uid="uid://dfhy2gsymkki2"]
 
-[ext_resource type="Script" path="res://battle/UI/BattleMenuRendererVertical.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c7w1fxtuhslgb" path="res://battle/UI/BattleMenuRendererVertical.gd" id="1_script"]
 [ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="2_font"]
 [ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="3_momo"]
 
-[node name="BattleMenuRendererVertical" type="Control"]
+[node name="BattleMenuRendererVertical" type="Control" unique_id=1455049875]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,12 +13,11 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 option_font = ExtResource("3_momo")
-option_font_size = 26
 
-[node name="Options" type="Node2D" parent="."]
-position = Vector2(60, 245)
+[node name="Options" type="Node2D" parent="." unique_id=852905234]
+position = Vector2(60, 270)
 
-[node name="PageIndicator" type="Label" parent="."]
+[node name="PageIndicator" type="Label" parent="." unique_id=927598290]
 layout_mode = 0
 offset_left = 496.0
 offset_top = 370.0

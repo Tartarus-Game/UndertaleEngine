@@ -423,9 +423,12 @@ func battle_set_menu(menu : BATTLE_MENU):
 		BATTLE_MENU.FIGHT_AIM:
 			$BattleAim.start()
 			var ui = UImanager.get_ui()
-			if ui and ui.menu_renderer:
+			if ui:
 				soul.hide()
-				ui.menu_renderer.hide_menu()
+				if ui.menu_renderer:
+					ui.menu_renderer.hide_menu()
+				if ui.fight_menu_renderer:
+					ui.fight_menu_renderer.hide_menu()
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
 			battle_set_fight_enemy_choice(battle_fight_enemy_choice);
 		BATTLE_MENU.ACT_ENEMY_CHOICE:
@@ -452,7 +455,7 @@ func battle_get_enemy(slot : int) -> BattleEnemy:
 	# 通过 EnemyManager 按索引读取敌人。
 	return enemy_manager.battle_get_enemy(slot);
 
-func battle_get_enemys():
+func battle_get_enemys() -> Array[BattleEnemy]:
 	# 读取当前敌人列表（按战场顺序）。
 	return enemy_manager.battle_get_enemys();
 
@@ -489,8 +492,11 @@ func battle_set_state(state: BATTLE_STATE):
 					lines.append(line)
 			
 			var ui = UImanager.get_ui()
-			if ui and ui.menu_renderer:
-				ui.menu_renderer.hide_menu()
+			if ui:
+				if ui.menu_renderer:
+					ui.menu_renderer.hide_menu()
+				if ui.fight_menu_renderer:
+					ui.fight_menu_renderer.hide_menu()
 			soul.show()
 			
 			_clear_typer()
@@ -605,7 +611,7 @@ func _input(event: InputEvent) -> void:
 			if typer.pause:
 				typer.pause = false
 				typer.next_text()
-		return
+		
 	
 	if battle_state != BATTLE_STATE.MENU:
 		return
@@ -725,10 +731,13 @@ func _process(_delta: float) -> void:
 		var UI = UImanager.get_ui();
 		
 		match battle_menu:
-			BATTLE_MENU.FIGHT_ENEMY_CHOICE, BATTLE_MENU.ACT_ENEMY_CHOICE, \
+			BATTLE_MENU.FIGHT_ENEMY_CHOICE:
+				var pos = UI.fight_menu_renderer.get_option_position(_get_selector().get_slot())
+				soul.position = pos
+			BATTLE_MENU.ACT_ENEMY_CHOICE, \
 			BATTLE_MENU.ACT_CHOICE, BATTLE_MENU.ITEM, BATTLE_MENU.MERCY:
 				var pos = UI.menu_renderer.get_option_position(_get_selector().get_slot())
-				soul.position = pos 
+				soul.position = pos
 			BATTLE_MENU.BUTTON:
 				var slot = UI.get_button_slot();
 				soul.position = UI.get_button_position(slot)

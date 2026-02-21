@@ -8,6 +8,7 @@
 [ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://font/Mars Needs Cunnilingus.ttf" id="4_5co24"]
 [ext_resource type="PackedScene" uid="uid://bgrd6jdlalrtp" path="res://battle/UI/BattleMenuRenderer.tscn" id="5_renderer"]
 [ext_resource type="Texture2D" uid="uid://dlxuqjkjc7pk0" path="res://sprite/spr_hpname_0.png" id="6_oxe26"]
+[ext_resource type="PackedScene" uid="uid://dfhy2gsymkki2" path="res://battle/UI/BattleMenuRendererVertical.tscn" id="7_vert"]
 
 [node name="BattleUI" type="Control" unique_id=211280362]
 layout_mode = 3
@@ -23,6 +24,10 @@ texture = ExtResource("4_3wk2x")
 centered = false
 
 [node name="BattleMenuRenderer" parent="." unique_id=1438218568 instance=ExtResource("5_renderer")]
+visible = false
+layout_mode = 1
+
+[node name="BattleMenuRendererVertical" parent="." unique_id=835086307 instance=ExtResource("7_vert")]
 visible = false
 layout_mode = 1
 
