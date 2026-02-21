@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ckde3myhb3drd"]
 
-[ext_resource type="Script" uid="uid://nj8tyjsko31h" path="res://battle/UI/EnemySelector.gd" id="1_l0wwe"]
+[ext_resource type="Script" uid="uid://ncw0ox2ylh32" path="res://battle/UI/EnemySelector.gd" id="1_l0wwe"]
 [ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="2_h5isb"]
 
 [node name="EnemySelector" type="Control" unique_id=857764922]

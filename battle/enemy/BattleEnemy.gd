@@ -1,55 +1,89 @@
 class_name BattleEnemy extends Node2D
 
-var battle : Battle;
+var battle: Battle
 
-var choice_box_size : Vector2 = Vector2(100, 100);
-var choice_box_offset : Vector2 = Vector2(0, 0);
-var _checked : bool = false;
-var _hp : float = 0;
-var _hp_max : float = 0;
-var _actions : Array[String] = [];
-var _name : String = "null";
+var choice_box_size: Vector2 = Vector2(100, 100)
+var choice_box_offset: Vector2 = Vector2(0, 0)
+var _is_checked: bool = false
+const EnemyDataRes = preload("res://battle/enemy/EnemyData.gd")
+@export var data: Resource
 
-func _ready():
-	position = Vector2(320, 120);
+var _action_names: Array[String] = []
+var _action_callbacks: Array[Callable] = []
 
-func init():
-	battle.BattleEvent.connect(on_battle_menu_changed);
-	action_set(0, "检查");
+func _init() -> void:
+	if not data:
+		data = EnemyDataRes.new()
 
-func on_battle_menu_changed(_type, _state, _from):
-	pass;
+func _ready() -> void:
+	pass
 
-func set_checked(enable : bool):
-	_checked = enable;
-	return;
+func take_damage(attack_power: float) -> float:
+	var def = data.defense if data else 0.0
+	var damage = max(0.0, attack_power - def)
+	var hp_before = data.hp if data else 0.0
+	if data:
+		data.hp -= damage
+		if data.hp < 0:
+			data.hp = 0
+	var hp_after = data.hp if data else 0.0
+	show_damage(damage, hp_before, hp_after)
+	return damage
 
-func get_is_checked():
-	return _checked;
+## 在敌人身上生成伤害数字 + 血条显示
+const EnemyDamageDisplayScript = preload("res://battle/enemy/EnemyDamageDisplay.gd")
 
-func get_hp():
-	return _hp;
+func show_damage(dmg: float, hp_before: float, hp_after: float) -> void:
+	var display = EnemyDamageDisplayScript.new()
+	add_child(display)
+	display.setup(dmg, hp_before, hp_after, data.hp_max if data else 100.0, choice_box_size.x)
+	print("[DamageDisplay] spawned: dmg=", dmg, " hp_before=", hp_before, " hp_after=", hp_after, " box_w=", choice_box_size.x)
 
-func get_hp_max():
-	return _hp_max;
+func process_turn(time_elapsed: float) -> void:
+	# 子类应该重写这里来实现具体的弹幕或停掉回合逻辑
+	pass
 
-func set_enemy_name(__name : String):
-	_name = __name;
+func init() -> void:
+	battle.battle_event.connect(_on_battle_event)
+	action_set(0, "检查", Callable(self , "_on_act_check"))
 
-func get_enemy_name():
-	return _name;
+func _on_act_check() -> void:
+	var enemy_name = data.name if data else "null"
+	print(enemy_name + " - 检查 (Check)")
 
-func action_get_count():
-	return _actions.size();
+## 子类重写此方法以响应战斗事件
+func _on_battle_event(_type: Battle.EVENT_TYPE, _event: Variant, _from: Variant) -> void:
+	pass
+
+func set_checked(enable: bool) -> void:
+	_is_checked = enable
+
+func get_is_checked() -> bool:
+	return _is_checked
+
+func action_get_count() -> int:
+	return _action_names.size()
 
 func get_actions() -> Array[String]:
-	return _actions;
+	return _action_names
 
-func action_set(slot : int, text : String):
-	if(action_get_count() < slot): return;
-	_actions.resize(_actions.size()+1);
-	_actions.set(slot, text);
-	
-func action_get_name(slot : int):
-	if(action_get_count() <= slot): return;
-	return _actions[slot];
+func action_set(slot: int, text: String, callback: Callable = Callable()) -> void:
+	if slot > action_get_count():
+		return
+	if slot == action_get_count():
+		_action_names.append(text)
+		_action_callbacks.append(callback)
+	else:
+		_action_names[slot] = text
+		_action_callbacks[slot] = callback
+
+func action_get_name(slot: int) -> String:
+	if slot >= action_get_count():
+		return ""
+	return _action_names[slot]
+
+func action_call(slot: int) -> void:
+	if slot >= action_get_count():
+		return
+	if _action_callbacks[slot].is_valid():
+		_action_callbacks[slot].call()

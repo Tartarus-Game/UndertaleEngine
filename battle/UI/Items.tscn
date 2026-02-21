@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c8d06e42qucst"]
 
-[ext_resource type="Script" uid="uid://dnossliruxob" path="res://battle/UI/items.gd" id="1_yqywn"]
+[ext_resource type="Script" uid="uid://dnossliruxob" path="res://battle/UI/BattleItemManager.gd" id="1_yqywn"]
 [ext_resource type="PackedScene" uid="uid://dk8ai6o4jtqur" path="res://auto_load/text/TextTyper.tscn" id="2_rbbwn"]
 
 [node name="Items" type="Control" unique_id=84777606]

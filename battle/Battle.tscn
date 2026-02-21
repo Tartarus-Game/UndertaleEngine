@@ -10,10 +10,11 @@
 [ext_resource type="Script" uid="uid://dy6lkyxc7oa66" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
 [ext_resource type="Texture2D" uid="uid://b351xgcu6kmr1" path="res://resources/battle/UI/HWY)OFN$1B]8{H]M`J])A59.png" id="6_jhxqk"]
 [ext_resource type="PackedScene" uid="uid://dlv4o7oqvx82r" path="res://battle/UI/EnemyActionSelection.tscn" id="8_4km6a"]
-[ext_resource type="Script" uid="uid://bwatej5vd3pvd" path="res://battle/EnemySelectorManager.gd" id="8_d0b6a"]
-[ext_resource type="Script" uid="uid://dc3xwofrkxqph" path="res://battle/BattleActions.gd" id="8_ttuon"]
+[ext_resource type="Script" uid="uid://bwatej5vd3pvd" path="res://battle/BattleEnemySelections.gd" id="8_d0b6a"]
+[ext_resource type="Script" uid="uid://dc3xwofrkxqph" path="res://battle/BattleEnemyActions.gd" id="8_ttuon"]
 [ext_resource type="PackedScene" uid="uid://ckde3myhb3drd" path="res://battle/UI/EnemySelector.tscn" id="9_d0b6a"]
 [ext_resource type="PackedScene" uid="uid://c8d06e42qucst" path="res://battle/UI/Items.tscn" id="12_bim3i"]
+[ext_resource type="Script" path="res://battle/UI/FightAim.gd" id="FightAimScript"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v3re7"]
 shader = ExtResource("4_34q6o")
@@ -21,12 +22,12 @@ shader_parameter/size = Vector2(0, 0)
 shader_parameter/scale = 0.0
 shader_parameter/angle = 0.0
 
-[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_actions", "enemy_selections", "UImanager", "enemy_manager", "soul")]
+[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_actions", "enemy_selections", "ui_manager", "enemy_manager", "soul")]
 script = ExtResource("1_hkniu")
 items = NodePath("Items")
 enemy_actions = NodePath("Actions")
 enemy_selections = NodePath("EnemySelections")
-UImanager = NodePath("UIManager")
+ui_manager = NodePath("UIManager")
 enemy_manager = NodePath("EnemyManager")
 soul = NodePath("BattleSoul")
 
@@ -190,4 +191,8 @@ offset_right = 99.68749
 offset_bottom = 100.0
 metadata/_edit_lock_ = true
 
-[connection signal="BattleEvent" from="." to="UIManager/UI" method="_on_battle_battle_event"]
+[node name="FightAim" type="Node2D" parent="."]
+position = Vector2(320, 320)
+script = ExtResource("FightAimScript")
+
+[connection signal="battle_event" from="." to="UIManager/UI" method="_on_battle_battle_event"]

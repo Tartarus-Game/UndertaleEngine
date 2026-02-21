@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://7iyox3e6ue34"]
+[gd_scene format=3 uid="uid://1dk3s2g8pj5n"]
 
 [ext_resource type="Script" uid="uid://cpc6rp4nib2vb" path="res://battle/UI/ScreenBattle.gd" id="1_rgb2w"]
 [ext_resource type="AudioStream" uid="uid://b8mneg5yhg3v2" path="res://resources/battle/UI/snd_squeak.wav" id="2_3wk2x"]
@@ -7,7 +7,7 @@
 [ext_resource type="FontFile" uid="uid://buo22dtclln2k" path="res://resources/font/Mars Needs Cunnilingus.ttf" id="4_5co24"]
 [ext_resource type="Texture2D" uid="uid://dlxuqjkjc7pk0" path="res://resources/battle/UI/spr_hpname_0.png" id="6_oxe26"]
 
-[node name="BattleUI" type="Control" unique_id=211280362]
+[node name="ScreenBattle" type="Control" unique_id=211280362]
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_rgb2w")

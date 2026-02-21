@@ -1,57 +1,68 @@
 extends Node
-var player_data = {
+
+# ——— 玩家数据 ———
+var player_data: Dictionary = {
 	hp = 0,
 	hp_max = 0,
 	def = 0,
 	atk = 0,
 	weapon = null,
 	armor = null,
-	items = player_data_items
 }
 
-var player_data_items : Array[String] = [
+var player_data_items: Array[String] = [
 	"PROMISE",
 	"PROMISE",
 	"PROMISE",
 	"PROMISE"
-];
+]
 
-func player_get_data(_name : String):
-	return player_data[_name];
+func player_get_data(key: String) -> Variant:
+	return player_data.get(key)
 
-func player_get_item(_slot : int):
-	if(!player_data_items.has(_slot)): return;
-	return player_data_items[_slot]
+## 注意：has() 检测的是值而非索引，应改为索引范围检测
+func player_get_item(slot: int) -> String:
+	if slot < 0 or slot >= player_data_items.size():
+		return ""
+	return player_data_items[slot]
 
-func player_get_items():
-	return player_data_items;
+func player_get_items() -> Array[String]:
+	return player_data_items
 
-func player_get_item_count():
-	return len(player_data_items);
+func player_get_item_count() -> int:
+	return player_data_items.size()
+
+# ——— 输入/窗口 ———
 
 func _ready() -> void:
 	if not InputMap.has_action("toggle_fullscreen"):
 		InputMap.add_action("toggle_fullscreen")
-		var event = InputEventKey.new()
+		var event := InputEventKey.new()
 		event.keycode = KEY_F4
 		InputMap.action_add_event("toggle_fullscreen", event)
 
-func _input(event):
+func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_fullscreen"):
 		toggle_fullscreen()
 
-func storage_save(path: String, slot: int):
-	DirAccess.make_dir_recursive_absolute(path);
-	var file = FileAccess.open(path + "file" + str(slot), FileAccess.WRITE);
-	file.store_var(player_data);
+# ——— 存储 ———
 
-func storage_load(path : String, slot : int):
-	DirAccess.make_dir_recursive_absolute(path);
-	var file = FileAccess.open(path + "file" + str(slot), FileAccess.READ);
-	if(!file):return;
-	player_data = file.get_var();
+func storage_save(path: String, slot: int) -> void:
+	DirAccess.make_dir_recursive_absolute(path)
+	var file := FileAccess.open(path + "file" + str(slot), FileAccess.WRITE)
+	if file:
+		file.store_var(player_data)
 
-func toggle_fullscreen():
+func storage_load(path: String, slot: int) -> void:
+	DirAccess.make_dir_recursive_absolute(path)
+	var file := FileAccess.open(path + "file" + str(slot), FileAccess.READ)
+	if not file:
+		return
+	player_data = file.get_var()
+
+# ——— 全屏 ———
+
+func toggle_fullscreen() -> void:
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	else:

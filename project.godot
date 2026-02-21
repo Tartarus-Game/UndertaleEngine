@@ -27,6 +27,7 @@ ScreenManager="*res://gui/ScreenManager.gd"
 SceneManager="*res://auto_load/SceneManager.tscn"
 AudioManager="*res://auto_load/audio/AudioManager.tscn"
 EncounterManager="*res://auto_load/encounter/EncounterManager.gd"
+BattleManager="*res://auto_load/BattleManager.gd"
 
 [display]
 
