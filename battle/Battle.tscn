@@ -22,10 +22,9 @@ shader_parameter/size = Vector2(0, 0)
 shader_parameter/scale = 0.0
 shader_parameter/angle = 0.0
 
-[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_actions", "enemy_selections", "ui_manager", "enemy_manager", "soul")]
+[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("items", "enemy_selections", "ui_manager", "enemy_manager", "soul")]
 script = ExtResource("1_hkniu")
 items = NodePath("Items")
-enemy_actions = NodePath("Actions")
 enemy_selections = NodePath("EnemySelections")
 ui_manager = NodePath("UIManager")
 enemy_manager = NodePath("EnemyManager")

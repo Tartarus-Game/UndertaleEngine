@@ -1,4 +1,7 @@
-class_name BattleItemManager extends Control
+class_name BattleOptionList extends Control
+
+## 通用文本选项列表
+## 用于 ITEM、ACT_CHOICE、MERCY 等所有需要上下选择的列表界面
 
 @onready var selections: Array[RichTextLabel] = [
 	$TextTyper1,
@@ -13,6 +16,7 @@ var _slot: int = 0;
 
 func set_items(items_name: Array[String]):
 	items = items_name;
+	page = 0;
 
 func hide_all(enable: bool):
 	for i in selections:
@@ -35,3 +39,6 @@ func set_slot(slot: int):
 		else:
 			selections[i].visible = false;
 	counter.text = "(" + str(slot + 1) + "/" + str(len(items)) + ")";
+
+func get_item_count() -> int:
+	return items.size()

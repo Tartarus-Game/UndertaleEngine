@@ -16,9 +16,12 @@ func _ready():
 	hide()
 
 func start():
+	position = Vector2(320, 320)
 	show()
 	active = true
 	_finished = false
+	_blink_timer = 0.0
+	_blink_visible = true
 	if bg_texture:
 		cursor_pos = - bg_texture.get_width() / 2.0 - 10.0
 	queue_redraw()

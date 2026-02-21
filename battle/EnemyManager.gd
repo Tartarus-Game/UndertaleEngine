@@ -56,3 +56,10 @@ func battle_set_enemy(slot: int, packed: PackedScene) -> void:
 
 func battle_get_enemy_count() -> int:
 	return enemies.size()
+
+## 从战场移除一个敌人（退役后调用）
+func remove_enemy(enemy: BattleEnemy) -> void:
+	var idx = enemies.find(enemy)
+	if idx >= 0:
+		enemies.remove_at(idx)
+		_arrange_enemies()

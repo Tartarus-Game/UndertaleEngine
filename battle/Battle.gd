@@ -3,7 +3,6 @@ class_name Battle extends Node
 # ——— 灵魂位置常量 ———
 const SOUL_BUTTON_OFFSET := Vector2(-38.0, 0.0)
 const SOUL_MERCY_OFFSET := Vector2(-39.0, 0.0) # MERCY 按钮多偏移 1px
-const SOUL_ACT_OFFSET := Vector2(-36.0, 0.0)
 const SOUL_ITEM_X := 85.0
 const SOUL_ITEM_BASE_Y := 288.0
 const SOUL_ITEM_ROW_HEIGHT := 32.0
@@ -12,8 +11,7 @@ const SOUL_ITEM_ROW_HEIGHT := 32.0
 @onready var _battle_box = $BattleBox
 @onready var fight_aim: BattleFightAim = $FightAim
 
-@export var items: BattleItemManager
-@export var enemy_actions: BattleEnemyActions
+@export var items: BattleOptionList
 @export var enemy_selections: BattleEnemySelections
 @export var ui_manager: BattleUIManager
 @export var enemy_manager: EnemyManager
@@ -37,7 +35,8 @@ enum BATTLE_MENU {
 	ACT_ENEMY_CHOICE,
 	ACT_CHOICE,
 	ITEM,
-	MERCY_CHOICE
+	MERCY_CHOICE,
+	TEXT_DIALOGUE
 }
 
 enum BATTLE_STATE {
@@ -84,8 +83,12 @@ func battle_set_act_choice(slot: int) -> void:
 	var size := battle_get_act_enemy_choice().action_get_count()
 	var clamped := clampi(slot, 0, size - 1)
 	battle_act_choice = clamped
-	enemy_actions.set_actions_name(battle_get_act_enemy_choice().get_actions())
-	soul.position = enemy_actions.selections[clamped].position + SOUL_ACT_OFFSET
+	items.set_items(battle_get_act_enemy_choice().get_actions())
+	items.set_slot(clamped)
+	soul.position = Vector2(
+		SOUL_ITEM_X,
+		SOUL_ITEM_BASE_Y + SOUL_ITEM_ROW_HEIGHT * (clamped - items.page)
+	)
 	battle_event.emit(EVENT_TYPE.ACT_CHOICE_CHANGED, clamped, -1)
 
 func battle_set_item_choice(slot: int) -> void:
@@ -131,14 +134,20 @@ func battle_set_menu(menu: BATTLE_MENU) -> void:
 			for i in range(3):
 				enemy_selections.hide_enemy(i, true)
 			items.hide_all(true)
-			enemy_actions.hide_all_actions(true)
+			
+			_box_typer.clear_text()
+			_box_typer.text_add("* 一些沙包在虚空中挡住了你的路", func(t): t.pause_text())
+			_box_typer.next_text()
+			
+			if _last_menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE or _last_menu == BATTLE_MENU.ACT_ENEMY_CHOICE or _last_menu == BATTLE_MENU.ACT_CHOICE or _last_menu == BATTLE_MENU.ITEM or _last_menu == BATTLE_MENU.MERCY_CHOICE:
+				_box_typer.skip()
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
 			_box_typer.skip()
 			_box_typer.visible = false
 			_refresh_enemy_selection_list()
 			battle_set_fight_enemy_choice(battle_fight_enemy_choice)
 		BATTLE_MENU.ACT_ENEMY_CHOICE:
-			enemy_actions.hide_all_actions(true)
+			items.hide_all(true)
 			_box_typer.skip()
 			_box_typer.visible = false
 			_refresh_enemy_selection_list()
@@ -162,6 +171,12 @@ func battle_set_menu(menu: BATTLE_MENU) -> void:
 			_box_typer.skip()
 			_box_typer.visible = false
 			battle_set_mercy_choice(0)
+		BATTLE_MENU.TEXT_DIALOGUE:
+			for i in range(3):
+				enemy_selections.hide_enemy(i, true)
+			items.hide_all(true)
+			_box_typer.visible = true
+			soul.position = Vector2(-20, -20) # 隐藏灵魂
 	battle_event.emit(EVENT_TYPE.MENU_CHANGED, menu, _last_menu)
 	_last_menu = menu
 
@@ -176,6 +191,18 @@ func _refresh_enemy_selection_list() -> void:
 			enemy_selections.set_enemy_info(i, d.name, d.hp, d.hp_max)
 		else:
 			enemy_selections.hide_enemy(i, true)
+
+## 开始一段等待玩家按Z确认的文本，确认后执行 next_action
+func start_dialogue(text: String, next_action: Callable = Callable()) -> void:
+	battle_set_menu(BATTLE_MENU.TEXT_DIALOGUE)
+	_box_typer.clear_text()
+	_box_typer.text_add("* " + text, func(t): t.pause_text())
+	_box_typer.text_add("", func(t):
+		t.pause = false
+		if next_action.is_valid():
+			next_action.call()
+	)
+	_box_typer.next_text()
 
 # ——————————————————————————————————————————
 #  Getter（转发 EnemyManager）
@@ -224,6 +251,8 @@ func _exit_tree() -> void:
 var _box_tween: Tween
 
 func shrink_box() -> void:
+	_box_typer.visible = false
+	_box_typer.clear_text()
 	if _box_tween and _box_tween.is_valid():
 		_box_tween.kill()
 
@@ -253,12 +282,26 @@ func _process(_delta: float) -> void:
 
 func _on_fight_aim_finished(mult: float) -> void:
 	var enemy = battle_get_fight_enemy_choice()
-	# 简单公式: 基础攻击力 * 伤害倍率, 如果游戏有自己的伤害判定可以放在这里
+	# 简单公式: 基础攻击力 * 伤害倍率
 	var dmg = enemy.take_damage(20.0 * mult)
 	print("造成了伤害:", dmg, " 倍率:", mult)
-	# 等待伤害显示动画播完再进入敌方回合
+	# 等待伤害显示动画播完
 	await get_tree().create_timer(2.2).timeout
-	battle_set_menu(BATTLE_MENU.BUTTON)
+	
+	# 检查敌人是否死亡
+	if enemy.data and enemy.data.hp <= 0:
+		enemy.retire()
+		enemy.defeated.connect(func():
+			enemy_manager.remove_enemy(enemy)
+			# 所有敌人都被击败
+			if battle_get_enemy_count() == 0:
+				print("所有敌人被击败！战斗胜利！")
+				# TODO: 胜利流程
+				return
+			BattleManager.start_enemy_turn()
+		)
+		return
+	
 	BattleManager.start_enemy_turn()
 
 
@@ -316,24 +359,14 @@ func _handle_act_enemy_input(event: InputEvent) -> void:
 		battle_set_menu(BATTLE_MENU.BUTTON)
 
 func _handle_act_choice_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_right"):
-		if not battle_act_choice % 2:
-			battle_set_act_choice(battle_act_choice + 1)
-	elif event.is_action_pressed("ui_left"):
-		if battle_act_choice % 2:
-			battle_set_act_choice(battle_act_choice - 1)
-	elif event.is_action_pressed("ui_up"):
-		if battle_act_choice - 2 >= 0:
-			battle_set_act_choice(battle_act_choice - 2)
+	if event.is_action_pressed("ui_up"):
+		battle_set_act_choice(battle_act_choice - 1)
 	elif event.is_action_pressed("ui_down"):
-		if battle_act_choice + 2 <= battle_get_act_enemy_choice().action_get_count() - 1:
-			battle_set_act_choice(battle_act_choice + 2)
+		battle_set_act_choice(battle_act_choice + 1)
 	elif event.is_action_pressed("ui_accept"):
 		var enemy := battle_get_act_enemy_choice()
+		# 具体的行动逻辑与文本显示由 Enemy 内部的 action_call 决定，包括换到敌方回合
 		enemy.action_call(battle_act_choice)
-		battle_set_menu(BATTLE_MENU.BUTTON)
-		# Any ACT consumes a turn and launches the enemy's attack phase
-		BattleManager.start_enemy_turn()
 	elif event.is_action_pressed("ui_cancel"):
 		battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
 
