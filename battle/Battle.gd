@@ -461,6 +461,7 @@ func battle_set_state(state: BATTLE_STATE):
 	match battle_state:
 		BATTLE_STATE.MENU:
 			_button_typer_effect_enable = true
+			soul.set_move_able(false)
 		BATTLE_STATE.DIALOG:
 			var typer = $TextTyper
 			while(DialogueManager.get_dialogue_size() > 0):
@@ -512,7 +513,7 @@ func battle_set_state(state: BATTLE_STATE):
 				typer.next_text()
 		BATTLE_STATE.IN_TURN:
 			# 敌方回合执行阶段：后续在这里处理子弹与受击判定。
-			pass
+			soul.set_move_able(true)
 		BATTLE_STATE.BOARD_RESETTING:
 			# 敌方回合结束后，把战斗框恢复到菜单默认尺寸。
 			var default_size = Vector2(573, 140)

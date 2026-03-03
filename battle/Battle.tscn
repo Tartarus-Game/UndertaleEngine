@@ -33,9 +33,9 @@ metadata/_edit_lock_ = true
 script = ExtResource("6_dgjnm")
 battle = NodePath("..")
 
-[node name="BattleBox" parent="." unique_id=946096550 instance=ExtResource("2_wuq8c")]
+[node name="BattleBox" parent="." unique_id=476302587 instance=ExtResource("2_wuq8c")]
 position = Vector2(320, 320)
-size = Vector2(573, 140)
+size = Vector2(575, 140)
 
 [node name="UIManager" type="Control" parent="." unique_id=1166055155 node_paths=PackedStringArray("UI")]
 layout_mode = 3
@@ -82,6 +82,7 @@ visible = false
 modulate = Color(0.496621, 0.496621, 0.496621, 0.77254903)
 position = Vector2(320, 240)
 texture = ExtResource("9_t871k")
+metadata/_edit_lock_ = true
 
 [node name="MotionBlur" type="BackBufferCopy" parent="." unique_id=1669145347]
 position = Vector2(320.00003, 240.00002)
