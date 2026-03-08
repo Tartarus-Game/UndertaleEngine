@@ -9,7 +9,9 @@
 @export var frame_width : float = 5;
 
 var _active_tween : Tween
-	
+func _ready() -> void:
+	collision_layer = Global.BATTLE_BOX_COLLISION_LAYER
+
 func resize(target_size: Vector2, target_position: Vector2, duration: float = 0.5) -> void:
 	if _active_tween and _active_tween.is_valid():
 		_active_tween.kill()

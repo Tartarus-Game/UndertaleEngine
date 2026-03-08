@@ -3,12 +3,14 @@ class_name Battle extends Node
 @export var UImanager : BattleUIManager;
 @export var enemy_manager : EnemyManager;
 @export var soul : BattleSoulRed;
+@export var bullet_manager : BattleBulletManager
 
 const BattleDamageClass = preload("res://battle/UI/BattleDamage.tscn")
 const ShakerClass = preload("res://battle/UI/Shaker.gd")
 
 enum EVENT_TYPE{
 	# 广播给 BattleUI 的事件类型。
+	STATE_CHANGED,
 	MENU_CHANGED,
 	BUTTON_CHANGED,
 	FIGHT_ENEMY_CHOICE_CHANGED,
@@ -50,6 +52,7 @@ signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant);
 var battle_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
 var _last_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
 var battle_state : BATTLE_STATE = BATTLE_STATE.MENU;
+var battle_next_state : BATTLE_STATE = BATTLE_STATE.DIALOG;
 var _last_state : BATTLE_STATE = BATTLE_STATE.MENU;
 # 是否正在播放对话文本（在 MENU 状态内屏蔽方向键，但允许 Z 推进打字机）。
 var _is_dialog: bool = false
@@ -453,6 +456,12 @@ func battle_set_enemy(slot : int, packed : PackedScene):
 	# 动态替换某个敌人槽位（调试/脚本切敌时用）。
 	return enemy_manager.battle_set_enemy(slot, packed);
 
+func battle_goto_next_state():
+	battle_set_state(battle_next_state)
+
+func battle_set_next_state(state: BATTLE_STATE):
+	battle_next_state = state
+
 func battle_set_state(state: BATTLE_STATE):
 	# 战斗大状态切换（MENU/DIALOG/TURN 等）。
 	_last_state = battle_state
@@ -461,7 +470,9 @@ func battle_set_state(state: BATTLE_STATE):
 	match battle_state:
 		BATTLE_STATE.MENU:
 			_button_typer_effect_enable = true
+			battle_set_next_state(BATTLE_STATE.DIALOG)
 			soul.set_move_able(false)
+			soul.show()
 		BATTLE_STATE.DIALOG:
 			var typer = $TextTyper
 			while(DialogueManager.get_dialogue_size() > 0):
@@ -471,9 +482,10 @@ func battle_set_state(state: BATTLE_STATE):
 			func(t): 
 				t.pause = false
 				t.clear_text()
-				battle_set_state(BATTLE_STATE.TURN_PREPARATION)
+				battle_goto_next_state()
 			)
 			typer.next_text()
+			battle_set_next_state(BATTLE_STATE.TURN_PREPARATION)
 		BATTLE_STATE.TURN_PREPARATION:
 			# 收集所有敌人本回合台词，用打字机展示，玩家确认后切入 BOARD_RESETTING。
 			var lines: Array = []
@@ -491,10 +503,10 @@ func battle_set_state(state: BATTLE_STATE):
 			soul.show()
 			
 			_clear_typer()
-			
+			battle_set_next_state(BATTLE_STATE.IN_TURN)
 			if lines.is_empty():
 				# 敌人无台词，直接进入回合
-				battle_set_state(BATTLE_STATE.BOARD_RESETTING)
+				battle_goto_next_state()
 			else:
 				var typer = $TextTyper
 				for i in range(lines.size()):
@@ -508,12 +520,13 @@ func battle_set_state(state: BATTLE_STATE):
 							_button_idle_text = t.text
 							t.clear_text()
 							t.pause = false
-							battle_set_state(BATTLE_STATE.BOARD_RESETTING)
+							battle_goto_next_state()
 						)
 				typer.next_text()
 		BATTLE_STATE.IN_TURN:
 			# 敌方回合执行阶段：后续在这里处理子弹与受击判定。
 			soul.set_move_able(true)
+			battle_set_next_state(BATTLE_STATE.BOARD_RESETTING)
 		BATTLE_STATE.BOARD_RESETTING:
 			# 敌方回合结束后，把战斗框恢复到菜单默认尺寸。
 			var default_size = Vector2(573, 140)
@@ -521,10 +534,18 @@ func battle_set_state(state: BATTLE_STATE):
 			$BattleBox.resize(default_size, default_pos, 0.4)
 			# 当前版本自动回到 MENU，便于快速联调四按钮循环。
 			await get_tree().create_timer(0.4).timeout
+			battle_set_next_state(BATTLE_STATE.TURN_PREPARATION)
 			battle_set_state(BATTLE_STATE.MENU)
 			battle_set_menu(BATTLE_MENU.BUTTON)
 		BATTLE_STATE.RESULT:
 			pass
+	emit_signal("BattleEvent", EVENT_TYPE.STATE_CHANGED, state, _last_state);
+
+func battle_create_turn(node : BattleTurn):
+	node.battle = self
+	node.bullet_manager = bullet_manager
+	add_child(node)
+	return node
 
 func _clear_typer():
 	# 清空打字机文本和队列。

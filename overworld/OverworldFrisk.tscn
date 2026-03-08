@@ -1,0 +1,153 @@
+[gd_scene format=3 uid="uid://b8qya7qg4hgmf"]
+
+[ext_resource type="PackedScene" uid="uid://c8wakee8p7jnt" path="res://overworld/OverworldChar.tscn" id="1_t0e7y"]
+[ext_resource type="Texture2D" uid="uid://dwk22fpkfqdog" path="res://sprite/overworld/spr_f_maincharad_0.png" id="2_gq1g1"]
+[ext_resource type="Script" uid="uid://b32ywoo8jypfg" path="res://overworld/OverworldFrisk.gd" id="2_otvqr"]
+[ext_resource type="Texture2D" uid="uid://bkmikk0f0mnop" path="res://sprite/overworld/spr_f_maincharad_1.png" id="3_otvqr"]
+[ext_resource type="Texture2D" uid="uid://dw5wffsytjuwv" path="res://sprite/overworld/spr_f_maincharad_2.png" id="4_wvr25"]
+[ext_resource type="Texture2D" uid="uid://nutbk0o6l6lv" path="res://sprite/overworld/spr_f_maincharad_3.png" id="5_hnd4x"]
+[ext_resource type="Texture2D" uid="uid://dyagwxb7ptvxa" path="res://sprite/overworld/spr_f_maincharal_0.png" id="6_tqbc0"]
+[ext_resource type="Texture2D" uid="uid://ccvrswxdx7f0" path="res://sprite/overworld/spr_f_maincharal_1.png" id="7_wwyal"]
+[ext_resource type="Texture2D" uid="uid://d28vtdwqv5fcs" path="res://sprite/overworld/spr_f_maincharau_0.png" id="8_d0vxf"]
+[ext_resource type="Texture2D" uid="uid://dctatpwuagf1d" path="res://sprite/overworld/spr_f_maincharau_1.png" id="9_bl50d"]
+[ext_resource type="Texture2D" uid="uid://o71e4k8fv18r" path="res://sprite/overworld/spr_f_maincharau_2.png" id="10_innxh"]
+[ext_resource type="Texture2D" uid="uid://ccipd3hmhbmfl" path="res://sprite/overworld/spr_f_maincharau_3.png" id="11_m2r58"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_t0e7y"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_gq1g1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_otvqr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_wvr25")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_hnd4x")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_tqbc0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_wwyal")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_d0vxf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_bl50d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_innxh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_m2r58")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_gq1g1")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_tqbc0")
+}],
+"loop": true,
+"name": &"idle_left",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_tqbc0")
+}],
+"loop": true,
+"name": &"idle_right",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_d0vxf")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_gq1g1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_otvqr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_wvr25")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_hnd4x")
+}],
+"loop": true,
+"name": &"move_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_tqbc0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_wwyal")
+}],
+"loop": true,
+"name": &"move_left",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_tqbc0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_wwyal")
+}],
+"loop": true,
+"name": &"move_right",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_d0vxf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_bl50d")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_innxh")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_m2r58")
+}],
+"loop": true,
+"name": &"move_up",
+"speed": 5.0
+}]
+
+[node name="OverworldFrisk" unique_id=895921900 instance=ExtResource("1_t0e7y")]
+script = ExtResource("2_otvqr")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." index="0" unique_id=1812114391]
+sprite_frames = SubResource("SpriteFrames_t0e7y")
+animation = &"move_left"
+offset = Vector2(0, -15)
+
+[node name="CollisionShape2D" parent="." index="1" unique_id=717703689]
+position = Vector2(0, -4.5)
+
+[node name="RayCast2D" type="RayCast2D" parent="." index="2" unique_id=752896031]

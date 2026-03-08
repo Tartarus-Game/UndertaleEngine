@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://q3h3onkk03a1"]
+
+[ext_resource type="PackedScene" uid="uid://lotlby30nbe3" path="res://overworld/OverworldTrigger.tscn" id="1_pypn8"]
+[ext_resource type="Script" uid="uid://fq3qldqqfnvj" path="res://overworld/OverworldTriggerArea.gd" id="2_j0wvl"]
+
+[node name="OverworldTrigger" unique_id=778753363 instance=ExtResource("1_pypn8")]
+script = ExtResource("2_j0wvl")

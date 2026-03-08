@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://lotlby30nbe3"]
+
+[ext_resource type="Script" uid="uid://b86bvg6ytt4fn" path="res://overworld/OverworldTrigger.gd" id="1_q2xor"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_twpme"]
+
+[node name="OverworldTrigger" type="Area2D" unique_id=778753363]
+script = ExtResource("1_q2xor")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1883464387]
+shape = SubResource("RectangleShape2D_twpme")

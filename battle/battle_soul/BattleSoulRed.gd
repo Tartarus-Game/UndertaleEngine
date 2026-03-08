@@ -15,6 +15,9 @@ var _key_to_move = {
 	"ui_up": 90
 }
 
+func hurt(bullet : BattleBullet):
+	pass;
+
 func set_move_able(able: bool):
 	move_able = able;
 

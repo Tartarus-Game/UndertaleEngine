@@ -24,6 +24,9 @@ func init():
 
 func on_battle_menu_changed(_type, _state, _from):
 	# 给子类重写：根据菜单变化更新敌人的行为/动画。
+	if(_type == Battle.EVENT_TYPE.STATE_CHANGED):
+		if(_state == Battle.BATTLE_STATE.DIALOG):
+			battle.battle_set_next_state(Battle.BATTLE_STATE.BOARD_RESETTING)
 	if(_type == Battle.EVENT_TYPE.ACT_CONFIRMED):
 		match(battle.battle_act_choice):
 			0:

@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://c8wakee8p7jnt"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yacvy"]
+size = Vector2(20, 9)
+
+[node name="OverworldChar" type="CharacterBody2D" unique_id=895921900]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=717703689]
+shape = SubResource("RectangleShape2D_yacvy")

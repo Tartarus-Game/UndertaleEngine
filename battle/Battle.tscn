@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://dgjryx8kkb80t" path="res://battle/EnemyManager.gd" id="6_dgjnm"]
 [ext_resource type="PackedScene" uid="uid://cax2xyv8r7v1m" path="res://battle/UI/BattleAim.tscn" id="7_aim"]
 [ext_resource type="Texture2D" uid="uid://bxd7qye4wwgg0" path="res://sprite/640 480 kr.png" id="9_t871k"]
+[ext_resource type="Script" uid="uid://dsvlgea3rychv" path="res://battle/BatleBulletManager.gd" id="10_4km6a"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_v3re7"]
 shader = ExtResource("4_34q6o")
@@ -17,11 +18,12 @@ shader_parameter/size = Vector2(0, 0)
 shader_parameter/scale = 0.0
 shader_parameter/angle = 0.0
 
-[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("UImanager", "enemy_manager", "soul")]
+[node name="Battle" type="Node" unique_id=1945439670 node_paths=PackedStringArray("UImanager", "enemy_manager", "soul", "bullet_manager")]
 script = ExtResource("1_hkniu")
 UImanager = NodePath("UIManager")
 enemy_manager = NodePath("EnemyManager")
 soul = NodePath("BattleSoul")
+bullet_manager = NodePath("BulletManager")
 
 [node name="BackGroundColorRect" type="ColorRect" parent="." unique_id=1476469995]
 offset_right = 640.0
@@ -35,6 +37,7 @@ battle = NodePath("..")
 
 [node name="BattleBox" parent="." unique_id=476302587 instance=ExtResource("2_wuq8c")]
 position = Vector2(320, 320)
+collision_layer = 2
 size = Vector2(575, 140)
 
 [node name="UIManager" type="Control" parent="." unique_id=1166055155 node_paths=PackedStringArray("UI")]
@@ -83,6 +86,9 @@ modulate = Color(0.496621, 0.496621, 0.496621, 0.77254903)
 position = Vector2(320, 240)
 texture = ExtResource("9_t871k")
 metadata/_edit_lock_ = true
+
+[node name="BulletManager" type="CanvasLayer" parent="." unique_id=804755259]
+script = ExtResource("10_4km6a")
 
 [node name="MotionBlur" type="BackBufferCopy" parent="." unique_id=1669145347]
 position = Vector2(320.00003, 240.00002)

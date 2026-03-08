@@ -9,6 +9,9 @@ var player_data = {
 	items = player_data_items
 }
 
+const BATTLE_SOUL_COLLISION_LAYER := 5
+const BATTLE_BOX_COLLISION_LAYER := 2
+
 var player_data_items = [];
 
 func player_get_data(_name : String):

@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bqdlkpg26x3o7"]
+
+[ext_resource type="Script" uid="uid://7ti10alj8xvr" path="res://battle/BattleBullet.gd" id="1_ia807"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ia807"]
+
+[node name="BattleBullet" type="CharacterBody2D" unique_id=1873237000 node_paths=PackedStringArray("CS2D")]
+script = ExtResource("1_ia807")
+CS2D = NodePath("CollisionShape2D")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=975810872]
+shape = SubResource("RectangleShape2D_ia807")

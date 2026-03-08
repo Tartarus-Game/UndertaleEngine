@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://epbtohyb36ro"]
 
 [ext_resource type="Script" uid="uid://bsnnqtiv5ncun" path="res://overworld/test_level/test.gd" id="1_egkdu"]
+[ext_resource type="PackedScene" uid="uid://b8qya7qg4hgmf" path="res://overworld/OverworldFrisk.tscn" id="2_36otr"]
 
 [node name="Test" type="Node2D" unique_id=1868602192]
 script = ExtResource("1_egkdu")
+
+[node name="OverworldFrisk" parent="." unique_id=895921900 instance=ExtResource("2_36otr")]
