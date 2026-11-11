@@ -5,10 +5,11 @@ var battle : Battle;
 var choice_box_size : Vector2 = Vector2(100, 100);
 var choice_box_offset : Vector2 = Vector2(0, 0);
 var _checked : bool = false;
-var _hp : float = 0;
-var _hp_max : float = 0;
+var _hp : float = 30;
+var _hp_max : float = 30;
 var _actions : Array[String] = [];
-var _name : String = "null";
+var _name : String = "Dummy";
+var spareable: bool = false
 
 func _ready():
 	position = Vector2(320, 120);
@@ -46,10 +47,20 @@ func get_actions() -> Array[String]:
 	return _actions;
 
 func action_set(slot : int, text : String):
-	if(action_get_count() < slot): return;
-	_actions.resize(_actions.size()+1);
+	if slot < 0 or slot > action_get_count(): return;
+	if slot == action_get_count(): _actions.resize(_actions.size()+1);
 	_actions.set(slot, text);
 	
 func action_get_name(slot : int):
-	if(action_get_count() <= slot): return;
+	if slot < 0 or action_get_count() <= slot: return;
 	return _actions[slot];
+
+func take_damage(amount: float) -> void:
+	_hp = maxf(0.0, _hp - maxf(amount, 0.0))
+
+# Override this in an enemy scene to implement custom ACT options.
+func perform_action(slot: int) -> String:
+	if slot == 0:
+		_checked = true
+		return "* %s - %d HP." % [_name, int(_hp)]
+	return "* Nothing happened."

@@ -10,3 +10,9 @@ func init():
 	action_set(1, "嘲讽");
 	action_set(2, "祈祷");
 	action_set(3, "辱骂");
+
+func perform_action(slot: int) -> String:
+	if slot == 1:
+		spareable = true
+		return "* You talked. The enemy can be spared."
+	return super(slot)

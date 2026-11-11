@@ -7,6 +7,8 @@ func item_has(id : String):
 
 func register(id : String, item : Item):
 	items[id] = item;
+	if item.get_parent() == null:
+		add_child(item)
 
 func item_get(id: String):
 	if !item_has(id): return;
