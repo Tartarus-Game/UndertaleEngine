@@ -9,6 +9,7 @@ var pause: bool = false
 var typer_uid: int = -1
 var texts: Array = []
 var current_text: Dictionary = {}
+var voices: Dictionary = {}
 
 @export var sound: AudioStream
 
@@ -16,6 +17,37 @@ var current_text: Dictionary = {}
 func text_add(value: String, function: Callable = Callable()) -> TextTyper:
 	texts.append({"text": value, "callable": function})
 	return self
+
+
+func register_voice(id: String, stream: AudioStream) -> void:
+	voices[id] = stream
+
+
+# Inline commands are independent of RichTextLabel's BBCode:
+# {wait:0.3}, {speed:0.04}, {pause}, {voice:name}, {angle:10}.
+func text_add_markup(value: String) -> TextTyper:
+	var expression := RegEx.new()
+	expression.compile("\\{(wait|speed|pause|voice|angle)(?::([^}]*))?\\}")
+	var cursor := 0
+	for match_result in expression.search_all(value):
+		if match_result.get_start() > cursor:
+			text_add(value.substr(cursor, match_result.get_start() - cursor))
+		var command := match_result.get_string(1)
+		var argument := match_result.get_string(2)
+		text_add("", _apply_markup.bind(command, argument))
+		cursor = match_result.get_end()
+	if cursor < value.length():
+		text_add(value.substr(cursor))
+	return self
+
+
+func _apply_markup(typer: TextTyper, command: String, argument: String) -> void:
+	match command:
+		"wait": typer.sleep_text(maxf(0.0, argument.to_float()))
+		"speed": typer.delta_time = maxf(0.0, argument.to_float())
+		"pause": typer.pause_text()
+		"voice": typer.sound = voices.get(argument)
+		"angle": typer.rotation = deg_to_rad(argument.to_float())
 
 
 func _process(delta: float) -> void:
@@ -42,6 +74,10 @@ func advance_text(delta: float) -> void:
 				delta_timer = 0.0
 				return
 			next_text()
+			# A control command may append no characters. Process the next
+			# segment (or stop at a pause) before consuming character time.
+			if visible_characters >= get_total_character_count():
+				continue
 
 		if sleep > 0.0:
 			var elapsed := minf(sleep, remaining)
