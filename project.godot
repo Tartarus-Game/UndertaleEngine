@@ -26,6 +26,13 @@ Global="*res://auto_load/Global.gd"
 SceneManager="*res://auto_load/SceneManager.tscn"
 AudioManager="*res://auto_load/audio/AudioManager.tscn"
 EncounterManager="*res://auto_load/encounter/EncounterManager.gd"
+DialogueService="*res://auto_load/DialogueService.gd"
+EventService="*res://auto_load/EventService.gd"
+SettingsService="*res://auto_load/SettingsService.gd"
+ShopService="*res://auto_load/ShopService.gd"
+WorldMenu="*res://auto_load/WorldMenu.gd"
+GameOverService="*res://auto_load/GameOverService.gd"
+DebugService="*res://auto_load/DebugService.gd"
 
 [display]
 

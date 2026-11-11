@@ -3,6 +3,7 @@ class_name BattleEnemy extends Node2D
 var battle : Battle;
 @export var data: EnemyData
 @export var wave_scene: PackedScene
+@export var projectile_target := false
 
 var choice_box_size : Vector2 = Vector2(100, 100);
 var choice_box_offset : Vector2 = Vector2(0, 0);
@@ -90,6 +91,10 @@ func get_wave_scene(_turn: int) -> PackedScene:
 
 func get_can_flee() -> bool:
 	return data.can_flee
+
+
+func get_flee_chance(turn: int) -> float:
+	return clampf(data.flee_chance + data.flee_chance_per_turn * turn, 0.0, 1.0)
 
 func get_attack() -> float:
 	return data.attack

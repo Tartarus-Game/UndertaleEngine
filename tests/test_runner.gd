@@ -36,7 +36,7 @@ func run_tests() -> void:
 	test_screen_groups()
 	await test_battle()
 	await test_overworld_round_trip()
-	AudioManager.SEP.stop()
+	AudioManager.stop_all_sfx()
 	AudioManager.SEP.stream = null
 	await get_tree().create_timer(0.1).timeout
 	if failures.is_empty():
@@ -364,13 +364,18 @@ func test_overworld_round_trip() -> void:
 	player.interaction_ray.target_position = Vector2(32, 0)
 	player.interaction_ray.force_raycast_update()
 	check(player.interaction_ray.get_collider() == trigger, "the overworld interaction ray finds the encounter")
+	player.position = trigger.position
+	player.interaction_ray.force_raycast_update()
+	check(player.interaction_ray.get_collider() == trigger, "interaction still works when the player overlaps a trigger")
+	player.position = trigger.position - Vector2(20, 0)
+	for frame in range(2): await tree.physics_frame
 	var original_id := world.get_instance_id()
 	var original_position := player.position
 	var event := InputEventAction.new()
 	event.action = "ui_accept"
 	event.pressed = true
 	Input.parse_input_event(event)
-	for frame in range(3): await tree.process_frame
+	await tree.create_timer(0.22).timeout
 	check(tree.current_scene is Battle and tree.current_scene.battle_get_menu() == Battle.BATTLE_MENU.BUTTON, "the encounter confirm does not activate a battle menu")
 	event.pressed = false
 	Input.parse_input_event(event)

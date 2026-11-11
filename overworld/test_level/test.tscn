@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://epbtohyb36ro"]
+[gd_scene load_steps=6 format=3 uid="uid://epbtohyb36ro"]
 
 [ext_resource type="Script" path="res://overworld/test_level/test.gd" id="1"]
 [ext_resource type="PackedScene" path="res://overworld/OverworldFrisk.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://overworld/OverworldTrigger.tscn" id="3"]
+
+[ext_resource type="Script" path="res://overworld/WorldInteractable.gd" id="4"]
 
 [sub_resource type="RectangleShape2D" id="WallShape"]
 size = Vector2(28, 110)
@@ -34,7 +36,44 @@ offset_left = 40.0
 offset_top = 55.0
 offset_right = 600.0
 offset_bottom = 85.0
-text = "Arrow keys: move. Face the light and press Z to fight."
+text = "Arrows: move   Z: interact   C: menu"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(320, 240)
+
+[node name="PatternTrigger" parent="." instance=ExtResource("3")]
+position = Vector2(515, 125)
+
+[node name="Npc" parent="." instance=ExtResource("3")]
+position = Vector2(505, 340)
+script = ExtResource("4")
+message = "* Would you like to try the engine?"
+options = Array[String](["Yes", "No"])
+choice_flag = "demo_choice"
+
+[node name="SavePoint" parent="." instance=ExtResource("3")]
+position = Vector2(110, 340)
+script = ExtResource("4")
+kind = 1
+
+[node name="Shop" parent="." instance=ExtResource("3")]
+position = Vector2(110, 125)
+script = ExtResource("4")
+kind = 2
+shop_stock = Array[String](["monster_candy", "toy_knife", "ribbon"])
+shop_dialogue = Array[String](["* Welcome! Try the pattern dummy to earn gold."])
+
+[node name="Labels" type="Label" parent="."]
+offset_left = 40.0
+offset_top = 410.0
+offset_right = 600.0
+offset_bottom = 445.0
+theme_override_font_sizes/font_size = 15
+text = "Top-left: shop   Bottom-left: save   Top-right: patterns   Bottom-right: NPC"
+
+[node name="Door" parent="." instance=ExtResource("3")]
+position = Vector2(320, 110)
+script = ExtResource("4")
+kind = 3
+target_scene = "res://overworld/test_level/side_room.tscn"
+target_position = Vector2(320, 300)

@@ -7,8 +7,10 @@ var facing := Vector2.DOWN
 
 
 func _ready() -> void:
+	add_to_group("overworld_player")
 	interaction_ray.collide_with_bodies = false
 	interaction_ray.collide_with_areas = true
+	interaction_ray.hit_from_inside = true
 	interaction_ray.collision_mask = 8
 	_update_animation(Vector2.ZERO)
 

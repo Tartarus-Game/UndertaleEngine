@@ -3,6 +3,7 @@ class_name BattleWave extends Node
 signal finished
 
 var battle: Battle
+var source_enemy: BattleEnemy
 var duration: float = 6.0
 var elapsed: float = 0.0
 

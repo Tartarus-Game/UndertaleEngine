@@ -12,9 +12,14 @@ var return_scene_path := ""
 var last_result := ""
 var _suspended_scene: Node
 var _active_encounter := false
+var encounter_music := {}
+var _previous_music: AudioStream
+var _previous_music_position := 0.0
+var _previous_music_playing := false
+var _previous_music_paused := false
 
 
-func encounter(id: int, _anim: bool = true) -> void:
+func encounter(id: int, animation: bool = true) -> void:
 	if not encounters.has(id) or _active_encounter:
 		return
 	current_id = id
@@ -22,11 +27,38 @@ func encounter(id: int, _anim: bool = true) -> void:
 	return_scene_path = _suspended_scene.scene_file_path if _suspended_scene else ""
 	last_result = ""
 	_active_encounter = true
-	call_deferred("_start_battle")
+	if animation:
+		call_deferred("_transition_to_battle")
+	else:
+		call_deferred("_start_battle")
+
+
+func _transition_to_battle() -> void:
+	var fader: ColorRect = SceneManager.fader
+	fader.visible = true
+	fader.modulate.a = 0.0
+	var fade := SceneManager.create_tween()
+	fade.tween_property(fader, "modulate:a", 1.0, 0.16)
+	await fade.finished
+	if not _active_encounter: return
+	_start_battle()
+	var fade_in := SceneManager.create_tween()
+	fade_in.tween_property(fader, "modulate:a", 0.0, 0.16)
+	await fade_in.finished
+	fader.visible = false
 
 
 func _start_battle() -> void:
 	var tree := get_tree()
+	var bgm: AudioStreamPlayer = AudioManager.BGMP
+	_previous_music = bgm.stream
+	_previous_music_playing = bgm.playing
+	_previous_music_paused = bgm.stream_paused
+	_previous_music_position = bgm.get_playback_position() if bgm.playing else 0.0
+	if encounter_music.has(current_id):
+		AudioManager.play_sound(encounter_music[current_id], AudioManager.PLAYER.BGM)
+	elif bgm.playing:
+		bgm.stream_paused = true
 	if is_instance_valid(_suspended_scene):
 		tree.root.remove_child(_suspended_scene)
 	var scene: PackedScene = load("res://battle/Battle.tscn")
@@ -43,6 +75,10 @@ func encounter_get(id: int):
 func encounter_set(id: int, enemy0: PackedScene, enemy1: PackedScene = null, enemy2: PackedScene = null, encounter_text: String = "") -> void:
 	encounters[id] = [enemy0, enemy1, enemy2]
 	encounter_texts[id] = encounter_text
+
+
+func set_encounter_music(id: int, stream: AudioStream) -> void:
+	encounter_music[id] = stream
 
 
 func get_current_encounter() -> Array:
@@ -85,5 +121,16 @@ func _restore_scene(result: String) -> void:
 			SceneManager.current_scene = load(return_scene_path)
 	_suspended_scene = null
 	battle_soul = null
+	var bgm: AudioStreamPlayer = AudioManager.BGMP
+	if encounter_music.has(current_id):
+		bgm.stop()
+		bgm.stream = _previous_music
+		if _previous_music_playing and _previous_music:
+			bgm.play(_previous_music_position)
+			bgm.stream_paused = _previous_music_paused
+	elif _previous_music_playing:
+		bgm.stream_paused = _previous_music_paused
 	last_result = result
+	if result == "lost":
+		await GameOverService.show_game_over()
 	battle_finished.emit(result)
