@@ -18,7 +18,12 @@ animations = [{
 collision_layer = 2
 script = ExtResource("1_qshr3")
 
-[node name="HitBox" type="CollisionPolygon2D" parent="."]
+[node name="HurtBox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+
+[node name="HitBox" type="CollisionPolygon2D" parent="HurtBox"]
 polygon = PackedVector2Array(-2, -2, -2, 2, 2, 2, 2, -2)
 
 [node name="sprite" type="AnimatedSprite2D" parent="."]

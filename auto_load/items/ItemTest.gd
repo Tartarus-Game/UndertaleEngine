@@ -11,6 +11,9 @@ var _desc : String = \
 [color=darkred]- 不能吃
 """;
 
+func use():
+	return "* You cannot eat the PROMISE."
+
 func drop():
 	pass
 func name():

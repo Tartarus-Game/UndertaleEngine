@@ -13,6 +13,14 @@ var act_enemy_slot : int = 0;
 var act_slot : int = 0;
 var item_slot : int = 0;
 
+func _ready() -> void:
+	Global.player_hp_changed.connect(_update_hp)
+	_update_hp(int(Global.player_data.hp), int(Global.player_data.hp_max))
+
+func _update_hp(hp: int, maximum: int) -> void:
+	$PlayerInfo/Label.text = "%d / %d" % [hp, maximum]
+	$PlayerInfo/HPMax/HP.size.x = 25.0 * float(hp) / float(maxi(maximum, 1))
+
 
 func get_button(slot : int):
 	return button_manager.get_button(slot);

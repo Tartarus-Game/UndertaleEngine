@@ -39,36 +39,27 @@ var current_page : int = 0;
 func _process(delta: float) -> void:
 	label.visible_ratio = clampf(lerp(label.visible_ratio,1.1,1 - 0.1 ** delta),0.0,1.0);
 	if enable:
-		timer += 60 * delta;
+		timer += delta; # seconds
 		position.x = lerpf(position.x,240.0,1 - 0.001 ** delta)
 		modulate.a = lerpf(
 			modulate.a,
 			1.0 if not lock_enable else 0.2,
 			1 - 0.001 ** delta
 		)
-		selector.position.x = lerpf(
-			selector.position.x,
-			action_nodes[slot].position.x,
-			1 - 0.00001 ** delta
-		)
 		selector.size.x = lerpf(selector.size.x,16.0,1 - 0.001 ** delta)
 		selector.modulate.a = lerpf(selector.modulate.a,1.0, 1 - 0.1 ** delta)
+		var offset = 0.0
+		for index in range(mini(selection_slide[1], action_nodes.size())):
+			offset += action_nodes[index].size.x + 24.0
+		var target_x = 32.0 - offset
+		var selected_x = target_x
+		for index in range(mini(slot, action_nodes.size())):
+			selected_x += action_nodes[index].size.x + 24.0
+		if not action_nodes.is_empty():
+			selector.position.x = lerpf(selector.position.x, selected_x, 1 - 0.00001 ** delta)
 		for _i in action_nodes:
-			if action_nodes.find(_i) != 0:
-				var before = action_nodes[action_nodes.find(_i) - 1];
-				_i.position.x = lerp(
-					_i.position.x,
-					before.position.x + before.size.x + 24.0,
-					1 - 0.000000001 ** delta
-				);
-			else:
-				var offset = 0.0
-				for _j in range(selection_slide[1]):
-					if _j < action_nodes.size() and action_nodes.size() > 1:
-						offset += (action_nodes[_j].size.x + 24.0);
-					else:
-						break
-				_i.position.x = lerp(_i.position.x,32.0 - offset,1 - 0.000000001 ** delta);
+			_i.position.x = lerp(_i.position.x, target_x, 1 - 0.000000001 ** delta)
+			target_x += _i.size.x + 24.0
 
 			if slot == action_nodes.find(_i):
 				_i.modulate = lerp(_i.modulate,Color(1.0,1.0,0.0,1.0),1 - 0.001 ** delta);

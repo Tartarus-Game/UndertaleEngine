@@ -6,10 +6,17 @@ var encounters = {
 }
 
 var battle_soul : BattleSoulRed = null;
+var return_scene_path: String = ""
+var last_result: String = ""
+
+signal battle_finished(result: String)
 
 func encounter(id: int, _anim: bool = true):
-	current_id = id;
 	if(!encounters.has(id)): return;
+	current_id = id;
+	var scene = get_tree().current_scene
+	return_scene_path = scene.scene_file_path if scene else ""
+	last_result = ""
 	SceneManager._encounter_animation_start();
 
 func encounter_get(id : int):
@@ -30,4 +37,11 @@ func get_current_encounter():
 	return _enemys;
 
 func get_soul():
-	pass;
+	return battle_soul;
+
+func finish_battle(result: String) -> void:
+	last_result = result
+	battle_soul = null
+	battle_finished.emit(result)
+	if not return_scene_path.is_empty():
+		SceneManager.goto_scene_to_path(return_scene_path)

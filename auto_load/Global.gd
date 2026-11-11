@@ -1,14 +1,4 @@
 extends Node
-var player_data = {
-	hp = 0,
-	hp_max = 0,
-	def = 0,
-	atk = 0,
-	weapon = null,
-	armor = null,
-	items = player_data_items
-}
-
 var player_data_items : Array[String] = [
 	"PROMISE",
 	"PROMISE",
@@ -16,12 +6,31 @@ var player_data_items : Array[String] = [
 	"PROMISE"
 ];
 
+var player_data = {
+	hp = 20,
+	hp_max = 20,
+	def = 0,
+	atk = 0,
+	weapon = null,
+	armor = null,
+	items = player_data_items
+}
+
+signal player_hp_changed(hp: int, maximum: int)
+
 func player_get_data(_name : String):
 	return player_data[_name];
 
 func player_get_item(_slot : int):
-	if(!player_data_items.has(_slot)): return;
+	if _slot < 0 or _slot >= player_data_items.size(): return null;
 	return player_data_items[_slot]
+
+func player_set_hp(value: int) -> void:
+	player_data.hp = clampi(value, 0, int(player_data.hp_max))
+	player_hp_changed.emit(player_data.hp, player_data.hp_max)
+
+func player_heal(amount: int) -> void:
+	player_set_hp(int(player_data.hp) + maxi(amount, 0))
 
 func player_get_items():
 	return player_data_items;
@@ -50,6 +59,9 @@ func storage_load(path : String, slot : int):
 	var file = FileAccess.open(path + "file" + str(slot), FileAccess.READ);
 	if(!file):return;
 	player_data = file.get_var();
+	player_data_items.assign(player_data.items)
+	player_data.items = player_data_items
+	player_hp_changed.emit(player_data.hp, player_data.hp_max)
 
 func toggle_fullscreen():
 	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:

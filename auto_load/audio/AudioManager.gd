@@ -35,3 +35,7 @@ func toggle_pause(type = PLAYER.SOUND_EFFECT):
 	if(!sounds.has(type)): return;
 	var player : AudioStreamPlayer = sounds[type];
 	player.stream_paused = !player.stream_paused;
+
+func _exit_tree() -> void:
+	SEP.stop()
+	BGMP.stop()

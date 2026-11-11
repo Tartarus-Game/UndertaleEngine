@@ -1,255 +1,348 @@
 class_name Battle extends Node
 
-@onready var box_typer = $BoxTyper;
+@onready var box_typer: TextTyper = $BoxTyper
+@onready var battle_box = $BattleBox
 
-@export var items : BattleItemManager;
-@export var enemy_actions : BattleEnemyActions;
-@export var enemy_selections : BattleEnemySelections;
-@export var UImanager : BattleUIManager;
-@export var enemy_manager : EnemyManager;
-@export var soul : BattleSoulRed;
+@export var items: BattleItemManager
+@export var enemy_actions: BattleEnemyActions
+@export var enemy_selections: BattleEnemySelections
+@export var UImanager: BattleUIManager
+@export var enemy_manager: EnemyManager
+@export var soul: BattleSoulRed
+@export_range(0.1, 120.0, 0.1) var turn_duration: float = 6.0 # seconds
+@export_range(0.05, 10.0, 0.05) var bullet_interval: float = 0.55 # seconds
+@export var wave_scene: PackedScene = preload("res://battle/waves/ExampleWave.tscn")
 
-enum EVENT_TYPE{
-	MENU_CHANGED,
-	BUTTON_CHANGED,
-	FIGHT_ENEMY_CHOICE_CHANGED,
-	ACT_ENEMY_CHOICE_CHANGED,
-	ACT_CHOICE_CHANGED,
-	ITEM_CHOICE_CHANGED
+const BULLET_SCENE = preload("res://battle/bullets/BattleBullet.tscn")
+const MENU_BOX_SIZE = Vector2(573, 140)
+const TURN_BOX_SIZE = Vector2(250, 140)
+
+enum EVENT_TYPE {
+	MENU_CHANGED, BUTTON_CHANGED, FIGHT_ENEMY_CHOICE_CHANGED,
+	ACT_ENEMY_CHOICE_CHANGED, ACT_CHOICE_CHANGED, ITEM_CHOICE_CHANGED
 }
-
-enum BATTLE_MENU{
-	BUTTON,
-	FIGHT_ENEMY_CHOICE,
-	FIGHT_AIM,
-	FIGHT_ANIM,
-	ACT_ENEMY_CHOICE,
-	ACT_CHOICE,
-	ITEM
+enum BATTLE_MENU {
+	BUTTON, FIGHT_ENEMY_CHOICE, FIGHT_AIM, FIGHT_ANIM,
+	ACT_ENEMY_CHOICE, ACT_CHOICE, ITEM, MERCY
 }
-enum BATTLE_STATE{
-	MENU,
-}
+enum BATTLE_STATE { MENU, MESSAGE, ENEMY_TURN, RESULT }
 
-signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant);
+signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant)
+signal turn_started(turn_number: int)
+signal turn_finished(turn_number: int)
 
-var battle_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
-var _last_menu : BATTLE_MENU = BATTLE_MENU.BUTTON;
-var battle_state : BATTLE_STATE = BATTLE_STATE.MENU;
-var _last_state : BATTLE_STATE = BATTLE_STATE.MENU;
-var battle_fight_enemy_choice : int = 0;
-var battle_act_enemy_choice : int = 0;
-var battle_act_choice : int = 0;
-var battle_item_choice : int = 0;
-var battle_item_page : int = 0;
+var battle_menu: BATTLE_MENU = BATTLE_MENU.BUTTON
+var _last_menu: BATTLE_MENU = BATTLE_MENU.BUTTON
+var battle_state: BATTLE_STATE = BATTLE_STATE.MENU
+var battle_fight_enemy_choice := 0
+var battle_act_enemy_choice := 0
+var battle_act_choice := 0
+var battle_item_choice := 0
+var battle_item_page := 0
+var battle_menu_button := 0
+var mercy_choice := 0
+var turn_number := 0
+var active_wave: BattleWave
+var _message_next := ""
+var _result := ""
+var fight_meter: FightMeter
+var bullets: Node2D
 
-var battle_menu_button : int = 0;
-
-func battle_set_fight_enemy_choice(slot : int):
-	var _slot = slot;
-	if(_slot < 0):
-		_slot = 0;
-	elif(_slot >= battle_get_enemy_count()):
-		_slot = battle_get_enemy_count()-1;
-	battle_fight_enemy_choice = _slot;
-	enemy_selections.hide_info(false);
-	enemy_selections.set_slot(_slot);
-	soul.position = enemy_selections.selections[_slot].position;
-	emit_signal("BattleEvent", EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED, _slot, -1);
-
-func battle_set_act_enemy_choice(slot : int):
-	var _slot = slot;
-	if(_slot < 0):
-		_slot = 0;
-	elif(_slot >= battle_get_enemy_count()):
-		_slot = battle_get_enemy_count()-1;
-	battle_act_enemy_choice = _slot;
-	enemy_selections.hide_info(true);
-	enemy_selections.set_slot(_slot);
-	soul.position = enemy_selections.selections[_slot].position;
-	emit_signal("BattleEvent", EVENT_TYPE.ACT_ENEMY_CHOICE_CHANGED, _slot, -1);
-
-func battle_set_act_choice(slot : int):
-	var _size = battle_get_act_enemy_choice().action_get_count();
-	var _slot = slot;
-	if(_slot < 0):
-		_slot = 0;
-	elif(_slot >= _size):
-		_slot = _size-1;
-	battle_act_choice = _slot;
-	enemy_actions.set_actions_name(battle_get_act_enemy_choice().get_actions());
-	soul.position = enemy_actions.selections[battle_get_act_choice_number()].position-Vector2(36,0);
-	emit_signal("BattleEvent", EVENT_TYPE.ACT_CHOICE_CHANGED, _slot, -1);
-
-func battle_set_item_choice(slot : int):
-	var _size = Global.player_get_item_count();
-	var _slot = slot;
-	if(_slot < 0):
-		_slot = 0;
-	elif(_slot >= _size):
-		_slot = _size-1;
-	battle_item_choice = _slot;
-	while(_slot < battle_item_page):
-		battle_item_page -= 1;
-	while(_slot > battle_item_page+2):
-		battle_item_page += 1;
-	items.set_slot(_slot);
-	soul.position = Vector2(85,288 + 32*(_slot - battle_item_page));
-	emit_signal("BattleEvent", EVENT_TYPE.ITEM_CHOICE_CHANGED, _slot, -1);
-
-func battle_get_fight_enemy_choice() -> BattleEnemy:
-	return battle_get_enemy(battle_fight_enemy_choice);
-
-func battle_get_act_enemy_choice() -> BattleEnemy:
-	return battle_get_enemy(battle_act_enemy_choice);
-
-func battle_get_act_choice_number() -> int:
-	return battle_act_choice;
-
-func battle_set_button(slot : int):
-	battle_menu_button = slot;
-	emit_signal("BattleEvent", EVENT_TYPE.BUTTON_CHANGED, slot, -1);
-	battle_menu_button = UImanager.get_ui().get_button_slot();
-	
-	
-func battle_set_menu(menu : BATTLE_MENU):
-	battle_menu = menu;
-	match menu:
-		BATTLE_MENU.BUTTON:
-			box_typer.visible = true;
-			for i in range(3):
-				enemy_selections.hide_enemy(i, true);
-			items.hide_all(true);
-				
-		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
-			box_typer.skip();
-			box_typer.visible = false;
-			for i in range(3):
-				var enemys = enemy_manager.battle_get_enemys();
-				if(len(enemys)>i):
-					var enemy = enemy_manager.battle_get_enemy(i);
-					enemy_selections.hide_enemy(i, false);
-					enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
-						enemy.get_hp(), enemy.get_hp_max());
-				else:
-					enemy_selections.hide_enemy(i, true);
-			battle_set_fight_enemy_choice(battle_fight_enemy_choice);
-		BATTLE_MENU.ACT_ENEMY_CHOICE:
-			enemy_actions.hide_all_actions(true);
-			box_typer.skip();
-			box_typer.visible = false;
-			for i in range(3):
-				var enemys = enemy_manager.battle_get_enemys();
-				if(len(enemys)>i):
-					var enemy = enemy_manager.battle_get_enemy(i);
-					enemy_selections.hide_enemy(i, false);
-					enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), \
-						enemy.get_hp(), enemy.get_hp_max());
-				else:
-					enemy_selections.hide_enemy(i, true);
-			battle_set_act_enemy_choice(battle_act_enemy_choice);
-		BATTLE_MENU.ACT_CHOICE:
-			for i in range(3):
-				enemy_selections.hide_enemy(i, true);
-			battle_set_act_choice(0);
-		BATTLE_MENU.ITEM:
-			box_typer.skip();
-			box_typer.visible = false;
-			items.set_items(Global.player_get_items());
-			battle_set_item_choice(0);
-	emit_signal("BattleEvent", EVENT_TYPE.MENU_CHANGED, menu, _last_menu);
-	_last_menu = menu;
-
-func battle_get_menu():
-	return battle_menu;
-	
-func battle_get_state():
-	return battle_state;
-
-func battle_get_enemy(slot : int) -> BattleEnemy:
-	return enemy_manager.battle_get_enemy(slot);
-
-func battle_get_enemys():
-	return enemy_manager.battle_get_enemys();
-
-func battle_get_enemy_count():
-	return enemy_manager.battle_get_enemy_count();
-
-func battle_set_enemy(slot : int, packed : PackedScene):
-	return enemy_manager.battle_set_enemy(slot, packed);
 
 func _ready() -> void:
-	
-	battle_set_button(0);
+	fight_meter = FightMeter.new()
+	fight_meter.position = Vector2(320, 320)
+	fight_meter.z_index = 2
+	fight_meter.visible = false
+	add_child(fight_meter)
+	fight_meter.missed.connect(_on_fight_missed)
+	bullets = Node2D.new()
+	bullets.z_index = 2
+	add_child(bullets)
+	soul.z_index = 3
+	soul.defeated.connect(_on_soul_defeated)
+	EncounterManager.battle_soul = soul
+	battle_set_button(0)
+	battle_set_menu(BATTLE_MENU.BUTTON)
+	_set_prompt("* Choose an action.")
+
+
+func battle_set_fight_enemy_choice(slot: int) -> void:
+	if battle_get_enemy_count() == 0: return
+	battle_fight_enemy_choice = clampi(slot, 0, battle_get_enemy_count() - 1)
+	enemy_selections.hide_info(false)
+	enemy_selections.set_slot(battle_fight_enemy_choice)
+	soul.position = enemy_selections.selections[battle_fight_enemy_choice].position
+	BattleEvent.emit(EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED, battle_fight_enemy_choice, -1)
+
+
+func battle_set_act_enemy_choice(slot: int) -> void:
+	if battle_get_enemy_count() == 0: return
+	battle_act_enemy_choice = clampi(slot, 0, battle_get_enemy_count() - 1)
+	enemy_selections.hide_info(true)
+	enemy_selections.set_slot(battle_act_enemy_choice)
+	soul.position = enemy_selections.selections[battle_act_enemy_choice].position
+	BattleEvent.emit(EVENT_TYPE.ACT_ENEMY_CHOICE_CHANGED, battle_act_enemy_choice, -1)
+
+
+func battle_set_act_choice(slot: int) -> void:
+	var enemy := battle_get_act_enemy_choice()
+	if enemy == null or enemy.action_get_count() == 0: return
+	battle_act_choice = clampi(slot, 0, mini(enemy.action_get_count(), enemy_actions.selections.size()) - 1)
+	enemy_actions.set_actions_name(enemy.get_actions())
+	soul.position = enemy_actions.selections[battle_act_choice].position - Vector2(36, 0)
+	BattleEvent.emit(EVENT_TYPE.ACT_CHOICE_CHANGED, battle_act_choice, -1)
+
+
+func battle_set_item_choice(slot: int) -> void:
+	var count: int = Global.player_get_item_count()
+	if count == 0: return
+	battle_item_choice = clampi(slot, 0, count - 1)
+	battle_item_page = clampi(battle_item_page, maxi(0, battle_item_choice - 2), battle_item_choice)
+	items.set_slot(battle_item_choice)
+	soul.position = Vector2(85, 288 + 32 * (battle_item_choice - battle_item_page))
+	BattleEvent.emit(EVENT_TYPE.ITEM_CHOICE_CHANGED, battle_item_choice, -1)
+
+
+func battle_get_fight_enemy_choice() -> BattleEnemy:
+	return battle_get_enemy(battle_fight_enemy_choice)
+
+func battle_get_act_enemy_choice() -> BattleEnemy:
+	return battle_get_enemy(battle_act_enemy_choice)
+
+func battle_get_act_choice_number() -> int:
+	return battle_act_choice
+
+func battle_set_button(slot: int) -> void:
+	battle_menu_button = posmod(slot, 4)
+	BattleEvent.emit(EVENT_TYPE.BUTTON_CHANGED, battle_menu_button, -1)
+
+
+func _hide_choices() -> void:
+	for i in range(enemy_selections.selections.size()):
+		enemy_selections.hide_enemy(i, true)
+	enemy_actions.hide_all_actions(true)
+	items.hide_all(true)
+
+
+func battle_set_menu(menu: BATTLE_MENU) -> void:
+	battle_menu = menu
+	_hide_choices()
+	box_typer.visible = menu == BATTLE_MENU.BUTTON
+	soul.visible = menu != BATTLE_MENU.FIGHT_AIM
+	match menu:
+		BATTLE_MENU.FIGHT_ENEMY_CHOICE, BATTLE_MENU.ACT_ENEMY_CHOICE:
+			for i in range(mini(battle_get_enemy_count(), enemy_selections.selections.size())):
+				var enemy := battle_get_enemy(i)
+				enemy_selections.hide_enemy(i, false)
+				enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), enemy.get_hp(), enemy.get_hp_max())
+			if menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE:
+				battle_set_fight_enemy_choice(battle_fight_enemy_choice)
+			else:
+				battle_set_act_enemy_choice(battle_act_enemy_choice)
+		BATTLE_MENU.ACT_CHOICE:
+			battle_set_act_choice(0)
+		BATTLE_MENU.ITEM:
+			items.set_items(Global.player_get_items())
+			battle_item_page = 0
+			items.page = 0
+			battle_set_item_choice(0)
+		BATTLE_MENU.MERCY:
+			var choices: Array[String] = ["Spare", "Flee"]
+			enemy_actions.set_actions_name(choices)
+			_set_mercy_choice(0)
+		BATTLE_MENU.FIGHT_AIM:
+			fight_meter.start()
+	BattleEvent.emit(EVENT_TYPE.MENU_CHANGED, menu, _last_menu)
+	_last_menu = menu
+
+
+func _set_mercy_choice(slot: int) -> void:
+	mercy_choice = clampi(slot, 0, 1)
+	soul.position = enemy_actions.selections[mercy_choice].position - Vector2(36, 0)
+
+func battle_get_menu(): return battle_menu
+func battle_get_state(): return battle_state
+func battle_get_enemy(slot: int) -> BattleEnemy: return enemy_manager.battle_get_enemy(slot)
+func battle_get_enemys(): return enemy_manager.battle_get_enemys()
+func battle_get_enemy_count(): return enemy_manager.battle_get_enemy_count()
+func battle_set_enemy(slot: int, packed: PackedScene): return enemy_manager.battle_set_enemy(slot, packed)
+
 
 func _process(_delta: float) -> void:
-	if(battle_state == BATTLE_STATE.MENU):
-		if(battle_menu == BATTLE_MENU.BUTTON):
-			var UI = UImanager.get_ui();
-			match battle_menu_button:
-				0:
-					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-38, 0);
-				1:
-					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-38, 0);
-				2:
-					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-38, 0);
-				3:
-					soul.position = UI.get_button(battle_menu_button).global_position + Vector2(-39, 0);
-			if(Input.is_action_just_pressed("ui_right")): battle_set_button(battle_menu_button + 1);
-			if(Input.is_action_just_pressed("ui_left")): battle_set_button(battle_menu_button - 1);
-			if(Input.is_action_just_pressed("ui_accept")):
+	if battle_state == BATTLE_STATE.MESSAGE or battle_state == BATTLE_STATE.RESULT:
+		if Input.is_action_just_pressed("ui_accept"):
+			if box_typer.is_typing():
+				box_typer.skip()
+			elif battle_state == BATTLE_STATE.RESULT:
+				EncounterManager.finish_battle(_result)
+			else:
+				_continue_after_message()
+		return
+	if battle_state != BATTLE_STATE.MENU: return
+
+	match battle_menu:
+		BATTLE_MENU.BUTTON:
+			soul.position = UImanager.get_ui().get_button(battle_menu_button).global_position + Vector2(-38, 0)
+			if Input.is_action_just_pressed("ui_right"): battle_set_button(battle_menu_button + 1)
+			elif Input.is_action_just_pressed("ui_left"): battle_set_button(battle_menu_button - 1)
+			elif Input.is_action_just_pressed("ui_accept"):
 				match battle_menu_button:
 					0:
-						battle_set_menu(BATTLE_MENU.FIGHT_ENEMY_CHOICE);
+						if battle_get_enemy_count() > 0: battle_set_menu(BATTLE_MENU.FIGHT_ENEMY_CHOICE)
 					1:
-						battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE);
+						if battle_get_enemy_count() > 0: battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
 					2:
-						if(Global.player_get_item_count() > 0):
-							battle_set_menu(BATTLE_MENU.ITEM);
-		elif(battle_menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE):
-			if(Input.is_action_just_pressed("ui_down")): battle_set_fight_enemy_choice(\
-														battle_fight_enemy_choice + 1);
-			if(Input.is_action_just_pressed("ui_up")): battle_set_fight_enemy_choice(\
-														battle_fight_enemy_choice - 1);
-			if(Input.is_action_just_pressed("ui_accept")):
-				battle_set_menu(BATTLE_MENU.FIGHT_AIM);
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON);
-		elif(battle_menu == BATTLE_MENU.FIGHT_AIM):
-			pass;
-		elif(battle_menu == BATTLE_MENU.ACT_ENEMY_CHOICE):
-			if(Input.is_action_just_pressed("ui_down")): battle_set_act_enemy_choice(\
-														battle_act_enemy_choice + 1);
-			if(Input.is_action_just_pressed("ui_up")): battle_set_act_enemy_choice(\
-														battle_act_enemy_choice - 1);
-			if(Input.is_action_just_pressed("ui_accept")):
-				battle_set_menu(BATTLE_MENU.ACT_CHOICE);
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON);
-		elif(battle_menu == BATTLE_MENU.ACT_CHOICE):
-			
-			if(Input.is_action_just_pressed("ui_right")): 
-				if(!battle_act_choice%2):
-					battle_set_act_choice(battle_act_choice + 1);
-			if(Input.is_action_just_pressed("ui_left")): 
-				if(battle_act_choice%2):
-					battle_set_act_choice(battle_act_choice - 1);
-					
-			if(Input.is_action_just_pressed("ui_up")): 
-				if(battle_act_choice - 2 >= 0):
-					battle_set_act_choice(battle_act_choice - 2);
-			if(Input.is_action_just_pressed("ui_down")): 
-				if(battle_act_choice + 2 <= battle_get_act_enemy_choice().action_get_count()-1):
-					battle_set_act_choice(battle_act_choice + 2);
-			
-			if(Input.is_action_just_pressed("ui_accept")):
-				battle_set_menu(BATTLE_MENU.ACT_CHOICE);
-			elif(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE);
-		elif(battle_menu == BATTLE_MENU.ITEM):
-			if(Input.is_action_just_pressed("ui_up")): 
-				battle_set_item_choice(battle_item_choice - 1);
-			if(Input.is_action_just_pressed("ui_down")): 
-				battle_set_item_choice(battle_item_choice + 1);
-			if(Input.is_action_just_pressed("ui_cancel")):
-				battle_set_menu(BATTLE_MENU.BUTTON);
+						if Global.player_get_item_count() > 0: battle_set_menu(BATTLE_MENU.ITEM)
+					3: battle_set_menu(BATTLE_MENU.MERCY)
+		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
+			if Input.is_action_just_pressed("ui_down"): battle_set_fight_enemy_choice(battle_fight_enemy_choice + 1)
+			elif Input.is_action_just_pressed("ui_up"): battle_set_fight_enemy_choice(battle_fight_enemy_choice - 1)
+			elif Input.is_action_just_pressed("ui_accept"): battle_set_menu(BATTLE_MENU.FIGHT_AIM)
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.BUTTON)
+		BATTLE_MENU.FIGHT_AIM:
+			if Input.is_action_just_pressed("ui_accept"): _resolve_fight(fight_meter.accuracy())
+		BATTLE_MENU.ACT_ENEMY_CHOICE:
+			if Input.is_action_just_pressed("ui_down"): battle_set_act_enemy_choice(battle_act_enemy_choice + 1)
+			elif Input.is_action_just_pressed("ui_up"): battle_set_act_enemy_choice(battle_act_enemy_choice - 1)
+			elif Input.is_action_just_pressed("ui_accept"): battle_set_menu(BATTLE_MENU.ACT_CHOICE)
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.BUTTON)
+		BATTLE_MENU.ACT_CHOICE:
+			if Input.is_action_just_pressed("ui_right") and battle_act_choice % 2 == 0: battle_set_act_choice(battle_act_choice + 1)
+			elif Input.is_action_just_pressed("ui_left") and battle_act_choice % 2 == 1: battle_set_act_choice(battle_act_choice - 1)
+			elif Input.is_action_just_pressed("ui_up") and battle_act_choice >= 2: battle_set_act_choice(battle_act_choice - 2)
+			elif Input.is_action_just_pressed("ui_down") and battle_act_choice + 2 < battle_get_act_enemy_choice().action_get_count(): battle_set_act_choice(battle_act_choice + 2)
+			elif Input.is_action_just_pressed("ui_accept"):
+				_show_message(battle_get_act_enemy_choice().perform_action(battle_act_choice), "turn")
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
+		BATTLE_MENU.ITEM:
+			if Input.is_action_just_pressed("ui_up"): battle_set_item_choice(battle_item_choice - 1)
+			elif Input.is_action_just_pressed("ui_down"): battle_set_item_choice(battle_item_choice + 1)
+			elif Input.is_action_just_pressed("ui_accept"): _use_item()
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.BUTTON)
+		BATTLE_MENU.MERCY:
+			if Input.is_action_just_pressed("ui_left"): _set_mercy_choice(0)
+			elif Input.is_action_just_pressed("ui_right"): _set_mercy_choice(1)
+			elif Input.is_action_just_pressed("ui_accept"): _resolve_mercy()
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.BUTTON)
+
+
+func _set_prompt(message: String) -> void:
+	box_typer.clear_text()
+	box_typer.text_add(message)
+	box_typer.next_text()
+
+
+func _show_message(message: String, next: String) -> void:
+	battle_state = BATTLE_STATE.MESSAGE
+	_message_next = next
+	_hide_choices()
+	soul.visible = false
+	box_typer.visible = true
+	_set_prompt(message)
+
+
+func _continue_after_message() -> void:
+	if _message_next == "turn":
+		start_enemy_turn()
+	elif _message_next == "win":
+		_show_result("won", "* You won!\n* Press Z to return.")
+	elif _message_next == "flee":
+		_show_result("fled", "* You fled.\n* Press Z to return.")
+
+
+func _resolve_fight(accuracy: float) -> void:
+	fight_meter.running = false
+	fight_meter.visible = false
+	var enemy := battle_get_fight_enemy_choice()
+	if enemy == null: return
+	var damage := roundi(accuracy * 20.0)
+	enemy.take_damage(damage)
+	var message := "* %s took %d damage." % [enemy.get_enemy_name(), damage]
+	if enemy.get_hp() <= 0:
+		enemy_manager.battle_remove_enemy(enemy)
+	_show_message(message, "win" if battle_get_enemy_count() == 0 else "turn")
+
+
+func _on_fight_missed() -> void:
+	_resolve_fight(0.0)
+
+
+func _use_item() -> void:
+	var id: String = Global.player_get_item(battle_item_choice)
+	var item = ItemManager.item_get(id)
+	if item: item._slot = battle_item_choice
+	var message: String = item.use() if item else "* This item has no effect."
+	if item and item.consumable:
+		Global.player_get_items().remove_at(battle_item_choice)
+	_show_message(message, "turn")
+
+
+func _resolve_mercy() -> void:
+	if mercy_choice == 1:
+		_show_message("* You ran away.", "flee")
+		return
+	var spared := 0
+	for enemy in battle_get_enemys().duplicate():
+		if enemy.spareable:
+			enemy_manager.battle_remove_enemy(enemy)
+			spared += 1
+	var message := "* You spared %d enemy(s)." % spared if spared > 0 else "* No enemy is ready to be spared."
+	_show_message(message, "win" if battle_get_enemy_count() == 0 else "turn")
+
+
+func start_enemy_turn() -> void:
+	battle_state = BATTLE_STATE.ENEMY_TURN
+	turn_number += 1
+	box_typer.visible = false
+	battle_box.size = TURN_BOX_SIZE
+	soul.arena = Rect2(battle_box.global_position - TURN_BOX_SIZE / 2.0, TURN_BOX_SIZE)
+	soul.global_position = battle_box.global_position
+	soul.movement_enabled = true
+	soul.visible = true
+	active_wave = wave_scene.instantiate() as BattleWave
+	active_wave.battle = self
+	active_wave.duration = turn_duration
+	if active_wave is ExampleWave:
+		active_wave.interval = bullet_interval
+	active_wave.finished.connect(end_enemy_turn)
+	add_child(active_wave)
+	turn_started.emit(turn_number)
+
+
+func spawn_bullet(bullet: BattleBullet, at: Vector2) -> void:
+	bullet.position = at
+	bullets.add_child(bullet)
+
+
+func end_enemy_turn() -> void:
+	if battle_state != BATTLE_STATE.ENEMY_TURN: return
+	soul.movement_enabled = false
+	if is_instance_valid(active_wave): active_wave.queue_free()
+	_clear_bullets()
+	battle_box.size = MENU_BOX_SIZE
+	battle_state = BATTLE_STATE.MENU
+	turn_finished.emit(turn_number)
+	battle_set_menu(BATTLE_MENU.BUTTON)
+	_set_prompt("* Choose an action.")
+
+
+func _clear_bullets() -> void:
+	for bullet in bullets.get_children(): bullet.queue_free()
+
+
+func _on_soul_defeated() -> void:
+	if is_instance_valid(active_wave): active_wave.queue_free()
+	_clear_bullets()
+	soul.movement_enabled = false
+	battle_box.size = MENU_BOX_SIZE
+	_show_result("lost", "* You were defeated.\n* Press Z to return.")
+
+
+func _show_result(result: String, message: String) -> void:
+	_result = result
+	battle_state = BATTLE_STATE.RESULT
+	_hide_choices()
+	soul.visible = false
+	box_typer.visible = true
+	_set_prompt(message)

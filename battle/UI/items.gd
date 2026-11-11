@@ -23,7 +23,7 @@ func set_slot(slot : int):
 	_slot = slot;
 	while(_slot < page):
 		page -= 1;
-	while(_slot > page+3):
+	while(_slot > page+2):
 		page += 1;
 	counter.visible = true;
 	for i in range(3):
