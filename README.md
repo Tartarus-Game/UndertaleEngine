@@ -11,7 +11,7 @@ Open `project.godot` in Godot 4.6 and run the project.
 - The yellow, green and blue lights are a save point, a shop and a dialogue interaction. The save point can save, load and choose among three slots. The orange light leads to a second room.
 - **F3** opens the debug overlay. In battle, keys **1–6** select soul modes and **F6** ends the current wave. **F7** cycles registered rooms, **F8** starts a sample battle and **F9** opens a shop. **H** toggles invincibility; Page Up / Page Down change HP.
 
-The overworld menu offers items, stats, phone entries and settings. Its settings include language, window size, fullscreen, and confirm/cancel key bindings. Default gamepad face buttons and D-pad bindings are also configured. Long menu text can be scrolled with Page Up / Page Down.
+The overworld menu offers items, stats, phone entries and settings. Its settings include language, window size, fullscreen, and keyboard or gamepad bindings for movement, confirm, cancel and menu. Default gamepad face buttons and D-pad bindings are also configured. Long menu text can be scrolled with Page Up / Page Down.
 
 ## Encounters and battle
 

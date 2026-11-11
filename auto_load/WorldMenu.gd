@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const REMAP_ACTIONS := ["ui_up", "ui_down", "ui_left", "ui_right", "ui_accept", "ui_cancel", "ui_menu"]
+
 var busy := false
 var armed := false
 var state := "root"
@@ -9,6 +11,7 @@ var notice := ""
 var capture_action := ""
 var panel: Panel
 var label: RichTextLabel
+var hint: Label
 var actor: OverworldChar
 var was_enabled := false
 var phone_entries: Array[Dictionary] = []
@@ -38,9 +41,9 @@ func _ready() -> void:
 	font.fallbacks = [load("res://font/SIMSUNB.TTF")]
 	label.add_theme_font_override("normal_font", font)
 	panel.add_child(label)
-	var hint := Label.new()
+	hint = Label.new()
 	hint.position = Vector2(25, 338)
-	hint.text = "Z: OK   X: Back   PgUp/PgDn: Text"
+	hint.text = "Confirm / Cancel   PgUp/PgDn: Text"
 	hint.add_theme_font_override("font", font)
 	hint.add_theme_font_size_override("font_size", 15)
 	panel.add_child(hint)
@@ -85,7 +88,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			var key_event := event as InputEventKey
 			SettingsService.bind_key(capture_action, key_event.physical_keycode if key_event.physical_keycode != 0 else key_event.keycode)
 			capture_action = ""
-			notice = "Key saved."
+			notice = SettingsService.text("settings.saved")
+			_refresh()
+			get_viewport().set_input_as_handled()
+		elif event is InputEventJoypadButton and event.pressed:
+			var joy_event := event as InputEventJoypadButton
+			SettingsService.bind_joy(capture_action, joy_event.device, joy_event.button_index)
+			capture_action = ""
+			notice = SettingsService.text("settings.saved")
 			_refresh()
 			get_viewport().set_input_as_handled()
 		return
@@ -114,7 +124,7 @@ func _entry_count() -> int:
 		"root": return 5
 		"items": return Global.player_get_item_count()
 		"phone": return phone_entries.size()
-		"settings": return 6
+		"settings": return 11
 	return 0
 
 
@@ -148,9 +158,10 @@ func _activate() -> void:
 			0: SettingsService.set_language("zh_CN" if SettingsService.language == "en" else "en")
 			1: SettingsService.set_window_scale(1.0 if SettingsService.window_scale >= 3.0 else SettingsService.window_scale + 0.5)
 			2: Global.toggle_fullscreen()
-			3: capture_action = "ui_accept"; notice = "Press a key for confirm."
-			4: capture_action = "ui_cancel"; notice = "Press a key for cancel."
-			5: state = "root"; selected = 0
+			3, 4, 5, 6, 7, 8, 9:
+				capture_action = REMAP_ACTIONS[selected - 3]
+				notice = SettingsService.text("settings.press")
+			10: state = "root"; selected = 0
 
 
 func _refresh() -> void:
@@ -168,12 +179,21 @@ func _refresh() -> void:
 		"phone":
 			for phone in phone_entries: entries.append(str(phone.title))
 		"settings":
-			entries.assign(["Language: " + SettingsService.language, "Window scale: %.1f" % SettingsService.window_scale, "Toggle fullscreen", "Bind confirm", "Bind cancel", "Back"])
-	var output := ("MENU" if state == "root" else state.to_upper()) + "\n\n"
+			entries.assign([SettingsService.text("settings.language") + ": " + SettingsService.language, SettingsService.text("settings.scale") + ": %.1f" % SettingsService.window_scale, SettingsService.text("settings.fullscreen")])
+			for action in REMAP_ACTIONS:
+				entries.append(SettingsService.text("settings.bind") + " " + SettingsService.text("input." + str(action).trim_prefix("ui_")))
+			entries.append(SettingsService.text("settings.back"))
+	var output := SettingsService.text("menu.title" if state == "root" else "menu." + state) + "\n\n"
 	for i in range(entries.size()): output += ("> " if i == selected else "  ") + entries[i] + "\n"
-	if state == "items": output += "\n" + ["> Use   Info   Drop", "Use   > Info   Drop", "Use   Info   > Drop"][command] + "\n"
+	if state == "items":
+		output += "\n"
+		var commands := [SettingsService.text("item.use"), SettingsService.text("item.info"), SettingsService.text("item.drop")]
+		for i in range(commands.size()): output += ("> " if i == command else "  ") + commands[i] + "  "
+		output += "\n"
 	if not notice.is_empty(): output += "\n" + notice
 	label.text = output
+	hint.text = SettingsService.text("ui.hint")
+	label.call_deferred("scroll_to_line", maxi(0, selected - 7) if state == "settings" else 0)
 
 
 func _close() -> void:
