@@ -28,11 +28,20 @@ func physical_key(keycode: int) -> void:
 
 
 func run_extended() -> void:
+	var menu_events := InputMap.action_get_events("ui_menu")
+	var saved_bindings: Dictionary = SettingsService.bindings.duplicate(true)
+	SettingsService._loading = true
+	SettingsService.bind_key("ui_menu", KEY_C)
+	SettingsService._loading = false
 	await test_progression_and_shop()
+	test_input_settings()
 	await test_dialogue_and_events()
 	await test_souls_and_rules()
 	await test_patterns_and_waves()
 	await test_world_save_restore()
+	InputMap.action_erase_events("ui_menu")
+	for event in menu_events: InputMap.action_add_event("ui_menu", event)
+	SettingsService.bindings = saved_bindings
 	AudioManager.stop_all_sfx()
 	await get_tree().create_timer(0.15).timeout
 	if failures.is_empty(): print("All extended feature tests passed.")
@@ -66,11 +75,51 @@ func test_progression_and_shop() -> void:
 	check(Global.award_rewards(10, 7), "earned EXP triggers the next level")
 	check(Global.player_data.lv == 2 and Global.player_data.hp == 24 and Global.player_data.gold == 92, "level up and rewards update the player")
 	var previous_language: String = SettingsService.language
+	SettingsService._loading = true
 	SettingsService.set_language("zh_CN")
 	check(SettingsService.text("shop.buy") == "购买", "language setting resolves translated UI text")
 	SettingsService.set_language(previous_language)
+	SettingsService._loading = false
 	restore_player(original)
 	await get_tree().process_frame
+
+
+func test_input_settings() -> void:
+	var old_path: String = SettingsService.settings_path
+	var old_keys: Dictionary = SettingsService.bindings.duplicate(true)
+	var old_joy: Dictionary = SettingsService.joy_bindings.duplicate(true)
+	var old_events := InputMap.action_get_events("ui_up")
+	var path := "user://input_test_%d.cfg" % Time.get_ticks_usec()
+	SettingsService.settings_path = path
+	SettingsService.bind_key("ui_up", KEY_W)
+	WorldMenu.busy = true
+	WorldMenu.state = "settings"
+	WorldMenu.selected = 3
+	WorldMenu._activate()
+	var joy_event := InputEventJoypadButton.new()
+	joy_event.device = -1
+	joy_event.button_index = JOY_BUTTON_Y
+	joy_event.pressed = true
+	WorldMenu._unhandled_input(joy_event)
+	check(WorldMenu.capture_action.is_empty(), "the settings menu captures a gamepad button")
+	WorldMenu.busy = false
+	WorldMenu.state = "root"
+	InputMap.action_erase_events("ui_up")
+	SettingsService.bindings.clear()
+	SettingsService.joy_bindings.clear()
+	SettingsService.load_settings()
+	var key_found := false
+	var joy_found := false
+	for event in InputMap.action_get_events("ui_up"):
+		if event is InputEventKey and event.physical_keycode == KEY_W: key_found = true
+		if event is InputEventJoypadButton and event.button_index == JOY_BUTTON_Y: joy_found = true
+	check(key_found and joy_found, "keyboard and gamepad bindings survive settings reload")
+	InputMap.action_erase_events("ui_up")
+	for event in old_events: InputMap.action_add_event("ui_up", event)
+	SettingsService.bindings = old_keys
+	SettingsService.joy_bindings = old_joy
+	SettingsService.settings_path = old_path
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func test_dialogue_and_events() -> void:
@@ -165,10 +214,11 @@ func test_souls_and_rules() -> void:
 		for frame in range(fps): bullet._try_contact(area, 1.0 / fps)
 		check(is_equal_approx(Global.player_data.kr, 9.0), "continuous KR contact adds the same amount at %d updates/s" % fps)
 	var target: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
-	target.shootable = true
 	target.velocity = Vector2.ZERO
 	target.position = Vector2(50, 0)
 	add_child(target)
+	target.shootable = true
+	check(target.is_in_group("shootable_bullets"), "shootable state can be enabled after spawning")
 	var projectile := SoulProjectile.new()
 	projectile.velocity = Vector2(360, 0)
 	add_child(projectile)

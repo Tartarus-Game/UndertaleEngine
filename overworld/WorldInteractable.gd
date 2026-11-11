@@ -36,7 +36,8 @@ func _save() -> void:
 			await DialogueService.present(SettingsService.text("save.done") if saved else SettingsService.text("save.failed"))
 		1:
 			if FileAccess.file_exists("user://saves/file" + str(slot)):
-				await Global.restore_world("user://saves/", slot)
+				if not await Global.restore_world("user://saves/", slot):
+					await DialogueService.present(SettingsService.text("save.load_failed"))
 			else:
 				await DialogueService.present(SettingsService.text("save.missing"))
 		2:

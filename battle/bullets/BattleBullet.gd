@@ -8,7 +8,12 @@ enum Rule { WHITE, BLUE, ORANGE, HEAL }
 @export var karma := false
 @export var karma_per_second := 6.0
 @export var destroy_on_contact := true
-@export var shootable := false
+@export var shootable := false:
+	set(value):
+		shootable = value
+		if is_inside_tree():
+			if value: add_to_group("shootable_bullets")
+			else: remove_from_group("shootable_bullets")
 @export var projectile_health := 1.0
 var _contact_ticks: Dictionary = {}
 

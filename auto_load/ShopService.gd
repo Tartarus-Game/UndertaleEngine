@@ -11,6 +11,7 @@ var notice := ""
 var armed := false
 var panel: Panel
 var label: RichTextLabel
+var hint: Label
 var actor: OverworldChar
 var actor_was_enabled := false
 
@@ -39,9 +40,9 @@ func _ready() -> void:
 	font.fallbacks = [load("res://font/SIMSUNB.TTF")]
 	label.add_theme_font_override("normal_font", font)
 	panel.add_child(label)
-	var hint := Label.new()
+	hint = Label.new()
 	hint.position = Vector2(25, 338)
-	hint.text = "Z: OK   X: Back   PgUp/PgDn: Text"
+	hint.text = "Confirm / Cancel   PgUp/PgDn: Text"
 	hint.add_theme_font_override("font", font)
 	hint.add_theme_font_size_override("font_size", 15)
 	panel.add_child(hint)
@@ -137,10 +138,11 @@ func _refresh() -> void:
 		for id in Global.player_get_items():
 			var item := ItemManager.item_get(id)
 			lines.append("%s  %d G" % [item.get_display_name(), int(item.price / 2)] if item else id)
-	var output := "SHOP       %d G\n\n" % int(Global.player_data.gold)
+	var output := SettingsService.text("shop.title") + ("       %d G\n\n" % int(Global.player_data.gold))
 	for i in range(lines.size()): output += ("> " if i == selection else "  ") + lines[i] + "\n"
 	if not notice.is_empty(): output += "\n" + notice
 	label.text = output
+	hint.text = SettingsService.text("ui.hint")
 
 
 func _close() -> void:
