@@ -1,16 +1,23 @@
 extends Node2D
 
-func _ready() -> void:
-	if EncounterManager.last_result.is_empty():
-		await get_tree().create_timer(0.1).timeout
-		EncounterManager.encounter(-1)
-	else:
-		var label := Label.new()
-		label.text = "Battle result: %s\nPress Z to start again." % EncounterManager.last_result
-		label.position = Vector2(160, 200)
-		add_child(label)
+@onready var status: Label = $Status
 
-func _process(_delta: float) -> void:
-	if not EncounterManager.last_result.is_empty() and Input.is_action_just_pressed("ui_accept"):
+
+func _ready() -> void:
+	$EncounterTrigger.triggered.connect(_on_triggered)
+	EncounterManager.battle_finished.connect(_on_battle_finished)
+
+
+func _on_triggered(_actor: OverworldChar) -> void:
+	EncounterManager.encounter(-1)
+
+
+func _on_battle_finished(result: String) -> void:
+	status.text = "Battle: %s. Walk to the light and press Z to try again." % result
+	if result == "lost":
 		Global.player_set_hp(int(Global.player_data.hp_max))
-		EncounterManager.encounter(-1)
+
+
+func _draw() -> void:
+	draw_rect(Rect2(16, 32, 608, 416), Color(0.08, 0.10, 0.14))
+	draw_rect(Rect2(16, 32, 608, 416), Color(0.55, 0.58, 0.62), false, 3.0)

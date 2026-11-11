@@ -1,4 +1,4 @@
-class_name BattleUI extends Control
+class_name BattleUI extends Screen
 
 @onready var player_info_node = $PlayerInfo;
 @onready var button_manager = $BattleButtonManager;
@@ -16,6 +16,15 @@ var item_slot : int = 0;
 func _ready() -> void:
 	Global.player_hp_changed.connect(_update_hp)
 	_update_hp(int(Global.player_data.hp), int(Global.player_data.hp_max))
+	for index in range(4):
+		add_button(get_button(index), Callable(), _select_main_button.bind(index), _activate_main_button.bind(index))
+	set_active(true)
+
+func _select_main_button(index: int) -> void:
+	battle.battle_set_button(index)
+
+func _activate_main_button(index: int) -> void:
+	battle.choose_main_button(index)
 
 func _update_hp(hp: int, maximum: int) -> void:
 	$PlayerInfo/Label.text = "%d / %d" % [hp, maximum]
@@ -50,7 +59,7 @@ func _on_battle_battle_event(TYPE: Battle.EVENT_TYPE, EVENT: Variant, _FROM: Var
 					AudioManager.play_sound_with_pitch(button_accept, 1);
 				Battle.BATTLE_MENU.ACT_CHOICE:
 					AudioManager.play_sound_with_pitch(button_accept, 1);
-				Battle.BATTLE_MENU.ITEM:
+				Battle.BATTLE_MENU.ITEM, Battle.BATTLE_MENU.ITEM_COMMAND, Battle.BATTLE_MENU.ITEM_INFO, Battle.BATTLE_MENU.MERCY:
 					AudioManager.play_sound_with_pitch(button_accept, 1);
 		Battle.EVENT_TYPE.FIGHT_ENEMY_CHOICE_CHANGED:
 			if(EVENT != fight_enemy_slot):

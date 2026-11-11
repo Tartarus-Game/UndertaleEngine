@@ -29,7 +29,8 @@ func set_slot(slot : int):
 	for i in range(3):
 		var index = page + i;
 		if(len(items) > index):
-			var _name : String = items[index];
+			var item = ItemManager.item_get(items[index])
+			var _name : String = item.get_display_name() if item else items[index];
 			selections[i].visible = true;
 			selections[i].text = "* " + _name;
 		else:

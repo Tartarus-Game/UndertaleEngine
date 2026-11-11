@@ -162,13 +162,16 @@ metadata/_edit_lock_ = true
 offset_left = 52.0
 offset_top = 269.0
 offset_right = 589.0
-offset_bottom = 309.0
+offset_bottom = 383.0
 theme_override_font_sizes/normal_font_size = 27
 theme_override_font_sizes/bold_font_size = 27
 theme_override_font_sizes/bold_italics_font_size = 27
 theme_override_font_sizes/italics_font_size = 27
 theme_override_font_sizes/mono_font_size = 27
 text = "*"
+fit_content = false
+scroll_active = true
+autowrap_mode = 2
 tab_size = 2
 
 [node name="BattleSoul" parent="." unique_id=1637236197 instance=ExtResource("3_5r4g4")]

@@ -17,6 +17,9 @@ func set_enemy_hp(value : float):
 func set_enemy_max_hp(value : float):
 	hp_max_value = value;
 
+func set_spareable(value: bool) -> void:
+	typer.modulate = Color.YELLOW if value else Color.WHITE
+
 func hide_enemy_hp(enable : bool):
 	hp_max.visible = !enable;
 

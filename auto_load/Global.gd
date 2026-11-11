@@ -3,7 +3,10 @@ var player_data_items : Array[String] = [
 	"PROMISE",
 	"PROMISE",
 	"PROMISE",
-	"PROMISE"
+	"PROMISE",
+	"monster_candy",
+	"spider_donut",
+	"butts_pie"
 ];
 
 var player_data = {

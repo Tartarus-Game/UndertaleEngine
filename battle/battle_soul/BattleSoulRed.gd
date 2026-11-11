@@ -42,9 +42,10 @@ func advance_invulnerability(delta: float) -> void:
 func take_damage(amount: int) -> bool:
 	if not movement_enabled or invulnerability_remaining > 0.0 or amount <= 0:
 		return false
-	Global.player_set_hp(int(Global.player_data.hp) - amount)
+	var damage := maxi(1, amount - int(Global.player_data.def))
+	Global.player_set_hp(int(Global.player_data.hp) - damage)
 	invulnerability_remaining = invulnerability_time
-	hurt.emit(amount)
+	hurt.emit(damage)
 	if Global.player_data.hp <= 0:
 		defeated.emit()
 	return true

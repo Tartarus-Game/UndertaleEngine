@@ -11,6 +11,7 @@ class_name Battle extends Node
 @export var soul: BattleSoulRed
 @export_range(0.1, 120.0, 0.1) var turn_duration: float = 6.0 # seconds
 @export_range(0.05, 10.0, 0.05) var bullet_interval: float = 0.55 # seconds
+@export_range(0.0, 2.0, 0.05) var box_transition_duration: float = 0.25
 @export var wave_scene: PackedScene = preload("res://battle/waves/ExampleWave.tscn")
 
 const BULLET_SCENE = preload("res://battle/bullets/BattleBullet.tscn")
@@ -23,9 +24,9 @@ enum EVENT_TYPE {
 }
 enum BATTLE_MENU {
 	BUTTON, FIGHT_ENEMY_CHOICE, FIGHT_AIM, FIGHT_ANIM,
-	ACT_ENEMY_CHOICE, ACT_CHOICE, ITEM, MERCY
+	ACT_ENEMY_CHOICE, ACT_CHOICE, ITEM, MERCY, ITEM_COMMAND, ITEM_INFO
 }
-enum BATTLE_STATE { MENU, MESSAGE, ENEMY_TURN, RESULT }
+enum BATTLE_STATE { MENU, MESSAGE, ENEMY_TURN, RESULT, TRANSITION }
 
 signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant)
 signal turn_started(turn_number: int)
@@ -39,14 +40,18 @@ var battle_act_enemy_choice := 0
 var battle_act_choice := 0
 var battle_item_choice := 0
 var battle_item_page := 0
+var battle_item_command := 0
 var battle_menu_button := 0
 var mercy_choice := 0
 var turn_number := 0
 var active_wave: BattleWave
 var _message_next := ""
 var _result := ""
+var _turn_dialogues: Array[String] = []
+var _await_accept_release := true
 var fight_meter: FightMeter
 var bullets: Node2D
+var bullet_clip: Control
 
 
 func _ready() -> void:
@@ -56,15 +61,20 @@ func _ready() -> void:
 	fight_meter.visible = false
 	add_child(fight_meter)
 	fight_meter.missed.connect(_on_fight_missed)
+	bullet_clip = Control.new()
+	bullet_clip.clip_contents = true
+	bullet_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bullet_clip.z_index = 2
+	add_child(bullet_clip)
 	bullets = Node2D.new()
-	bullets.z_index = 2
-	add_child(bullets)
+	bullet_clip.add_child(bullets)
 	soul.z_index = 3
 	soul.defeated.connect(_on_soul_defeated)
 	EncounterManager.battle_soul = soul
 	battle_set_button(0)
 	battle_set_menu(BATTLE_MENU.BUTTON)
-	_set_prompt("* Choose an action.")
+	var intro := EncounterManager.get_current_encounter_text()
+	_set_prompt(intro if not intro.is_empty() else "* Choose an action.")
 
 
 func battle_set_fight_enemy_choice(slot: int) -> void:
@@ -115,7 +125,18 @@ func battle_get_act_choice_number() -> int:
 
 func battle_set_button(slot: int) -> void:
 	battle_menu_button = posmod(slot, 4)
+	UImanager.get_ui().sync_active_index(battle_menu_button)
 	BattleEvent.emit(EVENT_TYPE.BUTTON_CHANGED, battle_menu_button, -1)
+
+func choose_main_button(slot: int) -> void:
+	match slot:
+		0:
+			if battle_get_enemy_count() > 0: battle_set_menu(BATTLE_MENU.FIGHT_ENEMY_CHOICE)
+		1:
+			if battle_get_enemy_count() > 0: battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
+		2:
+			if Global.player_get_item_count() > 0: battle_set_menu(BATTLE_MENU.ITEM)
+		3: battle_set_menu(BATTLE_MENU.MERCY)
 
 
 func _hide_choices() -> void:
@@ -128,14 +149,14 @@ func _hide_choices() -> void:
 func battle_set_menu(menu: BATTLE_MENU) -> void:
 	battle_menu = menu
 	_hide_choices()
-	box_typer.visible = menu == BATTLE_MENU.BUTTON
-	soul.visible = menu != BATTLE_MENU.FIGHT_AIM
+	box_typer.visible = menu == BATTLE_MENU.BUTTON or menu == BATTLE_MENU.ITEM_INFO
+	soul.visible = menu != BATTLE_MENU.FIGHT_AIM and menu != BATTLE_MENU.ITEM_INFO
 	match menu:
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE, BATTLE_MENU.ACT_ENEMY_CHOICE:
 			for i in range(mini(battle_get_enemy_count(), enemy_selections.selections.size())):
 				var enemy := battle_get_enemy(i)
 				enemy_selections.hide_enemy(i, false)
-				enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), enemy.get_hp(), enemy.get_hp_max())
+				enemy_selections.set_enemy_info(i, enemy.get_enemy_name(), enemy.get_hp(), enemy.get_hp_max(), enemy.spareable)
 			if menu == BATTLE_MENU.FIGHT_ENEMY_CHOICE:
 				battle_set_fight_enemy_choice(battle_fight_enemy_choice)
 			else:
@@ -144,9 +165,18 @@ func battle_set_menu(menu: BATTLE_MENU) -> void:
 			battle_set_act_choice(0)
 		BATTLE_MENU.ITEM:
 			items.set_items(Global.player_get_items())
-			battle_item_page = 0
-			items.page = 0
-			battle_set_item_choice(0)
+			if _last_menu != BATTLE_MENU.ITEM_COMMAND and _last_menu != BATTLE_MENU.ITEM_INFO:
+				battle_item_choice = 0
+				battle_item_page = 0
+				items.page = 0
+			battle_set_item_choice(battle_item_choice)
+		BATTLE_MENU.ITEM_COMMAND:
+			var commands: Array[String] = ["Use", "Info", "Drop"]
+			enemy_actions.set_actions_name(commands)
+			_set_item_command(0)
+		BATTLE_MENU.ITEM_INFO:
+			var item = ItemManager.item_get(Global.player_get_item(battle_item_choice))
+			_set_prompt(item.info() if item else "* Unknown item.")
 		BATTLE_MENU.MERCY:
 			var choices: Array[String] = ["Spare", "Flee"]
 			enemy_actions.set_actions_name(choices)
@@ -161,6 +191,10 @@ func _set_mercy_choice(slot: int) -> void:
 	mercy_choice = clampi(slot, 0, 1)
 	soul.position = enemy_actions.selections[mercy_choice].position - Vector2(36, 0)
 
+func _set_item_command(slot: int) -> void:
+	battle_item_command = clampi(slot, 0, 2)
+	soul.position = enemy_actions.selections[battle_item_command].position - Vector2(36, 0)
+
 func battle_get_menu(): return battle_menu
 func battle_get_state(): return battle_state
 func battle_get_enemy(slot: int) -> BattleEnemy: return enemy_manager.battle_get_enemy(slot)
@@ -170,8 +204,18 @@ func battle_set_enemy(slot: int, packed: PackedScene): return enemy_manager.batt
 
 
 func _process(_delta: float) -> void:
+	# The key that triggered an encounter must be released before the battle
+	# consumes input; otherwise one press also selects FIGHT in the new scene.
+	if _await_accept_release:
+		if not Input.is_action_pressed("ui_accept") and not Input.is_action_just_pressed("ui_accept"):
+			_await_accept_release = false
+		return
 	if battle_state == BATTLE_STATE.MESSAGE or battle_state == BATTLE_STATE.RESULT:
-		if Input.is_action_just_pressed("ui_accept"):
+		if Input.is_action_just_pressed("ui_down"):
+			box_typer.get_v_scroll_bar().value += 32.0
+		elif Input.is_action_just_pressed("ui_up"):
+			box_typer.get_v_scroll_bar().value -= 32.0
+		elif Input.is_action_just_pressed("ui_accept"):
 			if box_typer.is_typing():
 				box_typer.skip()
 			elif battle_state == BATTLE_STATE.RESULT:
@@ -184,17 +228,9 @@ func _process(_delta: float) -> void:
 	match battle_menu:
 		BATTLE_MENU.BUTTON:
 			soul.position = UImanager.get_ui().get_button(battle_menu_button).global_position + Vector2(-38, 0)
-			if Input.is_action_just_pressed("ui_right"): battle_set_button(battle_menu_button + 1)
-			elif Input.is_action_just_pressed("ui_left"): battle_set_button(battle_menu_button - 1)
-			elif Input.is_action_just_pressed("ui_accept"):
-				match battle_menu_button:
-					0:
-						if battle_get_enemy_count() > 0: battle_set_menu(BATTLE_MENU.FIGHT_ENEMY_CHOICE)
-					1:
-						if battle_get_enemy_count() > 0: battle_set_menu(BATTLE_MENU.ACT_ENEMY_CHOICE)
-					2:
-						if Global.player_get_item_count() > 0: battle_set_menu(BATTLE_MENU.ITEM)
-					3: battle_set_menu(BATTLE_MENU.MERCY)
+			if Input.is_action_just_pressed("ui_right"): UImanager.get_ui().navigate(1)
+			elif Input.is_action_just_pressed("ui_left"): UImanager.get_ui().navigate(-1)
+			elif Input.is_action_just_pressed("ui_accept"): UImanager.get_ui().click_active()
 		BATTLE_MENU.FIGHT_ENEMY_CHOICE:
 			if Input.is_action_just_pressed("ui_down"): battle_set_fight_enemy_choice(battle_fight_enemy_choice + 1)
 			elif Input.is_action_just_pressed("ui_up"): battle_set_fight_enemy_choice(battle_fight_enemy_choice - 1)
@@ -218,8 +254,26 @@ func _process(_delta: float) -> void:
 		BATTLE_MENU.ITEM:
 			if Input.is_action_just_pressed("ui_up"): battle_set_item_choice(battle_item_choice - 1)
 			elif Input.is_action_just_pressed("ui_down"): battle_set_item_choice(battle_item_choice + 1)
-			elif Input.is_action_just_pressed("ui_accept"): _use_item()
+			elif Input.is_action_just_pressed("ui_accept"): battle_set_menu(BATTLE_MENU.ITEM_COMMAND)
 			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.BUTTON)
+		BATTLE_MENU.ITEM_COMMAND:
+			if Input.is_action_just_pressed("ui_right") and battle_item_command == 0: _set_item_command(1)
+			elif Input.is_action_just_pressed("ui_left") and battle_item_command == 1: _set_item_command(0)
+			elif Input.is_action_just_pressed("ui_down") and battle_item_command == 0: _set_item_command(2)
+			elif Input.is_action_just_pressed("ui_up") and battle_item_command == 2: _set_item_command(0)
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.ITEM)
+			elif Input.is_action_just_pressed("ui_accept"):
+				match battle_item_command:
+					0: _use_item()
+					1: battle_set_menu(BATTLE_MENU.ITEM_INFO)
+					2: _drop_item()
+		BATTLE_MENU.ITEM_INFO:
+			if Input.is_action_just_pressed("ui_down"): box_typer.get_v_scroll_bar().value += 32.0
+			elif Input.is_action_just_pressed("ui_up"): box_typer.get_v_scroll_bar().value -= 32.0
+			elif Input.is_action_just_pressed("ui_accept"):
+				if box_typer.is_typing(): box_typer.skip()
+				else: battle_set_menu(BATTLE_MENU.ITEM_COMMAND)
+			elif Input.is_action_just_pressed("ui_cancel"): battle_set_menu(BATTLE_MENU.ITEM_COMMAND)
 		BATTLE_MENU.MERCY:
 			if Input.is_action_just_pressed("ui_left"): _set_mercy_choice(0)
 			elif Input.is_action_just_pressed("ui_right"): _set_mercy_choice(1)
@@ -231,6 +285,7 @@ func _set_prompt(message: String) -> void:
 	box_typer.clear_text()
 	box_typer.text_add(message)
 	box_typer.next_text()
+	box_typer.get_v_scroll_bar().value = 0.0
 
 
 func _show_message(message: String, next: String) -> void:
@@ -244,11 +299,24 @@ func _show_message(message: String, next: String) -> void:
 
 func _continue_after_message() -> void:
 	if _message_next == "turn":
-		start_enemy_turn()
+		_turn_dialogues.clear()
+		for enemy in battle_get_enemys():
+			var dialogue := enemy.get_turn_dialog()
+			if not dialogue.is_empty(): _turn_dialogues.append(dialogue)
+		_advance_turn_dialogue()
+	elif _message_next == "turn_dialogue":
+		_advance_turn_dialogue()
 	elif _message_next == "win":
 		_show_result("won", "* You won!\n* Press Z to return.")
 	elif _message_next == "flee":
 		_show_result("fled", "* You fled.\n* Press Z to return.")
+
+
+func _advance_turn_dialogue() -> void:
+	if _turn_dialogues.is_empty():
+		start_enemy_turn()
+	else:
+		_show_message(_turn_dialogues.pop_front(), "turn_dialogue")
 
 
 func _resolve_fight(accuracy: float) -> void:
@@ -256,8 +324,13 @@ func _resolve_fight(accuracy: float) -> void:
 	fight_meter.visible = false
 	var enemy := battle_get_fight_enemy_choice()
 	if enemy == null: return
-	var damage := roundi(accuracy * 20.0)
-	enemy.take_damage(damage)
+	var before: float = enemy.get_hp()
+	var damage := roundi(enemy.take_damage(accuracy * 20.0))
+	var display := EnemyDamageDisplay.new()
+	display.position = enemy.position
+	display.z_index = 4
+	display.setup(damage, before, enemy.get_hp(), enemy.get_hp_max(), enemy.choice_box_size.x)
+	add_child(display)
 	var message := "* %s took %d damage." % [enemy.get_enemy_name(), damage]
 	if enemy.get_hp() <= 0:
 		enemy_manager.battle_remove_enemy(enemy)
@@ -278,8 +351,21 @@ func _use_item() -> void:
 	_show_message(message, "turn")
 
 
+func _drop_item() -> void:
+	var id: String = Global.player_get_item(battle_item_choice)
+	var item = ItemManager.item_get(id)
+	var message: String = item.drop() if item else "* You dropped the item."
+	if not item or item.droppable:
+		Global.player_get_items().remove_at(battle_item_choice)
+	_show_message(message, "turn")
+
+
 func _resolve_mercy() -> void:
 	if mercy_choice == 1:
+		for enemy in battle_get_enemys():
+			if not enemy.get_can_flee():
+				_show_message("* You cannot escape!", "turn")
+				return
 		_show_message("* You ran away.", "flee")
 		return
 	var spared := 0
@@ -292,15 +378,31 @@ func _resolve_mercy() -> void:
 
 
 func start_enemy_turn() -> void:
-	battle_state = BATTLE_STATE.ENEMY_TURN
+	battle_state = BATTLE_STATE.TRANSITION
 	turn_number += 1
 	box_typer.visible = false
-	battle_box.size = TURN_BOX_SIZE
+	soul.visible = false
+	if box_transition_duration > 0.0:
+		var tween := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(battle_box, "size", TURN_BOX_SIZE, box_transition_duration)
+		await tween.finished
+	else:
+		battle_box.size = TURN_BOX_SIZE
+	battle_state = BATTLE_STATE.ENEMY_TURN
 	soul.arena = Rect2(battle_box.global_position - TURN_BOX_SIZE / 2.0, TURN_BOX_SIZE)
+	bullet_clip.position = soul.arena.position
+	bullet_clip.size = soul.arena.size
+	bullets.position = -soul.arena.position
 	soul.global_position = battle_box.global_position
 	soul.movement_enabled = true
 	soul.visible = true
-	active_wave = wave_scene.instantiate() as BattleWave
+	var selected_wave := wave_scene
+	for enemy in battle_get_enemys():
+		var custom_wave := enemy.get_wave_scene(turn_number)
+		if custom_wave:
+			selected_wave = custom_wave
+			break
+	active_wave = selected_wave.instantiate() as BattleWave
 	active_wave.battle = self
 	active_wave.duration = turn_duration
 	if active_wave is ExampleWave:
@@ -317,10 +419,17 @@ func spawn_bullet(bullet: BattleBullet, at: Vector2) -> void:
 
 func end_enemy_turn() -> void:
 	if battle_state != BATTLE_STATE.ENEMY_TURN: return
+	battle_state = BATTLE_STATE.TRANSITION
 	soul.movement_enabled = false
+	soul.visible = false
 	if is_instance_valid(active_wave): active_wave.queue_free()
 	_clear_bullets()
-	battle_box.size = MENU_BOX_SIZE
+	if box_transition_duration > 0.0:
+		var tween := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(battle_box, "size", MENU_BOX_SIZE, box_transition_duration)
+		await tween.finished
+	else:
+		battle_box.size = MENU_BOX_SIZE
 	battle_state = BATTLE_STATE.MENU
 	turn_finished.emit(turn_number)
 	battle_set_menu(BATTLE_MENU.BUTTON)
