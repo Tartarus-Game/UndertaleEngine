@@ -3,10 +3,15 @@
 [ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_ot2r1"]
 [ext_resource type="Script" uid="uid://b6kfnt5v6kydf" path="res://auto_load/text/TextTyper.gd" id="1_wshua"]
 [ext_resource type="AudioStream" uid="uid://b5togwmgiyest" path="res://auto_load/text/typer_sound/text2.wav" id="3_3b3lk"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="4_cjk"]
+
+[sub_resource type="FontVariation" id="FontVariation_cjk"]
+fallbacks = [ExtResource("4_cjk")]
+base_font = ExtResource("1_ot2r1")
 
 [node name="TextTyper" type="RichTextLabel" unique_id=1599626808]
-theme_override_fonts/normal_font = ExtResource("1_ot2r1")
-theme_override_fonts/mono_font = ExtResource("1_ot2r1")
+theme_override_fonts/normal_font = SubResource("FontVariation_cjk")
+theme_override_fonts/mono_font = SubResource("FontVariation_cjk")
 bbcode_enabled = true
 fit_content = true
 scroll_active = false

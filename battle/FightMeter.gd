@@ -3,6 +3,7 @@ class_name FightMeter extends Node2D
 signal missed
 
 @export var duration: float = 1.5 # seconds for the marker to cross the bar
+@onready var target: Texture2D = load("res://battle/UI/spr_target_0.png")
 var elapsed := 0.0
 var running := false
 
@@ -29,7 +30,8 @@ func accuracy() -> float:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(-220, -12, 440, 24), Color(0.6, 0.2, 0.2))
-	draw_rect(Rect2(-25, -12, 50, 24), Color(0.95, 0.85, 0.2))
-	var x := lerpf(-220.0, 220.0, clampf(elapsed / duration, 0.0, 1.0))
-	draw_rect(Rect2(x - 3, -20, 6, 40), Color.WHITE)
+	var size := target.get_size()
+	draw_texture(target, -size / 2.0)
+	var x := lerpf(-size.x / 2.0, size.x / 2.0, clampf(elapsed / duration, 0.0, 1.0))
+	draw_rect(Rect2(x - 6, -size.y / 2.0 - 4, 12, size.y + 8), Color.BLACK)
+	draw_rect(Rect2(x - 3, -size.y / 2.0 - 1, 6, size.y + 2), Color.WHITE)

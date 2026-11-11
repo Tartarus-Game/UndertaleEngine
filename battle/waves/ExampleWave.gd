@@ -11,6 +11,8 @@ func advance_wave(_previous: float, now: float) -> void:
 		var from_right := bullet_count % 2 == 0
 		var lane := (bullet_count * 37) % 101 - 50
 		bullet.velocity = Vector2(-115 if from_right else 115, 0)
+		if battle.battle_get_enemy_count() > 0:
+			bullet.damage = roundi(battle.battle_get_enemy(0).get_attack())
 		battle.spawn_bullet(bullet, battle.battle_box.position + Vector2(130 if from_right else -130, lane))
 		bullet_count += 1
 		next_spawn_time += interval

@@ -4,6 +4,10 @@
 [ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="2_s0h1a"]
 [ext_resource type="Script" uid="uid://f34amk1qi5vl" path="res://battle/UI/EnemyActionSelection.gd" id="3_s0h1a"]
 
+[sub_resource type="FontVariation" id="FontVariation_cjk"]
+fallbacks = [ExtResource("2_s0h1a")]
+base_font = ExtResource("1_4gm38")
+
 [node name="EnemyActionSelection" type="Control" unique_id=1151202514]
 layout_mode = 3
 anchors_preset = 0
@@ -17,7 +21,7 @@ offset_left = -8.0
 offset_top = -17.0
 offset_right = 105.0
 offset_bottom = 17.0
-theme_override_fonts/normal_font = ExtResource("1_4gm38")
+theme_override_fonts/normal_font = SubResource("FontVariation_cjk")
 theme_override_fonts/bold_font = ExtResource("2_s0h1a")
 theme_override_font_sizes/normal_font_size = 27
 theme_override_font_sizes/bold_font_size = 27

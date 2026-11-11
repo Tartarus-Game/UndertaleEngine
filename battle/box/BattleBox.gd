@@ -8,7 +8,13 @@
 @export var Up : CollisionShape2D;
 @export var frame_width : float = 2;
 
+func _ready() -> void:
+	_update_box()
+
 func _physics_process(_delta: float) -> void:
+	_update_box()
+
+func _update_box() -> void:
 	Left.position = - Vector2(size.x/2-frame_width/2, 0);
 	Left.scale.y = size.y/50;
 	Left.scale.x = 1;

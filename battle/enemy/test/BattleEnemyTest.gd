@@ -15,4 +15,12 @@ func perform_action(slot: int) -> String:
 	if slot == 1:
 		spareable = true
 		return "* You talked. The enemy can be spared."
+	if slot == 2:
+		_hp = minf(_hp_max, _hp + 10.0)
+		return "* You prayed. The enemy recovered 10 HP."
+	if slot == 3:
+		return "* You shouted at the little robot."
 	return super(slot)
+
+func get_turn_dialog() -> String:
+	return "* The little robot watches you."

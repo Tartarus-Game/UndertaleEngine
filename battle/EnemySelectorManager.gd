@@ -9,10 +9,11 @@ class_name BattleEnemySelections extends Control
 func hide_enemy(slot : int, enable : bool):
 	selections[slot].visible = !enable;
 
-func set_enemy_info(slot : int,enemy_name : String, enemy_hp : float, enemy_hp_max : float):
+func set_enemy_info(slot : int,enemy_name : String, enemy_hp : float, enemy_hp_max : float, spareable := false):
 	selections[slot].set_enemy_name(enemy_name);
 	selections[slot].set_enemy_max_hp(enemy_hp_max);
 	selections[slot].set_enemy_hp(enemy_hp);
+	selections[slot].set_spareable(spareable)
 
 func hide_info(enable : bool):
 	for i in selections:
