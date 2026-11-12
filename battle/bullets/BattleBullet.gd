@@ -8,6 +8,7 @@ enum Rule { WHITE, BLUE, ORANGE, HEAL }
 @export var karma := false
 @export var karma_per_second := 6.0
 @export var destroy_on_contact := true
+@export var grazeable := true
 @export var shootable := false:
 	set(value):
 		shootable = value
@@ -19,6 +20,8 @@ var _contact_ticks: Dictionary = {}
 
 
 func _ready() -> void:
+	# Layer 5 is reserved for the optional graze sensor.
+	set_collision_layer_value(5, true)
 	area_entered.connect(_on_area_entered)
 	area_exited.connect(_on_area_exited)
 	if shootable:
@@ -54,6 +57,10 @@ func _physics_process(delta: float) -> void:
 
 func _motion_for_step(step: float) -> Vector2:
 	return velocity * step
+
+
+func is_graze_active() -> bool:
+	return true
 
 
 func _sweep_contacts(local_motion: Vector2) -> Dictionary:

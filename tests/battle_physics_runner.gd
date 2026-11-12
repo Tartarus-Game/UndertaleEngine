@@ -21,6 +21,9 @@ func run_physics_checks() -> void:
 	await test_pellet_warning()
 	await test_short_beams()
 	await test_soul_projectile_order_and_lifetime()
+	await test_graze()
+	await test_targeted_pellet()
+	await test_gun_shot()
 	await test_platform_carry()
 	await test_jump_release()
 	await test_gravity_directions()
@@ -262,6 +265,156 @@ func test_soul_projectile_order_and_lifetime() -> void:
 		if not overlap.is_queued_for_deletion(): overlap.queue_free()
 		if not shot.is_queued_for_deletion(): shot.queue_free()
 		await get_tree().process_frame
+
+
+func test_graze() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		Global.player_set_hp(20)
+		var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+		soul.arena = Rect2(-1000, -1000, 2000, 2000)
+		soul.movement_enabled = true
+		soul.graze_enabled = true
+		add_child(soul)
+		var count := [0]
+		soul.grazed.connect(func(_bullet): count[0] += 1)
+		var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		bullet.position = Vector2(15, 0)
+		bullet.velocity = Vector2.ZERO
+		bullet.destroy_on_contact = false
+		add_child(bullet)
+		for frame in range(fps + 1): await get_tree().physics_frame
+		check(count[0] >= 5 and count[0] <= 7 and Global.player_data.hp == 20, "nearby bullet grants grazes at a time-based cadence at %d ticks/s (count=%d)" % [fps, count[0]])
+		var previous: int = count[0]
+		soul.invulnerability_remaining = 2.0
+		for frame in range(fps / 4): await get_tree().physics_frame
+		check(count[0] == previous, "invulnerability suppresses grazing")
+		soul.graze_enabled = false
+		soul.invulnerability_remaining = 0.0
+		for frame in range(fps / 4): await get_tree().physics_frame
+		check(count[0] == previous, "disabled graze sensor grants no TP")
+		soul.queue_free()
+		bullet.queue_free()
+		await get_tree().process_frame
+	await set_physics_rate(60)
+	Global.player_set_hp(20)
+	var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+	soul.arena = Rect2(-1000, -1000, 2000, 2000)
+	soul.movement_enabled = true
+	soul.graze_enabled = true
+	add_child(soul)
+	var contact_grazes := [0]
+	soul.grazed.connect(func(_bullet): contact_grazes[0] += 1)
+	var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+	bullet.velocity = Vector2.ZERO
+	bullet.destroy_on_contact = false
+	add_child(bullet)
+	for frame in range(10): await get_tree().physics_frame
+	check(contact_grazes[0] == 0 and Global.player_data.hp == 17, "a direct hit does not count as a graze")
+	soul.queue_free()
+	bullet.queue_free()
+	await get_tree().process_frame
+
+
+func test_targeted_pellet() -> void:
+	for fps in [30, 60, 144]:
+		var pellet := TargetedPellet.new()
+		pellet.rest_position = Vector2(90, 0)
+		pellet.approach_duration = 1.0
+		pellet.hold_duration = 0.5
+		pellet.launch_velocity = Vector2(0, 120)
+		pellet.lifetime = 5.0
+		add_child(pellet)
+		pellet.set_physics_process(false)
+		for frame in range(fps): pellet._physics_process(1.0 / fps)
+		check(pellet.position.distance_to(Vector2(90, 0)) < 0.01, "targeted pellet reaches its rest point after one second at %d updates/s" % fps)
+		for frame in range(fps / 2): pellet._physics_process(1.0 / fps)
+		check(pellet.position.distance_to(Vector2(90, 0)) < 0.01, "targeted pellet waits before launch at %d updates/s" % fps)
+		for frame in range(fps / 2): pellet._physics_process(1.0 / fps)
+		check(pellet.position.distance_to(Vector2(90, 60)) < 0.02, "targeted pellet launches at the configured speed at %d updates/s" % fps)
+		pellet.queue_free()
+		await get_tree().process_frame
+	var pellet := TargetedPellet.new()
+	pellet.rest_position = Vector2(90, 0)
+	pellet.approach_duration = 0.2
+	pellet.hold_duration = 0.3
+	pellet.launch_velocity = Vector2(0, 100)
+	pellet.lifetime = 2.0
+	add_child(pellet)
+	pellet.set_physics_process(false)
+	pellet._physics_process(0.6)
+	check(pellet.position.distance_to(Vector2(90, 10)) < 0.01, "a long update crosses both pellet phase boundaries")
+	pellet.queue_free()
+	await get_tree().process_frame
+	for test in [{"position": Vector2(45, 0), "hp": 17}, {"position": Vector2(45, 20), "hp": 20}]:
+		Global.player_set_hp(20)
+		var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+		soul.arena = Rect2(-1000, -1000, 2000, 2000)
+		soul.movement_enabled = true
+		soul.position = test.position
+		add_child(soul)
+		await get_tree().physics_frame
+		pellet = TargetedPellet.new()
+		pellet.rest_position = Vector2(90, 0)
+		pellet.approach_duration = 0.2
+		pellet.hold_duration = 0.3
+		pellet.launch_velocity = Vector2(0, 400)
+		pellet.lifetime = 2.0
+		add_child(pellet)
+		pellet.set_physics_process(false)
+		pellet._physics_process(0.6)
+		check(Global.player_data.hp == test.hp, "pellet sweeps the actual two-segment path (soul=%s)" % test.position)
+		soul.queue_free()
+		if is_instance_valid(pellet): pellet.queue_free()
+		await get_tree().process_frame
+
+
+func test_gun_shot() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		Global.player_set_hp(20)
+		var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+		soul.arena = Rect2(-1000, -1000, 2000, 2000)
+		soul.movement_enabled = true
+		add_child(soul)
+		await get_tree().physics_frame
+		var gun := GunShot.new()
+		gun.fade_in = 0.001
+		gun.aim_duration = 0.0
+		gun.fire_duration = 0.001
+		gun.fade_out = 0.5
+		var shots := [0]
+		gun.fired.connect(func(): shots[0] += 1)
+		add_child(gun)
+		for frame in range(4): await get_tree().physics_frame
+		check(Global.player_data.hp == 17 and shots[0] == 1, "short gun firing window hits once at %d ticks/s" % fps)
+		soul.queue_free()
+		await get_tree().process_frame
+		Global.player_set_hp(20)
+		var late_soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+		late_soul.arena = Rect2(-1000, -1000, 2000, 2000)
+		late_soul.movement_enabled = true
+		add_child(late_soul)
+		for frame in range(4): await get_tree().physics_frame
+		check(Global.player_data.hp == 20, "gun cannot hit during fade-out at %d ticks/s" % fps)
+		late_soul.queue_free()
+		if is_instance_valid(gun): gun.queue_free()
+		await get_tree().process_frame
+	await set_physics_rate(60)
+	Global.player_set_hp(20)
+	var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+	soul.arena = Rect2(-1000, -1000, 2000, 2000)
+	soul.movement_enabled = true
+	add_child(soul)
+	var gun := GunShot.new()
+	gun.fade_in = 0.3
+	gun.aim_duration = 0.3
+	add_child(gun)
+	for frame in range(10): await get_tree().physics_frame
+	check(Global.player_data.hp == 20, "gun aiming marker is harmless before firing")
+	soul.queue_free()
+	gun.queue_free()
+	await get_tree().process_frame
 
 
 func test_platform_carry() -> void:

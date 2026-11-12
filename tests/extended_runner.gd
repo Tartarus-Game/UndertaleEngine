@@ -286,6 +286,15 @@ func test_patterns_and_waves() -> void:
 	distant_bullet.shootable = true
 	add_child(distant_bullet)
 	distant_bullet.set_physics_process(false)
+	battle.graze_enabled = true
+	battle.soul.grazed.emit(distant_bullet)
+	check(battle.tp_value == 1, "graze signal adds battle TP")
+	battle.set_tp(999)
+	check(battle.tp_value == battle.tp_max and battle.spend_tp(30) and battle.tp_value == battle.tp_max - 30, "TP is capped and can be spent")
+	check(not battle.spend_tp(999), "TP cannot be spent beyond its balance")
+	var ui: BattleUI = battle.get_node("UIManager/UI")
+	check(ui.tp_label.visible and ui.tp_label.text == "TP 70/100", "TP display follows the battle state")
+	battle.graze_enabled = false
 	var shot := SoulProjectile.new()
 	shot.velocity = Vector2(12000, 0)
 	shot.battle = battle
@@ -329,6 +338,10 @@ func test_patterns_and_waves() -> void:
 	var laser := BattlePatterns.blaster(battle, Vector2(100, 320), Vector2(400, 320), 0.5, 1.0)
 	var ring := BattlePatterns.ring(battle, Vector2(320, 320), 8, 50, 20, 1.0)
 	check(wall.size() == 3 and laser.warning == 0.5 and ring.get_child_count() == 8, "attack helpers instantiate bones, charged lasers and rings")
+	var pellet := BattlePatterns.targeted_pellet(battle, Vector2(0, 0), Vector2(80, 0), Vector2(0, 100), 0.3, 0.5)
+	var gun := BattlePatterns.gun(battle, Vector2(200, 200), 0.2, 0.3, 0.1, BattleBullet.Rule.BLUE, {"radius": 12.0, "show_horizontal": false})
+	check(pellet.get_parent() == battle.effects and pellet.rest_position == Vector2(80, 0), "targeted pellet factory configures its route")
+	check(gun.rule == BattleBullet.Rule.BLUE and gun.radius == 12.0 and not gun.show_horizontal, "gun factory applies attack options")
 	battle.end_enemy_turn()
 	target._hp = 1.0
 	target.data.exp_reward = 4

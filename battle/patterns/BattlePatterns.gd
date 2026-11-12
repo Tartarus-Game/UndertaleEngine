@@ -64,6 +64,35 @@ static func pellet(battle: Battle, at: Vector2, target: Vector2, pause := 0.5, s
 	return result
 
 
+static func targeted_pellet(battle: Battle, from: Vector2, rest_at: Vector2, launch_velocity: Vector2, approach := 0.35, hold := 0.5, lifetime := 5.0, rule := BattleBullet.Rule.WHITE) -> TargetedPellet:
+	var result := TargetedPellet.new()
+	result.rest_position = rest_at
+	result.approach_duration = approach
+	result.hold_duration = hold
+	result.launch_velocity = launch_velocity
+	result.lifetime = lifetime
+	result.rule = rule
+	battle.spawn_bullet(result, from, true)
+	return result
+
+
+static func gun(battle: Battle, at: Vector2, fade_in := 0.25, aim := 0.5, active := 0.1, rule := BattleBullet.Rule.WHITE, options := {}) -> GunShot:
+	var result := GunShot.new()
+	result.fade_in = fade_in
+	result.aim_duration = aim
+	result.fire_duration = active
+	result.rule = rule
+	result.fade_out = options.get("fade_out", result.fade_out)
+	result.radius = options.get("radius", result.radius)
+	result.aim_distance = options.get("aim_distance", result.aim_distance)
+	result.show_horizontal = options.get("show_horizontal", result.show_horizontal)
+	result.show_vertical = options.get("show_vertical", result.show_vertical)
+	result.prepare_sound = options.get("prepare_sound")
+	result.fire_sound = options.get("fire_sound")
+	battle.spawn_bullet(result, at, true)
+	return result
+
+
 static func knife_warning(battle: Battle, from: Vector2, target: Vector2, warning := 0.5, duration := 0.35) -> PatternBullet:
 	return beam(battle, from, (target - from).normalized(), warning, duration, 8.0)
 

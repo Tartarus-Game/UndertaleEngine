@@ -29,6 +29,8 @@ Player HP, attack, defense, inventory, equipment, EXP, GOLD, LV and KR are in `G
 
 `BattleBullet` supports white, blue, orange and healing collision rules, invulnerability, shootable targets, and optional KR. Set `karma = true` on a bullet or enable `Global.player_data.kr_enabled`; `karma_per_second` controls sustained contact, and the soul drains accumulated KR over time. `BattlePatterns` provides bones, walls, rotating rings, moving platforms, telegraphed beams and blasters, line/cross/star bombs, pellets, knife warnings and expanding pulses. These are procedural starter visuals and are intended to be customized.
 
+An encounter can enable `battle.graze_enabled = true` to show a TP counter and gain TP by passing close to dangerous bullets. Set `battle.tp_per_graze`, `battle.tp_max`, `battle.soul.graze_radius`, and `battle.soul.graze_interval` to configure it; `battle.spend_tp(amount)` spends TP when available. Disable `grazeable` on a bullet to exclude it. Grazing is sampled at physics updates and currently uses bullet `CollisionShape2D` shapes; very fast near-misses and polygon-only bullets are not continuously detected.
+
 Create a scene whose root extends `BattleWave`, assign it to an enemy, and schedule events using elapsed seconds:
 
 ```gdscript
@@ -42,6 +44,10 @@ func advance_wave(previous: float, now: float) -> void:
 ```
 
 Use `BattlePatterns.pellet()`, `platform()`, `ring()`, `line_bomb()`, `knife_warning()` and `pulse()` for other examples. Bullet velocities are pixels/second, angular velocities are radians/second, and all durations are seconds. `battle.spawn_bullet(bullet, position, true)` allows a bullet to be drawn outside the arena. `battle.set_arena_polygon(points)` accepts a simple, non-self-intersecting polygon of up to 32 vertices in local battle-box coordinates; pass an empty array to restore the rectangular box.
+
+`BattlePatterns.targeted_pellet(battle, from, rest_at, launch_velocity, approach, hold, lifetime, rule)` creates a pellet that travels to `rest_at`, pauses, and then launches. Its approach and hold durations are sequential and measured in seconds; the returned node also exposes `radius`.
+
+`BattlePatterns.gun(battle, at, fade_in, aim, active, rule, options)` creates a target marker that converges before a short firing window. The optional dictionary accepts `radius`, `aim_distance`, `fade_out`, `show_horizontal`, `show_vertical`, `prepare_sound`, and `fire_sound`; connect to its `fired` signal for custom effects. The pattern dummy demonstrates both attacks and TP grazing.
 
 ## World, dialogue and saves
 
@@ -84,3 +90,5 @@ The tests exercise the battle and world round trip, equipment and rewards, menu 
 ## References
 
 The design was informed by [UndergameEngine](https://github.com/SheepYhangCN/UndergameEngine), [TML233's UndertaleEngine](https://github.com/TML233/UndertaleEngine), [Zhazha's Undertale Engine](https://github.com/onezhazha233/Undertale-Engine-modded-by-Zhazha), and [swapfell-remake-project](https://github.com/onezhazha233/swapfell-remake-project). Those are GameMaker projects; this implementation is written for Godot.
+
+[Feature comparison](docs/FEATURE_COMPARISON.md) links individual reference files and records which parts remain incomplete.
