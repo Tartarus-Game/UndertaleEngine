@@ -64,7 +64,7 @@ static func pellet(battle: Battle, at: Vector2, target: Vector2, pause := 0.5, s
 	return result
 
 
-static func targeted_pellet(battle: Battle, from: Vector2, rest_at: Vector2, launch_velocity: Vector2, approach := 0.35, hold := 0.5, lifetime := 5.0, rule := BattleBullet.Rule.WHITE) -> TargetedPellet:
+static func targeted_pellet(battle: Battle, from: Vector2, rest_at: Vector2, launch_velocity: Vector2, approach := 0.35, hold := 0.5, lifetime := 5.0, rule := BattleBullet.Rule.WHITE, options := {}) -> TargetedPellet:
 	var result := TargetedPellet.new()
 	result.rest_position = rest_at
 	result.approach_duration = approach
@@ -72,6 +72,10 @@ static func targeted_pellet(battle: Battle, from: Vector2, rest_at: Vector2, lau
 	result.launch_velocity = launch_velocity
 	result.lifetime = lifetime
 	result.rule = rule
+	result.launch_timing = options.get("launch_timing", result.launch_timing)
+	result.approach_ease = options.get("approach_ease", result.approach_ease)
+	result.recoil_distance = options.get("recoil_distance", result.recoil_distance)
+	result.recoil_duration = options.get("recoil_duration", result.recoil_duration)
 	battle.spawn_bullet(result, from, true)
 	return result
 
@@ -89,6 +93,23 @@ static func gun(battle: Battle, at: Vector2, fade_in := 0.25, aim := 0.5, active
 	result.show_vertical = options.get("show_vertical", result.show_vertical)
 	result.prepare_sound = options.get("prepare_sound")
 	result.fire_sound = options.get("fire_sound")
+	battle.spawn_bullet(result, at, true)
+	return result
+
+
+static func bone_cone(battle: Battle, at: Vector2, from_angle: float, target_angle: float, charge := 0.5, acceleration := 240.0, rule := BattleBullet.Rule.WHITE, options := {}) -> BoneCone:
+	var result := BoneCone.new()
+	result.rotation = from_angle
+	result.target_angle = target_angle
+	result.charge_duration = charge
+	result.acceleration = acceleration
+	result.rule = rule
+	result.speed = options.get("speed", result.speed)
+	result.turn_speed = options.get("turn_speed", result.turn_speed)
+	result.length = options.get("length", result.length)
+	result.width = options.get("width", result.width)
+	result.lifetime = options.get("lifetime", result.lifetime)
+	result.karma = options.get("karma", result.karma)
 	battle.spawn_bullet(result, at, true)
 	return result
 

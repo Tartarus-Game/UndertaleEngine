@@ -13,6 +13,8 @@ func advance_wave(previous: float, now: float) -> void:
 		BattlePatterns.targeted_pellet(battle, center + Vector2(200, -45), center + Vector2(70, -45), Vector2(-180, 0), 0.5, 0.4)
 	if previous < 2.0 and now >= 2.0:
 		BattlePatterns.blaster(battle, center + Vector2(-120, -40), center, 0.8, 0.7)
+	if previous < 2.75 and now >= 2.75:
+		BattlePatterns.bone_cone(battle, center + Vector2(170, 0), PI / 2.0, PI, 0.5, 240.0, BattleBullet.Rule.BLUE, {"speed": 60.0})
 	if previous < 3.5 and now >= 3.5:
 		BattlePatterns.ring(battle, center, 8, 50, 25, 1.2, 2.0)
 	if previous < 4.0 and now >= 4.0:
