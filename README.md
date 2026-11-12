@@ -64,7 +64,9 @@ Register items with `ItemManager.register(id, item)`; `HealingItem` and `Equipme
 
 Movement, acceleration, invulnerability, typing, attack scheduling, fades and damage-over-time use seconds. Godot's `CharacterBody2D.move_and_slide()` applies the physics timestep internally; do not multiply its velocity by delta beforehand. Use elapsed-time boundary checks or a loop when scheduling repeated events so a long update does not skip them.
 
-Physics and input are still sampled at their configured rates; different physics tick rates can change collision precision, especially for fast projectiles. The implementation targets consistent speeds and durations rather than identical collision results at every tick rate.
+Blue-soul jump height can be shortened by releasing the jump key; `jump_release_speed_ratio` controls the remaining upward speed. Platforms created by `BattlePatterns.platform()` can set `bounce_in_arena = true` to reflect off the current rectangular arena bounds.
+
+Fast, linearly moving bullets sweep their `CollisionShape2D` shapes between physics updates, and fast expanding pulses check the swept ring. This reduces tunneling, but does not provide continuous collision for rotation, parent-driven motion, moving targets, or custom `CollisionPolygon2D` bullet shapes. Physics and input remain sampled at their configured rates, so different tick rates can still change collision precision.
 
 After importing once, run:
 
@@ -72,9 +74,10 @@ After importing once, run:
 godot --headless --editor --path . --quit
 godot --headless --path . res://tests/test_runner.tscn
 godot --headless --path . res://tests/extended_runner.tscn
+godot --headless --path . res://tests/battle_physics_runner.tscn
 ```
 
-The tests exercise the battle and world round trip, equipment and rewards, menu and dialogue input, shop transactions, room and save restoration, multiple waves, polygon bounds, and time-dependent behavior at 30, 60 and 144 updates per second.
+The tests exercise the battle and world round trip, equipment and rewards, menu and dialogue input, shop transactions, room and save restoration, multiple waves, polygon bounds, and time-dependent behavior at 30, 60 and 144 updates per second. The battle physics suite additionally uses actual collision shapes to test jumping, platforms, projectile sweeps and lifetime boundaries.
 
 ## References
 

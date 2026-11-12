@@ -11,6 +11,7 @@ var expansion_speed := 90.0
 var radius := 2.0
 var circle: CircleShape2D
 var launch_velocity := Vector2.ZERO
+var _motion_delay := 0.0
 
 
 func _ready() -> void:
@@ -30,18 +31,47 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var step := minf(delta, maxf(lifetime, 0.0))
 	var previous_age := age
-	age += delta
-	rotation += angular_velocity * delta
+	age += step
+	rotation += angular_velocity * step
 	if shape_type == Shape.PULSE:
-		radius += expansion_speed * delta
+		var previous_radius := radius
+		radius += expansion_speed * step
 		circle.radius = radius + width
+		if age >= warning:
+			var active_radius := previous_radius + expansion_speed * clampf(warning - previous_age, 0.0, step)
+			if absf(radius - active_radius) > 4.0:
+				_sweep_pulse(active_radius, radius)
 	elif shape_type == Shape.PELLET and age >= warning:
 		velocity = launch_velocity
 		# Only integrate the part of this update after the warning expires.
-		position -= velocity * clampf(warning - previous_age, 0.0, delta)
+		_motion_delay = clampf(warning - previous_age, 0.0, step)
 	queue_redraw()
 	super._physics_process(delta)
+
+
+func _motion_for_step(step: float) -> Vector2:
+	return velocity * maxf(0.0, step - _motion_delay)
+
+
+func _sweep_pulse(from_radius: float, to_radius: float) -> void:
+	var inner := minf(from_radius, to_radius) - width - 4.0
+	var outer := maxf(from_radius, to_radius) + width + 4.0
+	var area_shape := CircleShape2D.new()
+	area_shape.radius = maxf(outer, 0.001)
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = area_shape
+	query.transform = global_transform
+	query.collision_mask = collision_mask
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	query.exclude = [get_rid()]
+	for hit in get_world_2d().direct_space_state.intersect_shape(query):
+		var area := hit.collider as Area2D
+		if area and area.global_position.distance_to(global_position) >= inner:
+			super._try_contact(area)
+			if is_queued_for_deletion(): return
 
 
 func _try_contact(area: Area2D, delta: float = 0.0) -> void:
