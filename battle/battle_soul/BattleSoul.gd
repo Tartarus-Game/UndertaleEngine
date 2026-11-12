@@ -9,6 +9,7 @@ signal shot_requested(origin: Vector2, direction: Vector2)
 @export var gravity_acceleration := 1100.0
 @export var maximum_fall_speed := 400.0
 @export var jump_speed := 350.0
+@export_range(0.0, 1.0, 0.05) var jump_release_speed_ratio := 0.35
 @export var karma_per_second := 6.0
 @onready var sprite: AnimatedSprite2D = $sprite
 
@@ -23,11 +24,13 @@ var is_moving := false
 var shield_direction := Vector2.UP
 var last_direction := Vector2.UP
 var karma_timer := 0.0
+var _jump_active := false
 
 
 func set_mode(value: String) -> void:
 	mode = value.to_lower()
 	gravity_speed = 0.0
+	_jump_active = false
 	velocity = Vector2.ZERO
 	var color := Color.RED
 	if has_mode("blue"): color = Color(0.25, 0.35, 1.0)
@@ -79,14 +82,24 @@ func _physics_process(delta: float) -> void:
 		var grounded := is_on_floor() or _at_arena_floor(gravity)
 		if grounded and gravity_speed > 0.0:
 			gravity_speed = 0.0
+			_jump_active = false
 		if grounded and _jump_pressed(gravity):
 			gravity_speed = -jump_speed
+			_jump_active = true
+		elif _jump_active and gravity_speed < 0.0 and not Input.is_action_pressed(_jump_action(gravity)):
+			gravity_speed = maxf(gravity_speed, -jump_speed * jump_release_speed_ratio)
+			_jump_active = false
 		gravity_speed = minf(gravity_speed + gravity_acceleration * delta, maximum_fall_speed)
 		velocity = tangent * direction.dot(tangent) * current_speed + gravity * gravity_speed
 	else:
 		velocity = direction * current_speed
 	move_and_slide()
 	clamp_to_arena()
+	if has_mode("blue") and gravity_speed < 0.0:
+		var gravity := _cardinal(gravity_direction)
+		if is_on_ceiling() or (arena_polygon.is_empty() and _at_arena_floor(-gravity)):
+			gravity_speed = 0.0
+			_jump_active = false
 	is_moving = global_position.distance_squared_to(before) > 0.000001
 	if has_mode("yellow") and Input.is_action_just_pressed("ui_accept"):
 		shot_requested.emit(global_position, last_direction)
@@ -99,10 +112,14 @@ func _cardinal(direction: Vector2) -> Vector2:
 
 
 func _jump_pressed(gravity: Vector2) -> bool:
-	if gravity == Vector2.DOWN: return Input.is_action_just_pressed("ui_up")
-	if gravity == Vector2.UP: return Input.is_action_just_pressed("ui_down")
-	if gravity == Vector2.LEFT: return Input.is_action_just_pressed("ui_right")
-	return Input.is_action_just_pressed("ui_left")
+	return Input.is_action_just_pressed(_jump_action(gravity))
+
+
+func _jump_action(gravity: Vector2) -> StringName:
+	if gravity == Vector2.DOWN: return &"ui_up"
+	if gravity == Vector2.UP: return &"ui_down"
+	if gravity == Vector2.LEFT: return &"ui_right"
+	return &"ui_left"
 
 
 func _at_arena_floor(gravity: Vector2) -> bool:

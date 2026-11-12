@@ -93,6 +93,7 @@ static func platform(battle: Battle, at: Vector2, width: float, velocity := Vect
 	result.velocity = velocity
 	result.lifetime = lifetime
 	result.arena = battle.soul.arena
+	result.arena_source = battle.soul
 	battle.bullets.add_child(result)
 	return result
 
