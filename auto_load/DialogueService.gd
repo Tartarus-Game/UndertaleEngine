@@ -75,6 +75,14 @@ func present(message: String, choices_list: Array = [], face: Texture2D = null) 
 	return result
 
 
+func load_save_with_feedback(path: String, slot: int) -> void:
+	# The save point belongs to the old room and can be freed during loading.
+	if not await Global.restore_world(path, slot):
+		await present(SettingsService.text("save.load_failed"))
+	elif Global.last_save_recovered:
+		await present(SettingsService.text("save.recovered"))
+
+
 func _process(delta: float) -> void:
 	if not busy: return
 	typer.advance_text(delta)

@@ -4,6 +4,8 @@ var battle : Battle;
 @export var data: EnemyData
 @export var wave_scene: PackedScene
 @export var projectile_target := false
+@export var projectile_hit_shape: Shape2D
+@export var projectile_hit_offset := Vector2.ZERO
 
 var choice_box_size : Vector2 = Vector2(100, 100);
 var choice_box_offset : Vector2 = Vector2(0, 0);

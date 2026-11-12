@@ -27,6 +27,8 @@ Player HP, attack, defense, inventory, equipment, EXP, GOLD, LV and KR are in `G
 
 `battle.soul.set_mode()` accepts `red`, `blue`, `green`, `yellow`, `aqua`, `orange`, or combinations such as `yellow+aqua+orange`. Blue uses gravity and jumping; its `gravity_direction` can point up, down, left or right. Green turns a shield with the directional controls. Yellow fires with confirm in the most recent direction. Aqua reverses controls, and orange continues in the last direction. Bullet rules use actual soul displacement to distinguish moving from standing still.
 
+Yellow shots test shootable bullets against their enabled child `CollisionShape2D` and `CollisionPolygon2D` shapes. An enemy can opt in with `projectile_target` and configure `projectile_hit_shape` and `projectile_hit_offset`; without a custom shape it uses a 12-pixel-radius circle. Shots have a 3-pixel radius and compare relative linear movement to select the first hit. Shapes moved or rotated outside the normal physics update and rapidly rotating targets are not continuously detected.
+
 `BattleBullet` supports white, blue, orange and healing collision rules, invulnerability, shootable targets, and optional KR. Set `karma = true` on a bullet or enable `Global.player_data.kr_enabled`; `karma_per_second` controls sustained contact, and the soul drains accumulated KR over time. `BattlePatterns` provides bones, walls, rotating rings, moving platforms, telegraphed beams and blasters, line/cross/star bombs, pellets, knife warnings and expanding pulses. These are procedural starter visuals and are intended to be customized.
 
 An encounter can enable `battle.graze_enabled = true` to show a TP counter and gain TP by passing close to dangerous bullets. Set `battle.tp_per_graze`, `battle.tp_max`, `battle.soul.graze_radius`, and `battle.soul.graze_interval` to configure it; `battle.spend_tp(amount)` spends TP when available. Disable `grazeable` on a bullet to exclude it. Grazing is sampled at physics updates and currently uses bullet `CollisionShape2D` shapes; very fast near-misses and polygon-only bullets are not continuously detected.
@@ -68,6 +70,8 @@ EventService.run([
 
 `Global.set_flag()` / `get_flag()` manage persistent story values. `Global.storage_save(path, slot)` stores the player, flags, current room and position; `await Global.restore_world(path, slot)` loads them. The demo uses `user://saves/`. Store serializable values in flags. The loader also accepts the earlier prototype's player-only save data. On defeat the demo offers to load the current slot when one exists.
 
+Save writes go to a temporary file before replacing the primary slot. The previous valid save is retained as `.bak`; if the primary is truncated, invalid, missing, or refers to a missing room, loading can recover that backup. `Global.last_save_recovered` and the `save_recovered(slot)` signal report recovery. Unsupported save versions are not silently downgraded or overwritten. This retains one previous version; it does not protect against all filesystem or hardware failures.
+
 Register items with `ItemManager.register(id, item)`; `HealingItem` and `EquipmentItem` show how to implement effects. `ShopService.open_shop(stock, dialogue)` accepts item IDs; prices are defined by each item. `WorldMenu.register_phone(title, message)` adds phone entries. `SettingsService.text(key)` looks up the active language; add the game's own text keys to its language dictionaries.
 
 ## Timing and tests
@@ -86,6 +90,8 @@ godot --headless --path . res://tests/test_runner.tscn
 godot --headless --path . res://tests/extended_runner.tscn
 godot --headless --path . res://tests/battle_physics_runner.tscn
 ```
+
+On Linux, `tests/run_headless.sh` runs the import and all three suites, fails on Godot script errors even when the engine exits successfully, and applies a timeout. Set `GODOT_BIN` to choose the executable. The GitHub Actions workflow runs this script with the official Godot 4.6.3 Linux build.
 
 The tests exercise the battle and world round trip, equipment and rewards, menu and dialogue input, shop transactions, room and save restoration, multiple waves, polygon bounds, and time-dependent behavior at 30, 60 and 144 updates per second. The battle physics suite additionally uses actual collision shapes to test jumping, platforms, projectile sweeps and lifetime boundaries.
 

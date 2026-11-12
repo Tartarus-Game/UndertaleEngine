@@ -21,6 +21,8 @@ func run_physics_checks() -> void:
 	await test_pellet_warning()
 	await test_short_beams()
 	await test_soul_projectile_order_and_lifetime()
+	await test_soul_projectile_target_shapes()
+	await test_shootable_polygon()
 	await test_graze()
 	await test_targeted_pellet()
 	await test_pellet_parallel_and_recoil()
@@ -267,6 +269,177 @@ func test_soul_projectile_order_and_lifetime() -> void:
 		if not overlap.is_queued_for_deletion(): overlap.queue_free()
 		if not shot.is_queued_for_deletion(): shot.queue_free()
 		await get_tree().process_frame
+
+
+func test_soul_projectile_target_shapes() -> void:
+	for fps in [30, 60, 144]:
+		var bone := PatternBullet.new()
+		bone.position = Vector2(50, 0)
+		bone.velocity = Vector2.ZERO
+		bone.length = 50.0
+		bone.width = 8.0
+		bone.shootable = true
+		add_child(bone)
+		bone.set_physics_process(false)
+		var shot := SoulProjectile.new()
+		shot.position = Vector2(0, 20)
+		shot.velocity = Vector2(12000, 0)
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / fps)
+		check(bone.is_queued_for_deletion(), "yellow shot hits long bone away from its center at %d updates/s" % fps)
+		if not bone.is_queued_for_deletion(): bone.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+		var pellet := PatternBullet.new()
+		pellet.shape_type = PatternBullet.Shape.PELLET
+		pellet.position = Vector2(50, 0)
+		pellet.velocity = Vector2.ZERO
+		pellet.width = 4.0
+		pellet.shootable = true
+		add_child(pellet)
+		pellet.set_physics_process(false)
+		shot = SoulProjectile.new()
+		shot.position = Vector2(0, 7.5)
+		shot.velocity = Vector2(12000, 0)
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / fps)
+		check(not pellet.is_queued_for_deletion(), "yellow shot misses outside the actual pellet shape at %d updates/s" % fps)
+		if not pellet.is_queued_for_deletion(): pellet.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+		var moving: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		moving.position = Vector2(50, -50)
+		moving.velocity = Vector2.ZERO
+		moving.shootable = true
+		add_child(moving)
+		moving.set_physics_process(false)
+		shot = SoulProjectile.new()
+		shot.velocity = Vector2(100 * fps, 0)
+		add_child(shot)
+		shot.set_physics_process(false)
+		moving.position = Vector2(50, 50)
+		shot._physics_process(1.0 / fps)
+		check(moving.is_queued_for_deletion(), "yellow shot detects a target crossing its path between updates at %d updates/s" % fps)
+		if not moving.is_queued_for_deletion(): moving.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+		await set_physics_rate(fps)
+		moving = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		moving.position = Vector2(50, -50)
+		moving.velocity = Vector2(0, 100 * fps)
+		moving.shootable = true
+		add_child(moving)
+		shot = SoulProjectile.new()
+		shot.velocity = Vector2(100 * fps, 0)
+		add_child(shot)
+		for frame in range(4): await get_tree().physics_frame
+		check(not is_instance_valid(moving) or moving.is_queued_for_deletion(), "actual physics update detects crossing targets at %d ticks/s" % fps)
+		if is_instance_valid(moving): moving.queue_free()
+		if is_instance_valid(shot): shot.queue_free()
+		await get_tree().process_frame
+		moving = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		moving.position = Vector2(50, 0)
+		moving.velocity = Vector2.ZERO
+		moving.shootable = true
+		add_child(moving)
+		moving.set_physics_process(false)
+		shot = SoulProjectile.new()
+		shot.velocity = Vector2(100 * fps, 0)
+		add_child(shot)
+		shot.set_physics_process(false)
+		moving.position = Vector2(150, 0)
+		shot._physics_process(1.0 / fps)
+		check(not moving.is_queued_for_deletion(), "yellow shot does not hit a target moving away at the same speed")
+		if not moving.is_queued_for_deletion(): moving.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+		for target_speed in [1000.0, 12000.0]:
+			moving = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+			moving.position = Vector2(50, 0)
+			moving.velocity = Vector2.ZERO
+			moving.shootable = true
+			add_child(moving)
+			moving.set_physics_process(false)
+			shot = SoulProjectile.new()
+			shot.velocity = Vector2.ZERO
+			shot.lifetime = 0.005
+			add_child(shot)
+			shot.set_physics_process(false)
+			moving.position.x -= target_speed / fps
+			shot._physics_process(1.0 / fps)
+			check(moving.is_queued_for_deletion() == (target_speed > 1000.0), "moving target respects remaining shot lifetime at %d updates/s" % fps)
+			if not moving.is_queued_for_deletion(): moving.queue_free()
+			if not shot.is_queued_for_deletion(): shot.queue_free()
+			await get_tree().process_frame
+
+
+func test_shootable_polygon() -> void:
+	var bullet := BattleBullet.new()
+	bullet.position = Vector2(50, 0)
+	bullet.velocity = Vector2.ZERO
+	bullet.shootable = true
+	var polygon := CollisionPolygon2D.new()
+	polygon.polygon = PackedVector2Array([Vector2(0, 0), Vector2(40, 0), Vector2(40, 10), Vector2(10, 10), Vector2(10, 40), Vector2(0, 40)])
+	bullet.add_child(polygon)
+	add_child(bullet)
+	bullet.set_physics_process(false)
+	var shot := SoulProjectile.new()
+	shot.position = Vector2(70, 20)
+	shot.velocity = Vector2(1800, 0)
+	add_child(shot)
+	shot.set_physics_process(false)
+	shot._physics_process(1.0 / 60.0)
+	check(not bullet.is_queued_for_deletion(), "yellow shot misses the empty notch of a concave polygon")
+	shot.position = Vector2(0, 20)
+	shot.velocity = Vector2(6000, 0)
+	shot._physics_process(1.0 / 60.0)
+	check(bullet.is_queued_for_deletion(), "yellow shot hits the solid portion of a concave polygon")
+	if not bullet.is_queued_for_deletion(): bullet.queue_free()
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	await get_tree().process_frame
+	bullet = BattleBullet.new()
+	bullet.position = Vector2(50, 0)
+	bullet.velocity = Vector2.ZERO
+	bullet.shootable = true
+	polygon = CollisionPolygon2D.new()
+	polygon.polygon = PackedVector2Array([Vector2(-4, 20), Vector2(4, 20), Vector2(4, 30), Vector2(-4, 30)])
+	bullet.add_child(polygon)
+	add_child(bullet)
+	bullet.set_physics_process(false)
+	shot = SoulProjectile.new()
+	shot.velocity = Vector2(6000, 0)
+	add_child(shot)
+	shot.set_physics_process(false)
+	shot._physics_process(1.0 / 60.0)
+	check(not bullet.is_queued_for_deletion(), "shot misses the initial polygon")
+	polygon.polygon = PackedVector2Array([Vector2(-4, -5), Vector2(4, -5), Vector2(4, 5), Vector2(-4, 5)])
+	shot.position = Vector2.ZERO
+	shot._physics_process(1.0 / 60.0)
+	check(bullet.is_queued_for_deletion(), "yellow shot sees polygon changes after spawning")
+	if not bullet.is_queued_for_deletion(): bullet.queue_free()
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	await get_tree().process_frame
+	bullet = BattleBullet.new()
+	bullet.position = Vector2(50, 0)
+	bullet.velocity = Vector2.ZERO
+	bullet.shootable = true
+	polygon = CollisionPolygon2D.new()
+	polygon.build_mode = CollisionPolygon2D.BUILD_SEGMENTS
+	polygon.polygon = PackedVector2Array([Vector2(0, -20), Vector2(0, 20)])
+	bullet.add_child(polygon)
+	add_child(bullet)
+	bullet.set_physics_process(false)
+	shot = SoulProjectile.new()
+	shot.velocity = Vector2(6000, 0)
+	add_child(shot)
+	shot.set_physics_process(false)
+	shot._physics_process(1.0 / 60.0)
+	check(bullet.is_queued_for_deletion(), "yellow shot hits a polygon built from segments")
+	if not bullet.is_queued_for_deletion(): bullet.queue_free()
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	await get_tree().process_frame
 
 
 func test_graze() -> void:

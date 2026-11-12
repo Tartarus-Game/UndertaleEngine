@@ -129,6 +129,8 @@ func test_inventory_save() -> void:
 	check(Global.player_data.items.size() == Global.player_get_item_count(), "loaded inventory stays linked to player data")
 	Global.player_get_items().pop_back()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(directory + "file991"))
+	if FileAccess.file_exists(directory + "file991.bak"):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(directory + "file991.bak"))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(directory))
 	Global.player_set_hp(20)
 	var candy := ItemManager.item_get("monster_candy")

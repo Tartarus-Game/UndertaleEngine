@@ -3,6 +3,7 @@ extends Node
 signal player_hp_changed(hp: int, maximum: int)
 signal player_stats_changed
 signal flag_changed(key: String, value: Variant)
+signal save_recovered(slot: int)
 
 const EXP_LEVELS := [0, 10, 30, 70, 120, 200, 300, 500, 800, 1200, 1700, 2500, 3500, 5000, 7000, 10000, 15000, 25000, 50000, 99999]
 const INVENTORY_CAPACITY := 8
@@ -17,6 +18,7 @@ var player_data := {
 }
 var world_state := {"flags": {}, "scene": "", "position": Vector2.ZERO}
 var current_save_slot := 0
+var last_save_recovered := false
 
 
 func _ready() -> void:
@@ -134,24 +136,64 @@ func capture_world() -> void:
 
 func storage_save(path: String, slot: int) -> bool:
 	capture_world()
-	DirAccess.make_dir_recursive_absolute(path)
-	var file := FileAccess.open(path.path_join("file" + str(slot)), FileAccess.WRITE)
+	if DirAccess.make_dir_recursive_absolute(path) != OK: return false
+	var primary := path.path_join("file" + str(slot))
+	var temporary := primary + ".tmp"
+	var backup := primary + ".bak"
+	var invalid := primary + ".invalid"
+	var file := FileAccess.open(temporary, FileAccess.WRITE)
 	if file == null:
 		return false
 	file.store_var({"version": 1, "player": player_data, "world": world_state})
+	file.flush()
+	var write_error := file.get_error()
+	file.close()
+	if write_error != OK:
+		DirAccess.remove_absolute(temporary)
+		return false
+	var previous_path := ""
+	if FileAccess.file_exists(primary):
+		# Never replace a valid backup with a corrupt primary.
+		var existing := _read_save_file(primary)
+		if existing.has("unsupported_version"):
+			DirAccess.remove_absolute(temporary)
+			return false
+		previous_path = backup if not existing.is_empty() else invalid
+		if FileAccess.file_exists(previous_path) and DirAccess.remove_absolute(previous_path) != OK:
+			DirAccess.remove_absolute(temporary)
+			return false
+		if DirAccess.rename_absolute(primary, previous_path) != OK:
+			DirAccess.remove_absolute(temporary)
+			return false
+	if DirAccess.rename_absolute(temporary, primary) != OK:
+		if not previous_path.is_empty(): DirAccess.rename_absolute(previous_path, primary)
+		DirAccess.remove_absolute(temporary)
+		return false
 	current_save_slot = slot
+	last_save_recovered = false
 	return true
 
 
-func _read_save(path: String, slot: int) -> Dictionary:
-	var file := FileAccess.open(path.path_join("file" + str(slot)), FileAccess.READ)
+func storage_has_save(path: String, slot: int) -> bool:
+	var primary := path.path_join("file" + str(slot))
+	return FileAccess.file_exists(primary) or FileAccess.file_exists(primary + ".bak")
+
+
+func _read_save_file(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path): return {}
+	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
+	if file.get_length() < 4: return {}
+	var record_size := file.get_32()
+	if record_size < 4 or record_size > file.get_length() - 4: return {}
+	file.seek(0)
 	var saved: Variant = file.get_var()
 	if not saved is Dictionary:
 		return {}
-	if saved.has("version") and (saved.version != 1 or not saved.has("player")):
-		return {}
+	if saved.has("version") and saved.version != 1:
+		return {"unsupported_version": saved.version}
+	if saved.has("version") and not saved.has("player"): return {}
 	# The earlier prototype wrote player_data directly.
 	var saved_player: Variant = saved.get("player", saved)
 	if not saved_player is Dictionary:
@@ -177,6 +219,22 @@ func _read_save(path: String, slot: int) -> Dictionary:
 	return {"player": loaded_player, "world": loaded_world}
 
 
+func _read_save(path: String, slot: int) -> Dictionary:
+	var primary := path.path_join("file" + str(slot))
+	var saved := _read_save_file(primary)
+	if saved.has("unsupported_version"): return {}
+	if not saved.is_empty(): return saved
+	saved = _read_save_file(primary + ".bak")
+	if saved.has("unsupported_version"): return {}
+	if not saved.is_empty(): saved["recovered"] = true
+	return saved
+
+
+func _record_recovery(saved: Dictionary, slot: int) -> void:
+	last_save_recovered = bool(saved.get("recovered", false))
+	if last_save_recovered: save_recovered.emit(slot)
+
+
 func _apply_save(saved: Dictionary, slot: int) -> void:
 	player_data.clear()
 	player_data.merge(saved.player, true)
@@ -192,21 +250,32 @@ func storage_load(path: String, slot: int) -> bool:
 	var saved := _read_save(path, slot)
 	if saved.is_empty(): return false
 	_apply_save(saved, slot)
+	_record_recovery(saved, slot)
 	return true
 
 
 func restore_world(path: String, slot: int) -> bool:
 	var saved := _read_save(path, slot)
 	if saved.is_empty(): return false
+	if not _saved_room_exists(saved):
+		if saved.get("recovered", false): return false
+		saved = _read_save_file(path.path_join("file" + str(slot) + ".bak"))
+		if saved.is_empty() or saved.has("unsupported_version") or not _saved_room_exists(saved): return false
+		saved["recovered"] = true
 	var scene_path: String = saved.world.scene
-	if scene_path.is_empty() or not ResourceLoader.exists(scene_path) or not load(scene_path) is PackedScene:
-		return false
 	var previous := {"player": player_data.duplicate(true), "world": world_state.duplicate(true)}
 	var previous_slot := current_save_slot
 	_apply_save(saved, slot)
-	if await OverworldManager.change_room(scene_path, world_state.position): return true
+	if await OverworldManager.change_room(scene_path, world_state.position):
+		_record_recovery(saved, slot)
+		return true
 	_apply_save(previous, previous_slot)
 	return false
+
+
+func _saved_room_exists(saved: Dictionary) -> bool:
+	var scene_path: String = saved.world.scene
+	return not scene_path.is_empty() and ResourceLoader.exists(scene_path) and load(scene_path) is PackedScene
 
 
 func toggle_fullscreen() -> void:
