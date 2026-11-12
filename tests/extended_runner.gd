@@ -38,6 +38,7 @@ func run_extended() -> void:
 	await test_dialogue_and_events()
 	await test_souls_and_rules()
 	await test_patterns_and_waves()
+	await test_invalid_saves()
 	await test_world_save_restore()
 	InputMap.action_erase_events("ui_menu")
 	for event in menu_events: InputMap.action_add_event("ui_menu", event)
@@ -273,6 +274,30 @@ func test_patterns_and_waves() -> void:
 	add_child(battle)
 	await get_tree().process_frame
 	var target := battle.battle_get_enemy(0)
+	var old_position: Vector2 = target.global_position
+	var old_hp: float = target.get_hp()
+	target.projectile_target = true
+	# Enemy's larger radius puts its surface before the bullet's, even though
+	# the bullet's center is closer to the shot's origin.
+	target.global_position = Vector2(40, 0)
+	var distant_bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+	distant_bullet.position = Vector2(35, 0)
+	distant_bullet.velocity = Vector2.ZERO
+	distant_bullet.shootable = true
+	add_child(distant_bullet)
+	distant_bullet.set_physics_process(false)
+	var shot := SoulProjectile.new()
+	shot.velocity = Vector2(12000, 0)
+	shot.battle = battle
+	add_child(shot)
+	shot.set_physics_process(false)
+	shot._physics_process(1.0 / 60.0)
+	check(target.get_hp() < old_hp and not distant_bullet.is_queued_for_deletion(), "yellow projectile hits the first surface across enemies and bullets")
+	if not distant_bullet.is_queued_for_deletion(): distant_bullet.queue_free()
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	target._hp = old_hp
+	target.global_position = old_position
+	target.projectile_target = false
 	for index in range(1, 9): target.action_set(index, "Action %d" % index)
 	battle.battle_set_act_enemy_choice(0)
 	battle.battle_set_act_choice(7)
@@ -311,6 +336,48 @@ func test_patterns_and_waves() -> void:
 	check(battle.battle_get_enemy_count() == 1 and battle.reward_exp == 4, "shooting a target can defeat it and accumulate rewards")
 	battle.queue_free()
 	await get_tree().process_frame
+
+
+func test_invalid_saves() -> void:
+	var old_player: Dictionary = Global.player_data.duplicate(true)
+	var old_world: Dictionary = Global.world_state.duplicate(true)
+	var old_slot: int = Global.current_save_slot
+	var directory := "user://invalid_save_tests/"
+	DirAccess.make_dir_recursive_absolute(directory)
+	Global.player_set_hp(19)
+	Global.set_flag("save_test", "unchanged")
+	var before_player: Dictionary = Global.player_data.duplicate(true)
+	var before_world: Dictionary = Global.world_state.duplicate(true)
+	var file := FileAccess.open(directory.path_join("file1"), FileAccess.WRITE)
+	file.store_var({"version": 1, "player": {"hp": 1, "items": []}, "world": {"flags": []}})
+	file.close()
+	check(not Global.storage_load(directory, 1), "malformed world state is rejected")
+	check(Global.player_data == before_player and Global.world_state == before_world and Global.current_save_slot == old_slot, "invalid save does not partially modify state")
+	file = FileAccess.open(directory.path_join("file2"), FileAccess.WRITE)
+	file.store_var({"version": 1, "player": {"hp": 1, "items": []}, "world": {"flags": {}, "scene": "res://missing_room.tscn", "position": Vector2.ZERO}})
+	file.close()
+	check(not await Global.restore_world(directory, 2), "save with missing room cannot be restored")
+	check(Global.player_data == before_player and Global.world_state == before_world and Global.current_save_slot == old_slot, "failed room restoration leaves the previous state intact")
+	var invalid := [
+		{"version": 99, "player": {}},
+		{"version": 1, "world": {}},
+		{"version": 1, "player": {"hp": 1, "items": [42]}},
+	]
+	for data in invalid:
+		file = FileAccess.open(directory.path_join("file4"), FileAccess.WRITE)
+		file.store_var(data)
+		file.close()
+		check(not Global.storage_load(directory, 4), "invalid version, missing player or invalid inventory is rejected")
+		check(Global.player_data == before_player and Global.world_state == before_world and Global.current_save_slot == old_slot, "rejected save leaves state unchanged")
+	file = FileAccess.open(directory.path_join("file3"), FileAccess.WRITE)
+	file.store_var({"hp": 12, "items": ["PROMISE"]})
+	file.close()
+	check(Global.storage_load(directory, 3) and Global.player_data.hp == 12 and Global.player_get_item(0) == "PROMISE", "legacy player-only saves still load")
+	for slot in [1, 2, 3, 4]: DirAccess.remove_absolute(ProjectSettings.globalize_path(directory.path_join("file" + str(slot))))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(directory))
+	Global.world_state = old_world
+	Global.current_save_slot = old_slot
+	restore_player(old_player)
 
 
 func test_world_save_restore() -> void:

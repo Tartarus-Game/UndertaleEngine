@@ -47,12 +47,30 @@ func _physics_process(delta: float) -> void:
 		velocity = launch_velocity
 		# Only integrate the part of this update after the warning expires.
 		_motion_delay = clampf(warning - previous_age, 0.0, step)
+	elif shape_type == Shape.BEAM and previous_age <= warning and age > warning:
+		_check_beam_activation()
 	queue_redraw()
 	super._physics_process(delta)
 
 
 func _motion_for_step(step: float) -> Vector2:
 	return velocity * maxf(0.0, step - _motion_delay)
+
+
+func _check_beam_activation() -> void:
+	# The active window may both start and end within this physics update.
+	for child in get_children():
+		if not child is CollisionShape2D or child.disabled or child.shape == null: continue
+		var query := PhysicsShapeQueryParameters2D.new()
+		query.shape = child.shape
+		query.transform = child.global_transform
+		query.collision_mask = collision_mask
+		query.collide_with_areas = true
+		query.collide_with_bodies = false
+		query.exclude = [get_rid()]
+		for hit in get_world_2d().direct_space_state.intersect_shape(query):
+			if hit.collider is Area2D: _try_contact(hit.collider)
+			if is_queued_for_deletion(): return
 
 
 func _sweep_pulse(from_radius: float, to_radius: float) -> void:

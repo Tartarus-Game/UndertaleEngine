@@ -143,34 +143,70 @@ func storage_save(path: String, slot: int) -> bool:
 	return true
 
 
-func storage_load(path: String, slot: int) -> bool:
+func _read_save(path: String, slot: int) -> Dictionary:
 	var file := FileAccess.open(path.path_join("file" + str(slot)), FileAccess.READ)
 	if file == null:
-		return false
+		return {}
 	var saved: Variant = file.get_var()
 	if not saved is Dictionary:
-		return false
+		return {}
+	if saved.has("version") and (saved.version != 1 or not saved.has("player")):
+		return {}
 	# The earlier prototype wrote player_data directly.
-	var saved_player: Dictionary = saved.get("player", saved)
+	var saved_player: Variant = saved.get("player", saved)
+	if not saved_player is Dictionary:
+		return {}
+	var loaded_player := player_data.duplicate(true)
 	for key in saved_player:
-		player_data[key] = saved_player[key]
+		loaded_player[key] = saved_player[key]
+	for key in ["hp", "hp_max", "atk", "def", "exp", "gold", "lv", "kr"]:
+		if typeof(loaded_player.get(key)) not in [TYPE_INT, TYPE_FLOAT]: return {}
+	for key in ["name", "weapon", "armor"]:
+		if not loaded_player.get(key) is String: return {}
+	if not loaded_player.get("kr_enabled") is bool or not loaded_player.get("items") is Array:
+		return {}
+	for item in loaded_player.items:
+		if not item is String: return {}
+	var loaded_world := world_state.duplicate(true)
+	if saved.has("world"):
+		if not saved.world is Dictionary: return {}
+		loaded_world = {"flags": {}, "scene": "", "position": Vector2.ZERO}
+		loaded_world.merge(saved.world, true)
+	if not loaded_world.get("flags") is Dictionary or not loaded_world.get("scene") is String or not loaded_world.get("position") is Vector2:
+		return {}
+	return {"player": loaded_player, "world": loaded_world}
+
+
+func _apply_save(saved: Dictionary, slot: int) -> void:
+	player_data.clear()
+	player_data.merge(saved.player, true)
 	player_data_items.assign(player_data.get("items", []))
 	player_data.items = player_data_items
-	if saved.has("world"):
-		world_state = saved.world
+	world_state = saved.world
 	current_save_slot = slot
 	player_hp_changed.emit(int(player_data.hp), int(player_data.hp_max))
 	player_stats_changed.emit()
+
+
+func storage_load(path: String, slot: int) -> bool:
+	var saved := _read_save(path, slot)
+	if saved.is_empty(): return false
+	_apply_save(saved, slot)
 	return true
 
 
 func restore_world(path: String, slot: int) -> bool:
-	if not storage_load(path, slot):
+	var saved := _read_save(path, slot)
+	if saved.is_empty(): return false
+	var scene_path: String = saved.world.scene
+	if scene_path.is_empty() or not ResourceLoader.exists(scene_path) or not load(scene_path) is PackedScene:
 		return false
-	var scene_path := str(world_state.get("scene", ""))
-	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
-		return false
-	return await OverworldManager.change_room(scene_path, world_state.position)
+	var previous := {"player": player_data.duplicate(true), "world": world_state.duplicate(true)}
+	var previous_slot := current_save_slot
+	_apply_save(saved, slot)
+	if await OverworldManager.change_room(scene_path, world_state.position): return true
+	_apply_save(previous, previous_slot)
+	return false
 
 
 func toggle_fullscreen() -> void:
