@@ -19,6 +19,8 @@ func run_physics_checks() -> void:
 	await test_repeated_fast_contact()
 	await test_fast_pulse()
 	await test_pellet_warning()
+	await test_short_beams()
+	await test_soul_projectile_order_and_lifetime()
 	await test_platform_carry()
 	await test_jump_release()
 	await test_gravity_directions()
@@ -178,6 +180,87 @@ func test_pellet_warning() -> void:
 		check(Global.player_data.hp == expected, "pellet travels only forward after warning (soul x=%.0f HP=%d)" % [soul_x, Global.player_data.hp])
 		soul.queue_free()
 		if is_instance_valid(pellet): pellet.queue_free()
+		await get_tree().process_frame
+
+
+func test_short_beams() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for active in [true, false]:
+			Global.player_set_hp(20)
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.arena = Rect2(-1000, -1000, 2000, 2000)
+			soul.movement_enabled = true
+			add_child(soul)
+			await get_tree().physics_frame
+			var beam := PatternBullet.new()
+			beam.shape_type = PatternBullet.Shape.BEAM
+			beam.velocity = Vector2.ZERO
+			beam.warning = 0.001 if active else 0.003
+			beam.lifetime = 0.002
+			beam.destroy_on_contact = false
+			add_child(beam)
+			for frame in range(4): await get_tree().physics_frame
+			var expected := 17 if active else 20
+			check(Global.player_data.hp == expected, "short beam active=%s at %d ticks/s (HP=%d)" % [active, fps, Global.player_data.hp])
+			soul.queue_free()
+			if is_instance_valid(beam): beam.queue_free()
+			await get_tree().process_frame
+
+
+func test_soul_projectile_order_and_lifetime() -> void:
+	for fps in [30, 60, 144]:
+		var far: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		far.position = Vector2(80, 0)
+		far.velocity = Vector2.ZERO
+		far.shootable = true
+		add_child(far)
+		far.set_physics_process(false)
+		var near: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		near.position = Vector2(30, 0)
+		near.velocity = Vector2.ZERO
+		near.shootable = true
+		add_child(near)
+		near.set_physics_process(false)
+		var shot := SoulProjectile.new()
+		shot.velocity = Vector2(12000, 0)
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / fps)
+		check(near.is_queued_for_deletion() and not far.is_queued_for_deletion(), "yellow projectile hits nearest target at %d ticks/s" % fps)
+		if not near.is_queued_for_deletion(): near.queue_free()
+		if not far.is_queued_for_deletion(): far.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+		var target: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		target.position = Vector2(80, 0)
+		target.velocity = Vector2.ZERO
+		target.shootable = true
+		add_child(target)
+		target.set_physics_process(false)
+		shot = SoulProjectile.new()
+		shot.velocity = Vector2(12000, 0)
+		shot.lifetime = 0.005
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / fps)
+		check(not target.is_queued_for_deletion() and shot.is_queued_for_deletion(), "yellow projectile stops at lifetime boundary at %d ticks/s" % fps)
+		if not target.is_queued_for_deletion(): target.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+		var overlap: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		overlap.velocity = Vector2.ZERO
+		overlap.shootable = true
+		add_child(overlap)
+		overlap.set_physics_process(false)
+		shot = SoulProjectile.new()
+		shot.lifetime = 0.0
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / fps)
+		check(not overlap.is_queued_for_deletion() and shot.is_queued_for_deletion(), "expired yellow projectile cannot hit an overlapping target")
+		if not overlap.is_queued_for_deletion(): overlap.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
 		await get_tree().process_frame
 
 

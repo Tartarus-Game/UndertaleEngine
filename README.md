@@ -2,6 +2,8 @@
 
 A Godot 4.6 foundation for UNDERTALE-style fangames. It includes a small playable overworld, encounters, a battle loop, reusable attack patterns, dialogue, events, shops, and save/load. The included characters, art, balancing, translations and attacks are examples rather than a complete recreation of UNDERTALE.
 
+See [the development backlog](docs/TODO.md) for the current implementation status, known gaps, and verification work.
+
 ## Run the demo
 
 Open `project.godot` in Godot 4.6 and run the project.
