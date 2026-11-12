@@ -12,6 +12,14 @@ class_name Battle extends Node
 @export_range(0.1, 120.0, 0.1) var turn_duration: float = 6.0 # seconds
 @export_range(0.05, 10.0, 0.05) var bullet_interval: float = 0.55 # seconds
 @export_range(0.0, 2.0, 0.05) var box_transition_duration: float = 0.25
+@export var graze_enabled := false:
+	set(value):
+		graze_enabled = value
+		if is_node_ready():
+			soul.graze_enabled = value
+			tp_changed.emit(tp_value, tp_max)
+@export_range(1, 10000, 1) var tp_max := 100
+@export_range(1, 1000, 1) var tp_per_graze := 1
 @export var wave_scene: PackedScene = preload("res://battle/waves/ExampleWave.tscn")
 
 const BULLET_SCENE = preload("res://battle/bullets/BattleBullet.tscn")
@@ -31,6 +39,7 @@ enum BATTLE_STATE { MENU, MESSAGE, ENEMY_TURN, RESULT, TRANSITION }
 signal BattleEvent(TYPE: EVENT_TYPE, EVENT: Variant, FORM: Variant)
 signal turn_started(turn_number: int)
 signal turn_finished(turn_number: int)
+signal tp_changed(value: int, maximum: int)
 
 var battle_menu: BATTLE_MENU = BATTLE_MENU.BUTTON
 var _last_menu: BATTLE_MENU = BATTLE_MENU.BUTTON
@@ -49,6 +58,7 @@ var active_waves: Array[BattleWave] = []
 var reward_exp := 0
 var reward_gold := 0
 var rewards_granted := false
+var tp_value := 0
 var _message_next := ""
 var _result := ""
 var _turn_dialogues: Array[String] = []
@@ -90,6 +100,9 @@ func _ready() -> void:
 	soul.z_index = 4
 	soul.defeated.connect(_on_soul_defeated)
 	soul.shot_requested.connect(_on_soul_shot)
+	soul.graze_enabled = graze_enabled
+	soul.grazed.connect(_on_soul_grazed)
+	tp_changed.emit(tp_value, tp_max)
 	EncounterManager.battle_soul = soul
 	battle_set_button(0)
 	battle_set_menu(BATTLE_MENU.BUTTON)
@@ -538,6 +551,23 @@ func _on_soul_shot(origin: Vector2, direction: Vector2) -> void:
 	shot.velocity = direction.normalized() * 360.0
 	shot.battle = self
 	bullets.add_child(shot)
+
+
+func _on_soul_grazed(_bullet: BattleBullet) -> void:
+	set_tp(tp_value + tp_per_graze)
+
+
+func set_tp(value: int) -> void:
+	var next := clampi(value, 0, maxi(tp_max, 1))
+	if tp_value == next: return
+	tp_value = next
+	tp_changed.emit(tp_value, tp_max)
+
+
+func spend_tp(amount: int) -> bool:
+	if amount < 0 or amount > tp_value: return false
+	set_tp(tp_value - amount)
+	return true
 
 
 func damage_enemy_from_projectile(enemy: BattleEnemy, amount: float) -> void:

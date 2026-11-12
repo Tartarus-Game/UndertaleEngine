@@ -13,8 +13,15 @@ var act_enemy_slot : int = 0;
 var act_slot : int = 0;
 var item_slot : int = 0;
 var karma_bar: ColorRect
+var tp_label: Label
 
 func _ready() -> void:
+	tp_label = Label.new()
+	tp_label.position = Vector2(480, 400)
+	tp_label.add_theme_font_size_override("font_size", 18)
+	add_child(tp_label)
+	battle.tp_changed.connect(_update_tp)
+	_update_tp(battle.tp_value, battle.tp_max)
 	karma_bar = ColorRect.new()
 	karma_bar.color = Color(0.8, 0.1, 0.8)
 	karma_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -26,6 +33,12 @@ func _ready() -> void:
 	for index in range(4):
 		add_button(get_button(index), Callable(), _select_main_button.bind(index), _activate_main_button.bind(index))
 	set_active(true)
+
+
+func _update_tp(value: int, maximum: int) -> void:
+	tp_label.visible = battle.graze_enabled
+	tp_label.text = "TP %d/%d" % [value, maximum]
+
 
 func _select_main_button(index: int) -> void:
 	battle.battle_set_button(index)

@@ -3,6 +3,7 @@ class_name BattleSoul extends CharacterBody2D
 signal hurt(damage: int)
 signal defeated
 signal shot_requested(origin: Vector2, direction: Vector2)
+signal grazed(bullet: BattleBullet)
 
 @export var speed := 180.0
 @export var invulnerability_time := 1.0
@@ -11,6 +12,15 @@ signal shot_requested(origin: Vector2, direction: Vector2)
 @export var jump_speed := 350.0
 @export_range(0.0, 1.0, 0.05) var jump_release_speed_ratio := 0.35
 @export var karma_per_second := 6.0
+@export var graze_enabled := false:
+	set(value):
+		graze_enabled = value
+		if is_instance_valid(_graze_area): _graze_area.set_deferred("monitoring", value)
+@export_range(4.0, 100.0, 1.0) var graze_radius := 20.0:
+	set(value):
+		graze_radius = value
+		if is_instance_valid(_graze_shape): _graze_shape.radius = value
+@export_range(0.01, 5.0, 0.01) var graze_interval := 1.0 / 6.0
 @onready var sprite: AnimatedSprite2D = $sprite
 
 var movement_enabled := false
@@ -25,6 +35,24 @@ var shield_direction := Vector2.UP
 var last_direction := Vector2.UP
 var karma_timer := 0.0
 var _jump_active := false
+var _graze_area: Area2D
+var _graze_shape: CircleShape2D
+var _graze_cooldown := 0.0
+
+
+func _ready() -> void:
+	_graze_area = Area2D.new()
+	_graze_area.name = "GrazeArea"
+	_graze_area.collision_layer = 0
+	_graze_area.collision_mask = 16
+	_graze_area.monitorable = false
+	_graze_area.monitoring = graze_enabled
+	_graze_shape = CircleShape2D.new()
+	_graze_shape.radius = graze_radius
+	var collision := CollisionShape2D.new()
+	collision.shape = _graze_shape
+	_graze_area.add_child(collision)
+	add_child(_graze_area)
 
 
 func set_mode(value: String) -> void:
@@ -55,6 +83,7 @@ func has_mode(name: String) -> bool:
 func _physics_process(delta: float) -> void:
 	advance_invulnerability(delta)
 	advance_karma(delta)
+	_graze_cooldown = maxf(0.0, _graze_cooldown - delta)
 	if not movement_enabled:
 		velocity = Vector2.ZERO
 		is_moving = false
@@ -101,8 +130,43 @@ func _physics_process(delta: float) -> void:
 			gravity_speed = 0.0
 			_jump_active = false
 	is_moving = global_position.distance_squared_to(before) > 0.000001
+	_check_graze()
 	if has_mode("yellow") and Input.is_action_just_pressed("ui_accept"):
 		shot_requested.emit(global_position, last_direction)
+
+
+func _check_graze() -> void:
+	if not graze_enabled or invulnerability_remaining > 0.0 or _graze_cooldown > 0.000001:
+		return
+	for area in _graze_area.get_overlapping_areas():
+		var bullet := area as BattleBullet
+		if not bullet or bullet.is_queued_for_deletion() or not bullet.grazeable or not bullet.is_graze_active() or bullet.rule == BattleBullet.Rule.HEAL:
+			continue
+		if bullet is PatternBullet:
+			if bullet.age < bullet.warning: continue
+			if bullet.shape_type == PatternBullet.Shape.PULSE and absf(bullet.global_position.distance_to(global_position) - bullet.radius) > bullet.width + graze_radius:
+				continue
+		if _bullet_touches_hurtbox(bullet): continue
+		_graze_cooldown = graze_interval
+		grazed.emit(bullet)
+		return
+
+
+func _bullet_touches_hurtbox(bullet: BattleBullet) -> bool:
+	if bullet is PatternBullet and bullet.shape_type == PatternBullet.Shape.PULSE:
+		return absf(bullet.global_position.distance_to(global_position) - bullet.radius) <= bullet.width + 4.0
+	var hurtbox := $HurtBox as Area2D
+	for child in bullet.get_children():
+		if not child is CollisionShape2D or child.disabled or child.shape == null: continue
+		var query := PhysicsShapeQueryParameters2D.new()
+		query.shape = child.shape
+		query.transform = child.global_transform
+		query.collision_mask = hurtbox.collision_layer
+		query.collide_with_areas = true
+		query.collide_with_bodies = false
+		for hit in get_world_2d().direct_space_state.intersect_shape(query):
+			if hit.collider == hurtbox: return true
+	return false
 
 
 func _cardinal(direction: Vector2) -> Vector2:
