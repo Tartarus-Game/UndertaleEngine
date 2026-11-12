@@ -23,6 +23,8 @@ func run_physics_checks() -> void:
 	await test_soul_projectile_order_and_lifetime()
 	await test_graze()
 	await test_targeted_pellet()
+	await test_pellet_parallel_and_recoil()
+	await test_bone_cone()
 	await test_gun_shot()
 	await test_platform_carry()
 	await test_jump_release()
@@ -366,6 +368,104 @@ func test_targeted_pellet() -> void:
 		check(Global.player_data.hp == test.hp, "pellet sweeps the actual two-segment path (soul=%s)" % test.position)
 		soul.queue_free()
 		if is_instance_valid(pellet): pellet.queue_free()
+		await get_tree().process_frame
+
+
+func test_pellet_parallel_and_recoil() -> void:
+	for fps in [30, 60, 144]:
+		var pellet := TargetedPellet.new()
+		pellet.rest_position = Vector2(90, 0)
+		pellet.approach_duration = 1.0
+		pellet.hold_duration = 0.25
+		pellet.launch_timing = TargetedPellet.LaunchTiming.FROM_SPAWN
+		pellet.launch_velocity = Vector2(0, 100)
+		pellet.lifetime = 5.0
+		add_child(pellet)
+		pellet.set_physics_process(false)
+		for frame in range(fps / 2): pellet._physics_process(1.0 / fps)
+		check(pellet.position.distance_to(Vector2(45, 25)) < 0.03, "pellet approach and launch timer run concurrently at %d updates/s" % fps)
+		for frame in range(fps / 2): pellet._physics_process(1.0 / fps)
+		check(pellet.position.distance_to(Vector2(90, 75)) < 0.03, "concurrent pellet reaches the expected position at %d updates/s" % fps)
+		pellet.queue_free()
+		await get_tree().process_frame
+		pellet = TargetedPellet.new()
+		pellet.approach_duration = 0.0
+		pellet.hold_duration = 0.5
+		pellet.recoil_distance = 12.0
+		pellet.recoil_duration = 0.2
+		pellet.launch_velocity = Vector2(120, 0)
+		pellet.lifetime = 5.0
+		add_child(pellet)
+		pellet.set_physics_process(false)
+		for frame in range(roundi(fps * 0.7)): pellet._physics_process(1.0 / fps)
+		var elapsed: float = float(roundi(fps * 0.7)) / float(fps)
+		var expected_x := -12.0 + 120.0 * maxf(0.0, elapsed - 0.7)
+		check(absf(pellet.position.x - expected_x) < 0.08, "pellet recoils before launching at %d updates/s" % fps)
+		pellet.queue_free()
+		await get_tree().process_frame
+	var back := TargetedPellet.new()
+	back.rest_position = Vector2(100, 0)
+	back.approach_duration = 1.0
+	back.hold_duration = 2.0
+	back.approach_ease = TargetedPellet.ApproachEase.BACK_OUT
+	add_child(back)
+	back.set_physics_process(false)
+	back._physics_process(0.6)
+	check(back.position.x > 100.0, "back-out approach overshoots its rest point")
+	back._physics_process(0.4)
+	check(back.position.distance_to(Vector2(100, 0)) < 0.01, "back-out approach settles at its rest point")
+	back.queue_free()
+	await get_tree().process_frame
+
+
+func test_bone_cone() -> void:
+	var turning_positions: Array[Vector2] = []
+	for fps in [30, 60, 144]:
+		var cone := BoneCone.new()
+		cone.target_angle = PI / 2.0
+		cone.turn_speed = PI
+		cone.charge_duration = 0.5
+		cone.acceleration = 120.0
+		cone.lifetime = 5.0
+		add_child(cone)
+		cone.set_physics_process(false)
+		for frame in range(fps * 2): cone._physics_process(1.0 / fps)
+		check(cone.position.distance_to(Vector2(0, 135)) < 0.05 and absf(cone.speed - 180.0) < 0.01, "bone cone charges, turns and accelerates at %d updates/s" % fps)
+		cone.queue_free()
+		await get_tree().process_frame
+		cone = BoneCone.new()
+		cone.target_angle = PI / 2.0
+		cone.turn_speed = PI
+		cone.charge_duration = 0.0
+		cone.acceleration = 100.0
+		cone.lifetime = 5.0
+		add_child(cone)
+		cone.set_physics_process(false)
+		for frame in range(fps): cone._physics_process(1.0 / fps)
+		turning_positions.append(cone.position)
+		cone.queue_free()
+		await get_tree().process_frame
+	check(turning_positions[0].distance_to(turning_positions[2]) < 0.05 and turning_positions[1].distance_to(turning_positions[2]) < 0.05, "turning and accelerating cone follows the same trajectory at different update rates")
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		Global.player_set_hp(20)
+		var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+		soul.position = Vector2(0, 100)
+		soul.arena = Rect2(-1000, -1000, 2000, 2000)
+		soul.movement_enabled = true
+		add_child(soul)
+		await get_tree().physics_frame
+		var cone := BoneCone.new()
+		cone.rotation = PI / 2.0
+		cone.target_angle = PI / 2.0
+		cone.charge_duration = 0.0
+		cone.speed = 12000.0
+		cone.acceleration = 0.0
+		add_child(cone)
+		for frame in range(6): await get_tree().physics_frame
+		check(Global.player_data.hp == 17, "fast bone cone hits soul at %d physics ticks/s" % fps)
+		soul.queue_free()
+		if is_instance_valid(cone): cone.queue_free()
 		await get_tree().process_frame
 
 

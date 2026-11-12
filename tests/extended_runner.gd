@@ -342,6 +342,8 @@ func test_patterns_and_waves() -> void:
 	var gun := BattlePatterns.gun(battle, Vector2(200, 200), 0.2, 0.3, 0.1, BattleBullet.Rule.BLUE, {"radius": 12.0, "show_horizontal": false})
 	check(pellet.get_parent() == battle.effects and pellet.rest_position == Vector2(80, 0), "targeted pellet factory configures its route")
 	check(gun.rule == BattleBullet.Rule.BLUE and gun.radius == 12.0 and not gun.show_horizontal, "gun factory applies attack options")
+	var cone := BattlePatterns.bone_cone(battle, Vector2(100, 100), 0.0, PI / 2.0, 0.4, 100.0, BattleBullet.Rule.BLUE, {"speed": 30.0, "karma": true})
+	check(cone.get_parent() == battle.effects and cone.rule == BattleBullet.Rule.BLUE and cone.speed == 30.0 and cone.karma, "bone cone factory applies attack options")
 	battle.end_enemy_turn()
 	target._hp = 1.0
 	target.data.exp_reward = 4
