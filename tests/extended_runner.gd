@@ -28,6 +28,7 @@ func physical_key(keycode: int) -> void:
 
 
 func run_extended() -> void:
+	await test_custom_enemy_template()
 	var menu_events := InputMap.action_get_events("ui_menu")
 	var saved_bindings: Dictionary = SettingsService.bindings.duplicate(true)
 	SettingsService._loading = true
@@ -482,3 +483,62 @@ func test_world_save_restore() -> void:
 	Global.world_state = previous_world
 	restore_player(previous_player)
 	await tree.process_frame
+
+
+func test_custom_enemy_template() -> void:
+	var saved_player: Dictionary = Global.player_data.duplicate(true)
+	var old_encounter_id: int = EncounterManager.current_id
+	var old_battle_soul: BattleSoulRed = EncounterManager.battle_soul
+	var encounter_id := -int(Time.get_ticks_usec())
+	var example := preload("res://examples/custom_enemy/guide_enemy.tscn")
+	EncounterManager.encounter_set(encounter_id, example)
+	EncounterManager.current_id = encounter_id
+	var battle: Battle = preload("res://battle/Battle.tscn").instantiate()
+	battle.box_transition_duration = 0.0
+	battle.turn_duration = 1.0
+	add_child(battle)
+	await get_tree().process_frame
+	check(battle.battle_get_enemy_count() == 1, "custom enemy scene loads into a registered encounter")
+	var enemy: BattleEnemy = battle.battle_get_enemy(0)
+	check(enemy.get_enemy_name() == "Guide" and enemy.get_hp_max() == 45.0 and enemy.data.gold_reward == 18, "custom enemy reads its configured data")
+	check(enemy.action_get_name(1) == "Encourage", "custom enemy exposes its ACT callback")
+	enemy.perform_action(1)
+	check(not enemy.spareable, "one encouragement does not immediately allow sparing")
+	enemy.perform_action(1)
+	check(enemy.spareable, "a second encouragement allows sparing")
+	for fps in [30, 60, 144]:
+		for variant in ["bones", "pellets"]:
+			battle.start_enemy_turn()
+			check(battle.active_waves.size() == 1, "custom enemy starts exactly one wave")
+			var wave: BattleWave = battle.active_waves[0]
+			check(wave.scene_file_path.ends_with(variant + "_wave.tscn"), "custom enemy alternates to the %s wave" % variant)
+			wave.set_physics_process(false)
+			for frame in range(fps + 1):
+				if wave.is_queued_for_deletion(): break
+				wave._physics_process(1.0 / fps)
+			check(wave.get("spawn_index") == 2, "%s wave schedules both attacks at %d updates/s" % [variant, fps])
+			check(battle.battle_state == Battle.BATTLE_STATE.MENU and battle.active_waves.is_empty(), "the completed wave returns control to the battle menu")
+			await get_tree().process_frame
+			check(battle.bullets.get_child_count() == 0, "the battle cleans up the example wave's bullets")
+	battle.start_enemy_turn()
+	var long_step_wave: BattleWave = battle.active_waves[0]
+	long_step_wave.set_physics_process(false)
+	long_step_wave._physics_process(0.9)
+	check(long_step_wave.get("spawn_index") == 2, "a long update does not skip example wave attacks")
+	long_step_wave._physics_process(0.1)
+	await get_tree().process_frame
+	var old_gold := int(Global.player_data.gold)
+	var old_exp := int(Global.player_data.exp)
+	battle.mercy_choice = 0
+	battle._resolve_mercy()
+	check(battle.battle_get_enemy_count() == 0 and battle.reward_gold == 18 and battle.reward_exp == 0, "sparing the example enemy records gold but no EXP")
+	battle._reward_message("*")
+	battle._reward_message("*")
+	check(int(Global.player_data.gold) == old_gold + 18 and int(Global.player_data.exp) == old_exp, "example encounter rewards are granted exactly once")
+	battle.queue_free()
+	await get_tree().process_frame
+	EncounterManager.current_id = old_encounter_id
+	EncounterManager.encounters.erase(encounter_id)
+	EncounterManager.encounter_texts.erase(encounter_id)
+	EncounterManager.battle_soul = old_battle_soul if is_instance_valid(old_battle_soul) else null
+	restore_player(saved_player)
