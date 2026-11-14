@@ -10,6 +10,8 @@ var length := 40.0
 var width := 12.0
 var age := 0.0
 var _motion := Vector2.ZERO
+const MAX_CURVE_ERROR := 0.5 # Maximum requested arc-to-chord error in pixels.
+const MAX_CURVE_SUBSTEPS := 512
 
 
 func _ready() -> void:
@@ -30,6 +32,7 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	var elapsed := 0.0
+	var substeps := 0
 	while remaining > 0.00000001 and not is_queued_for_deletion():
 		var difference := angle_difference(rotation, target_angle)
 		var angular_speed := signf(difference) * maxf(turn_speed, 0.0) if absf(difference) > 0.000001 else 0.0
@@ -40,6 +43,15 @@ func _physics_process(delta: float) -> void:
 			step = minf(step, absf(difference / angular_speed))
 		var start_angle := rotation
 		var moving := age >= charge_duration
+		if moving and absf(angular_speed) > 0.000001 and substeps < MAX_CURVE_SUBSTEPS - 1:
+			# _integrate_motion follows a curved trajectory, while each collision
+			# sweep is linear. Bound the chord error for the fastest speed in the
+			# interval; cap the work in exceptionally fast or long updates.
+			var maximum_speed := maxf(absf(speed), absf(speed + acceleration * step))
+			if maximum_speed > 0.000001:
+				var angle_limit := (PI / 24.0) / absf(angular_speed)
+				var curve_limit := sqrt(8.0 * MAX_CURVE_ERROR / (maximum_speed * absf(angular_speed)))
+				step = minf(step, maxf(0.00000001, minf(angle_limit, curve_limit)))
 		_motion = _integrate_motion(start_angle, angular_speed, step) if moving else Vector2.ZERO
 		if moving: speed += acceleration * step
 		rotation = rotate_toward(start_angle, target_angle, absf(angular_speed) * step)
@@ -47,6 +59,7 @@ func _physics_process(delta: float) -> void:
 		_advance_physics(step, elapsed / delta, (elapsed + step) / delta)
 		elapsed += step
 		remaining -= step
+		substeps += 1
 	queue_redraw()
 
 

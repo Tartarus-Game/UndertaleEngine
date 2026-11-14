@@ -18,3 +18,5 @@ run_godot --editor --quit
 run_godot res://tests/test_runner.tscn
 run_godot res://tests/extended_runner.tscn
 run_godot res://tests/battle_physics_runner.tscn
+run_godot res://tests/rotation_sweep_runner.tscn
+run_godot res://tests/rotation_bullet_runner.tscn

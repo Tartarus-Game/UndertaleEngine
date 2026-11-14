@@ -80,7 +80,9 @@ Movement, acceleration, invulnerability, typing, attack scheduling, fades and da
 
 Blue-soul jump height can be shortened by releasing the jump key; `jump_release_speed_ratio` controls the remaining upward speed. Platforms created by `BattlePatterns.platform()` can set `bounce_in_arena = true` to reflect off the current rectangular arena bounds.
 
-Bullets with `CollisionShape2D` shapes sweep their linear motion relative to the soul, including parent translation. The soul's actual start and end positions are interpolated over each physics update; a path that bends after hitting a wall is therefore approximated by a straight line. Soul hurtboxes support `CollisionShape2D` and solid `CollisionPolygon2D` shapes, but not polygon segments. Custom physics priorities must let the soul and moving bullet parents process before bullets. Rotating bullets, custom `CollisionPolygon2D` bullet shapes, and moving-soul contacts with expanding pulse rings are not continuously detected. Physics and input remain sampled at their configured rates, so different tick rates can still change collision precision.
+Bullets with `CollisionShape2D` shapes sweep their motion relative to the soul, including rotating and translating parents. Rotation uses bounded trajectory subdivision: its target is at most 2 pixels of point travel and 7.5° per segment, with a 512-segment budget distributed across substeps; rounding can raise the total to about 1023 segments. Extreme rotation or tiny shapes can exceed that precision, and many nearby rotating bullets can be costly. Bone cones subdivide curved movement with a target 0.5-pixel chord error and a 512-substep limit. Pulse rings use synchronized relative motion, but approximate the soul as its center plus a 4-pixel radius and do not precisely support non-uniform scaling or custom hurtbox shapes.
+
+The soul's actual start and end positions are interpolated over each physics update; a path that bends after hitting a wall is therefore approximated by a straight line. Soul hurtboxes support `CollisionShape2D` and solid `CollisionPolygon2D` shapes, but not polygon segments. Custom physics priorities must let the soul and moving bullet parents process before bullets. Custom `CollisionPolygon2D` bullet shapes are not continuously detected. Physics and input remain sampled at their configured rates, so different tick rates can still change collision precision.
 
 After importing once, run:
 
@@ -89,9 +91,11 @@ godot --headless --editor --path . --quit
 godot --headless --path . res://tests/test_runner.tscn
 godot --headless --path . res://tests/extended_runner.tscn
 godot --headless --path . res://tests/battle_physics_runner.tscn
+godot --headless --path . res://tests/rotation_sweep_runner.tscn
+godot --headless --path . res://tests/rotation_bullet_runner.tscn
 ```
 
-On Linux, `tests/run_headless.sh` runs the import and all three suites, fails on Godot script errors even when the engine exits successfully, and applies a timeout. Set `GODOT_BIN` to choose the executable. The GitHub Actions workflow runs this script with the official Godot 4.6.3 Linux build.
+On Linux, `tests/run_headless.sh` runs the import and all five suites, fails on Godot script errors even when the engine exits successfully, and applies a timeout. Set `GODOT_BIN` to choose the executable. The GitHub Actions workflow runs this script with the official Godot 4.6.3 Linux build.
 
 The tests exercise the battle and world round trip, equipment and rewards, menu and dialogue input, shop transactions, room and save restoration, multiple waves, polygon bounds, and time-dependent behavior at 30, 60 and 144 updates per second. The battle physics suite additionally uses actual collision shapes to test jumping, platforms, projectile sweeps and lifetime boundaries.
 

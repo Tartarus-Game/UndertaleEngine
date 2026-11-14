@@ -40,8 +40,18 @@ var _graze_shape: CircleShape2D
 var _graze_cooldown := 0.0
 var _sweep_frame := -1
 var _sweep_start := Vector2.ZERO
-var _sweep_end := Vector2.ZERO
 var _hurt_polygon_cache := {}
+
+
+func _enter_tree() -> void:
+	# SceneTree emits physics_frame before any node's _physics_process, so the
+	# snapshot also precedes motion applied by a parent at another priority.
+	_capture_sweep_start()
+	get_tree().physics_frame.connect(_capture_sweep_start)
+
+
+func _exit_tree() -> void:
+	get_tree().physics_frame.disconnect(_capture_sweep_start)
 
 
 func _ready() -> void:
@@ -88,9 +98,6 @@ func has_mode(name: String) -> bool:
 
 
 func _physics_process(delta: float) -> void:
-	_sweep_frame = Engine.get_physics_frames()
-	_sweep_start = global_position
-	_sweep_end = _sweep_start
 	advance_invulnerability(delta)
 	advance_karma(delta)
 	_graze_cooldown = maxf(0.0, _graze_cooldown - delta)
@@ -140,14 +147,25 @@ func _physics_process(delta: float) -> void:
 			gravity_speed = 0.0
 			_jump_active = false
 	is_moving = global_position.distance_squared_to(before) > 0.000001
-	_sweep_end = global_position
 	_check_graze()
 	if has_mode("yellow") and Input.is_action_just_pressed("ui_accept"):
 		shot_requested.emit(global_position, last_direction)
 
 
+func _capture_sweep_start() -> void:
+	_sweep_frame = Engine.get_physics_frames()
+	_sweep_start = global_position
+
+
 func sweep_motion() -> Vector2:
-	return _sweep_end - _sweep_start if _sweep_frame == Engine.get_physics_frames() else Vector2.ZERO
+	return global_position - _sweep_start if _sweep_frame == Engine.get_physics_frames() else Vector2.ZERO
+
+
+func is_moving_for_collision() -> bool:
+	if _sweep_frame == Engine.get_physics_frames():
+		if sweep_motion().length_squared() > 0.000001: return movement_enabled
+		if is_physics_processing(): return false
+	return is_moving
 
 
 func sweep_hurt_shapes() -> Array[Dictionary]:

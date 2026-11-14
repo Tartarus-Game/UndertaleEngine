@@ -7,6 +7,13 @@ class MovingCarrier extends Node2D:
 		position += velocity * delta
 
 
+class RotatingPulseCarrier extends Node2D:
+	var angular_velocity := 0.0
+
+	func _physics_process(delta: float) -> void:
+		rotation += angular_velocity * delta
+
+
 func _ready() -> void:
 	call_deferred("run_physics_checks")
 
@@ -25,10 +32,17 @@ func run_physics_checks() -> void:
 	await test_parent_driven_bullets()
 	await test_parent_motion_physics()
 	await test_relative_soul_motion()
+	await test_parent_driven_soul_motion()
+	await test_spawn_frame_soul_motion()
 	await test_new_bullet_initial_overlap()
+	await test_disabled_bullet_monitoring()
 	await test_bullet_lifetime()
 	await test_repeated_fast_contact()
 	await test_fast_pulse()
+	await test_pulse_relative_motion()
+	await test_pulse_reentry_karma()
+	await test_pulse_spawn_after_soul_moves()
+	await test_pulse_orbital_motion()
 	await test_pellet_warning()
 	await test_short_beams()
 	await test_soul_projectile_order_and_lifetime()
@@ -142,6 +156,62 @@ func test_parent_driven_bullets() -> void:
 			await get_tree().process_frame
 
 
+func test_pulse_reentry_karma() -> void:
+	await set_physics_rate(60)
+	Global.player_set_hp(10)
+	var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+	add_child(soul)
+	soul.set_physics_process(false)
+	var pulse := PatternBullet.new()
+	pulse.position = Vector2(-100, 0)
+	pulse.shape_type = PatternBullet.Shape.PULSE
+	pulse.radius = 40.0
+	pulse.width = 1.0
+	pulse.expansion_speed = 0.0
+	pulse.velocity = Vector2.ZERO
+	pulse.rule = BattleBullet.Rule.HEAL
+	pulse.destroy_on_contact = false
+	add_child(pulse)
+	pulse.set_physics_process(false)
+	for i in range(3): await get_tree().physics_frame
+	soul.movement_enabled = true
+	pulse.velocity = Vector2(12000, 0)
+	pulse._physics_process(1.0 / 60)
+	check(Global.player_data.hp == 13, "healing pulse applies on the first crossing")
+	pulse.velocity = Vector2(-12000, 0)
+	pulse._physics_process(1.0 / 60)
+	check(Global.player_data.hp == 16, "healing pulse applies again after leaving and crossing")
+	soul.queue_free()
+	pulse.queue_free()
+	await get_tree().process_frame
+
+	Global.player_set_hp(20)
+	Global.player_data.kr = 0.0
+	soul = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+	soul.position = Vector2(40, 0)
+	add_child(soul)
+	soul.set_physics_process(false)
+	pulse = PatternBullet.new()
+	pulse.shape_type = PatternBullet.Shape.PULSE
+	pulse.radius = 40.0
+	pulse.width = 1.0
+	pulse.expansion_speed = 0.0
+	pulse.velocity = Vector2.ZERO
+	pulse.karma = true
+	pulse.karma_per_second = 120.0
+	pulse.destroy_on_contact = false
+	add_child(pulse)
+	pulse.set_physics_process(false)
+	for i in range(3): await get_tree().physics_frame
+	soul.movement_enabled = true
+	for i in range(3): pulse._physics_process(1.0 / 60)
+	check(is_equal_approx(Global.player_data.kr, 9.0), "continuous pulse contact applies KR once per elapsed step (KR=%.2f)" % Global.player_data.kr)
+	Global.player_data.kr = 0.0
+	soul.queue_free()
+	pulse.queue_free()
+	await get_tree().process_frame
+
+
 func test_parent_motion_physics() -> void:
 	for fps in [30, 60, 144]:
 		await set_physics_rate(fps)
@@ -241,6 +311,146 @@ func test_fast_pulse() -> void:
 		soul.queue_free()
 		pulse.queue_free()
 		await get_tree().process_frame
+
+
+func test_pulse_relative_motion() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for test in [
+			{"name": "soul crosses a stationary ring", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "hp": 17},
+			{"name": "parent carries soul across a stationary ring", "soul": Vector2(-100, 0), "soul_step": 0.0, "soul_parent_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "hp": 17},
+			{"name": "very fast soul crosses a narrow ring", "soul": Vector2(-10000123, 0), "soul_step": 20000000.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "arena": Rect2(-20000000, -1000, 40000000, 2000), "hp": 17},
+			{"name": "tangent reaches the ring", "soul": Vector2(-100, 45), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "hp": 17},
+			{"name": "near tangent misses the ring", "soul": Vector2(-100, 46), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "hp": 20},
+			{"name": "soul and expanding ring never meet", "soul": Vector2(5, 0), "soul_step": 55.0, "radius": 20.0, "growth": 80.0, "center_step": 0.0, "hp": 20},
+			{"name": "ring center moves across stationary soul", "soul": Vector2(100, 0), "soul_step": 0.0, "radius": 40.0, "growth": 0.0, "center_step": 200.0, "hp": 17},
+			{"name": "ring and soul move together without meeting", "soul": Vector2(100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 200.0, "hp": 20},
+			{"name": "crossing after expiration", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "lifetime": 0.2, "hp": 20},
+			{"name": "crossing before expiration", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "lifetime": 0.4, "hp": 17},
+			{"name": "crossing while warned", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "warning": 0.9, "hp": 20},
+			{"name": "second crossing after warning", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "warning": 0.6, "hp": 17},
+			{"name": "shield blocks ring approaching from the front", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "mode": "green+red", "hp": 20},
+			{"name": "shield does not block ring approaching from behind", "soul": Vector2(100, 0), "soul_step": 0.0, "radius": 40.0, "growth": 0.0, "center_step": 200.0, "mode": "green+red", "hp": 17},
+			{"name": "scaled ring reaches outside its unscaled radius", "soul": Vector2(75, 0), "soul_step": 0.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "scale": 2.0, "hp": 17},
+			{"name": "disabled collision mask ignores crossing", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "mask": 0, "hp": 20},
+			{"name": "unmonitorable hurtbox ignores crossing", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "disable_hurtbox": true, "hp": 20},
+			{"name": "disabled pulse shape ignores crossing", "soul": Vector2(-100, 0), "soul_step": 200.0, "radius": 40.0, "growth": 0.0, "center_step": 0.0, "disable_shape": true, "hp": 20},
+		]:
+			Global.player_set_hp(20)
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.position = test.soul
+			soul.speed = float(test.soul_step) * fps
+			soul.arena = test.get("arena", Rect2(-1000, -1000, 2000, 2000))
+			var soul_parent := MovingCarrier.new()
+			add_child(soul_parent)
+			soul_parent.add_child(soul)
+			var carrier := MovingCarrier.new()
+			carrier.scale = Vector2.ONE * float(test.get("scale", 1.0))
+			add_child(carrier)
+			var pulse := PatternBullet.new()
+			pulse.shape_type = PatternBullet.Shape.PULSE
+			pulse.radius = test.radius
+			pulse.width = 1.0
+			pulse.velocity = Vector2.ZERO
+			pulse.expansion_speed = test.growth * fps
+			pulse.warning = float(test.get("warning", 0.0)) / fps
+			pulse.destroy_on_contact = false
+			carrier.add_child(pulse)
+			if test.has("mask"): pulse.collision_mask = test.mask
+			if test.has("disable_hurtbox"): soul.get_node("HurtBox").monitorable = false
+			if test.has("disable_shape"): (pulse.get_child(0) as CollisionShape2D).disabled = true
+			if test.has("mode"): soul.set_mode(test.mode)
+			soul.set_physics_process(false)
+			pulse.set_physics_process(false)
+			for i in range(3): await get_tree().physics_frame
+			soul.movement_enabled = true
+			pulse.lifetime = float(test.get("lifetime", 2.0)) / fps
+			carrier.velocity = Vector2(test.center_step * fps, 0)
+			soul_parent.velocity = Vector2(float(test.get("soul_parent_step", 0.0)) * fps, 0)
+			Input.action_press("ui_right")
+			soul.set_physics_process(true)
+			pulse.set_physics_process(true)
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			soul.set_physics_process(false)
+			if is_instance_valid(pulse): pulse.set_physics_process(false)
+			carrier.set_physics_process(false)
+			soul_parent.set_physics_process(false)
+			Input.action_release("ui_right")
+			check(Global.player_data.hp == test.hp, "pulse %s at %d Hz (HP=%d)" % [test.name, fps, Global.player_data.hp])
+			soul_parent.queue_free()
+			carrier.queue_free()
+			await get_tree().process_frame
+
+
+func test_pulse_spawn_after_soul_moves() -> void:
+	await set_physics_rate(60)
+	Global.player_set_hp(20)
+	var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+	soul.position = Vector2(-100, 0)
+	soul.speed = 12000.0
+	soul.arena = Rect2(-1000, -1000, 2000, 2000)
+	soul.movement_enabled = true
+	add_child(soul)
+	soul.set_physics_process(false)
+	await get_tree().physics_frame
+	Input.action_press("ui_right")
+	soul._physics_process(1.0 / 60)
+	Input.action_release("ui_right")
+	var pulse := PatternBullet.new()
+	pulse.shape_type = PatternBullet.Shape.PULSE
+	pulse.radius = 40.0
+	pulse.width = 1.0
+	pulse.expansion_speed = 0.0
+	pulse.velocity = Vector2.ZERO
+	pulse.destroy_on_contact = false
+	add_child(pulse)
+	pulse.set_physics_process(false)
+	pulse._physics_process(1.0 / 60)
+	check(Global.player_data.hp == 20, "pulse ignores soul movement before pulse was spawned")
+	soul.queue_free()
+	pulse.queue_free()
+	await get_tree().process_frame
+
+
+func test_pulse_orbital_motion() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for test in [
+			{"name": "arc crosses soul", "soul": Vector2(70.71, 70.71), "hp": 17},
+			{"name": "arc misses soul on chord", "soul": Vector2(50, 50), "hp": 20},
+			{"name": "arc crosses while warned", "soul": Vector2(70.71, 70.71), "warning": 0.9, "hp": 20},
+			{"name": "arc crosses after warning", "soul": Vector2(70.71, 70.71), "warning": 0.2, "hp": 17},
+		]:
+			Global.player_set_hp(20)
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.position = test.soul
+			soul.movement_enabled = true
+			add_child(soul)
+			var carrier := RotatingPulseCarrier.new()
+			add_child(carrier)
+			var pulse := PatternBullet.new()
+			pulse.shape_type = PatternBullet.Shape.PULSE
+			pulse.position = Vector2(100, 0)
+			pulse.radius = 10.0
+			pulse.width = 1.0
+			pulse.velocity = Vector2.ZERO
+			pulse.expansion_speed = 0.0
+			pulse.warning = float(test.get("warning", 0.0)) / fps
+			pulse.destroy_on_contact = false
+			carrier.add_child(pulse)
+			pulse.set_physics_process(false)
+			for i in range(3): await get_tree().physics_frame
+			pulse.lifetime = 1.0 / fps
+			carrier.angular_velocity = PI * 0.5 * fps
+			pulse.set_physics_process(true)
+			await get_tree().physics_frame
+			await get_tree().physics_frame
+			carrier.set_physics_process(false)
+			check(Global.player_data.hp == test.hp, "orbital pulse %s at %d Hz (HP=%d)" % [test.name, fps, Global.player_data.hp])
+			soul.queue_free()
+			carrier.queue_free()
+			await get_tree().process_frame
 
 
 func test_pellet_warning() -> void:
@@ -1054,3 +1264,153 @@ func test_new_bullet_initial_overlap() -> void:
 		soul.queue_free()
 		if is_instance_valid(bullet) and not bullet.is_queued_for_deletion(): bullet.queue_free()
 		await get_tree().process_frame
+
+
+func test_parent_driven_soul_motion() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for test in [
+			{"name": "stationary bullet crossing", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "expected": 17},
+			{"name": "near miss", "soul": Vector2(-100, 60), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "expected": 20},
+			{"name": "opposing bullet", "soul": Vector2(-100, 0), "bullet": Vector2(100, 0), "soul_move": Vector2(200, 0), "bullet_move": Vector2(-200, 0), "expected": 17},
+			{"name": "same speed separation", "soul": Vector2(-100, 0), "bullet": Vector2(-200, 0), "soul_move": Vector2(200, 0), "bullet_move": Vector2(200, 0), "expected": 20},
+			{"name": "expires before crossing", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "lifetime": 0.25, "expected": 20},
+			{"name": "crosses before expiry", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "lifetime": 0.75, "expected": 17},
+			{"name": "blue detects parent movement", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "rule": BattleBullet.Rule.BLUE, "expected": 17},
+			{"name": "orange spares parent movement", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "rule": BattleBullet.Rule.ORANGE, "expected": 20},
+			{"name": "blue detects parent movement when soul processing is disabled", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "rule": BattleBullet.Rule.BLUE, "disabled": true, "expected": 17},
+			{"name": "orange spares parent movement when soul processing is disabled", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "soul_move": Vector2(200, 0), "bullet_move": Vector2.ZERO, "rule": BattleBullet.Rule.ORANGE, "disabled": true, "expected": 20},
+		]:
+			for carrier_priority in [-100, 0]:
+				for soul_first in [true, false]:
+					Global.player_set_hp(20)
+					var carrier := MovingCarrier.new()
+					carrier.position = test.soul
+					carrier.process_physics_priority = carrier_priority
+					var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+					soul.speed = 0.0
+					soul.movement_enabled = false
+					carrier.add_child(soul)
+					var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+					bullet.position = test.bullet
+					bullet.velocity = Vector2.ZERO
+					bullet.rule = test.get("rule", BattleBullet.Rule.WHITE)
+					bullet.destroy_on_contact = false
+					if soul_first:
+						add_child(carrier)
+						add_child(bullet)
+					else:
+						add_child(bullet)
+						add_child(carrier)
+					for frame in range(3): await get_tree().physics_frame
+					soul.movement_enabled = true
+					if test.has("disabled"): soul.set_physics_process(false)
+					carrier.velocity = test.soul_move * fps
+					bullet.velocity = test.bullet_move * fps
+					bullet.lifetime = float(test.get("lifetime", 2.0)) / fps
+					await get_tree().physics_frame
+					await get_tree().physics_frame
+					carrier.velocity = Vector2.ZERO
+					if is_instance_valid(bullet): bullet.set_physics_process(false)
+					check(Global.player_data.hp == test.expected, "parent-driven soul: %s at %d Hz (parent priority %d, soul first %s, HP=%d)" % [test.name, fps, carrier_priority, soul_first, Global.player_data.hp])
+					carrier.queue_free()
+					if is_instance_valid(bullet) and not bullet.is_queued_for_deletion(): bullet.queue_free()
+					await get_tree().process_frame
+
+
+func test_spawn_frame_soul_motion() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for test in [
+			{"name": "earlier crossing does not affect new bullet", "pre": Vector2(100, 0), "post": Vector2(100, 0), "bullet": Vector2.ZERO, "expected": 20},
+			{"name": "earlier movement does not hit nearby bullet", "pre": Vector2(100, 0), "post": Vector2(100, 0), "bullet": Vector2(112, 0), "expected": 20},
+			{"name": "movement after spawn still hits", "pre": Vector2(-100, 0), "post": Vector2(100, 0), "bullet": Vector2.ZERO, "expected": 17},
+			{"name": "movement before and after spawn is clipped", "pre": Vector2(-50, 0), "post": Vector2(100, 0), "bullet": Vector2.ZERO, "expected": 17},
+			{"name": "soul created after bullet can cross it", "pre": Vector2(-100, 0), "post": Vector2(100, 0), "bullet": Vector2.ZERO, "new_soul": true, "expected": 17},
+			{"name": "bullet parent moves after spawn", "pre": Vector2.ZERO, "post": Vector2.ZERO, "bullet": Vector2(-100, 0), "carrier_move": Vector2(200, 0), "expected": 17},
+		]:
+			Global.player_set_hp(20)
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.position = Vector2(-100, 0)
+			soul.movement_enabled = true
+			if not test.has("new_soul"):
+				add_child(soul)
+				soul.set_physics_process(false)
+			var carrier := MovingCarrier.new()
+			add_child(carrier)
+			for frame in range(3): await get_tree().physics_frame
+			# The soul's frame-start snapshot has run, but node physics callbacks
+			# have not. Move and spawn in this same real physics frame.
+			soul.position = test.pre
+			var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+			bullet.position = test.bullet
+			bullet.velocity = Vector2.ZERO
+			bullet.destroy_on_contact = false
+			carrier.add_child(bullet)
+			if test.has("new_soul"):
+				add_child(soul)
+				soul.set_physics_process(false)
+			soul.position = test.post
+			if test.has("carrier_move"): carrier.velocity = test.carrier_move * fps
+			await get_tree().physics_frame
+			carrier.velocity = Vector2.ZERO
+			if is_instance_valid(bullet): bullet.set_physics_process(false)
+			check(Global.player_data.hp == test.expected, "spawn frame: %s at %d Hz (HP=%d)" % [test.name, fps, Global.player_data.hp])
+			soul.queue_free()
+			carrier.queue_free()
+			await get_tree().process_frame
+
+
+func test_disabled_bullet_monitoring() -> void:
+	for fps in [30, 144]:
+		await set_physics_rate(fps)
+		for kind in ["linear", "rotating", "pulse"]:
+			Global.player_set_hp(20)
+			var soul: BattleSoul = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.position = Vector2(20, 0) if kind == "pulse" else Vector2.ZERO
+			soul.movement_enabled = true
+			add_child(soul)
+			soul.set_physics_process(false)
+			for i in range(3): await get_tree().physics_frame
+			var bullet: BattleBullet
+			if kind == "linear":
+				bullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+				bullet.position = Vector2(-100, 0)
+				bullet.velocity = Vector2(200 * fps, 0)
+			else:
+				var pattern := PatternBullet.new()
+				pattern.velocity = Vector2.ZERO
+				if kind == "rotating":
+					pattern.shape_type = PatternBullet.Shape.BONE
+					pattern.length = 80
+					pattern.width = 4
+					pattern.angular_velocity = PI * fps
+				else:
+					pattern.shape_type = PatternBullet.Shape.PULSE
+					pattern.radius = 2
+					pattern.width = 2
+					pattern.expansion_speed = 40 * fps
+				bullet = pattern
+			bullet.monitoring = false
+			bullet.destroy_on_contact = false
+			add_child(bullet)
+			for i in range(3): await get_tree().physics_frame
+			bullet.set_physics_process(false)
+			check(Global.player_data.hp == 20, "disabled monitoring prevents %s damage at %d Hz (HP=%d)" % [kind, fps, Global.player_data.hp])
+			# Re-enable while overlapping to ensure normal damage is restored.
+			bullet.velocity = Vector2.ZERO
+			if kind == "pulse":
+				var pulse := bullet as PatternBullet
+				pulse.expansion_speed = 0
+				pulse.radius = 20
+				pulse.circle.radius = 22
+			else:
+				bullet.position = Vector2.ZERO
+				if kind == "rotating": (bullet as PatternBullet).angular_velocity = 0
+			bullet.monitoring = true
+			bullet.set_physics_process(true)
+			for i in range(4): await get_tree().physics_frame
+			check(Global.player_data.hp == 17, "re-enabled monitoring restores %s damage at %d Hz (HP=%d)" % [kind, fps, Global.player_data.hp])
+			soul.queue_free()
+			if is_instance_valid(bullet) and not bullet.is_queued_for_deletion(): bullet.queue_free()
+			await get_tree().process_frame
