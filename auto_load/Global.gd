@@ -141,6 +141,9 @@ func storage_save(path: String, slot: int) -> bool:
 	var temporary := primary + ".tmp"
 	var backup := primary + ".bak"
 	var invalid := primary + ".invalid"
+	# A backup from a newer version must not be shadowed now or replaced on
+	# the next save, even if the primary is missing or otherwise readable.
+	if _read_save_file(backup).has("unsupported_version"): return false
 	var file := FileAccess.open(temporary, FileAccess.WRITE)
 	if file == null:
 		return false
@@ -158,7 +161,12 @@ func storage_save(path: String, slot: int) -> bool:
 		if existing.has("unsupported_version"):
 			DirAccess.remove_absolute(temporary)
 			return false
-		previous_path = backup if not existing.is_empty() else invalid
+		# A structurally valid world can still point to a removed room. Keep
+		# the recoverable backup rather than replacing it with that primary.
+		var usable := not existing.is_empty()
+		if usable and existing.get("has_world", false):
+			usable = _saved_room_exists(existing)
+		previous_path = backup if usable else invalid
 		if FileAccess.file_exists(previous_path) and DirAccess.remove_absolute(previous_path) != OK:
 			DirAccess.remove_absolute(temporary)
 			return false
@@ -216,7 +224,7 @@ func _read_save_file(path: String) -> Dictionary:
 		loaded_world.merge(saved.world, true)
 	if not loaded_world.get("flags") is Dictionary or not loaded_world.get("scene") is String or not loaded_world.get("position") is Vector2:
 		return {}
-	return {"player": loaded_player, "world": loaded_world}
+	return {"player": loaded_player, "world": loaded_world, "has_world": saved.has("world")}
 
 
 func _read_save(path: String, slot: int) -> Dictionary:
