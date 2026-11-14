@@ -44,7 +44,7 @@ func _ready() -> void:
 	choices.add_theme_font_size_override("font_size", 18)
 	var choice_font := FontVariation.new()
 	choice_font.base_font = load("res://font/DTM-momo.otf")
-	choice_font.fallbacks = [load("res://font/SIMSUNB.TTF")]
+	choice_font.fallbacks = [load("res://font/NotoSansSC.ttf"), load("res://font/SIMSUNB.TTF")]
 	choices.add_theme_font_override("font", choice_font)
 	panel.add_child(choices)
 

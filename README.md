@@ -97,6 +97,8 @@ The tests exercise the battle and world round trip, equipment and rewards, menu 
 
 ## References
 
+The Simplified Chinese fallback font is [Noto Sans SC](https://github.com/google/fonts/tree/2894aab31764f10f29c421bdfd2340d3b382d384/ofl/notosanssc), distributed under the [SIL Open Font License 1.1](font/NotoSansSC-OFL.txt). The full unmodified variable font is included as `font/NotoSansSC.ttf`.
+
 The design was informed by [UndergameEngine](https://github.com/SheepYhangCN/UndergameEngine), [TML233's UndertaleEngine](https://github.com/TML233/UndertaleEngine), [Zhazha's Undertale Engine](https://github.com/onezhazha233/Undertale-Engine-modded-by-Zhazha), and [swapfell-remake-project](https://github.com/onezhazha233/swapfell-remake-project). Those are GameMaker projects; this implementation is written for Godot.
 
 [Feature comparison](docs/FEATURE_COMPARISON.md) links individual reference files and records which parts remain incomplete.

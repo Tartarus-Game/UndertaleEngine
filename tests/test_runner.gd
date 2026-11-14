@@ -52,7 +52,7 @@ func test_timing() -> void:
 	typer.set_process(false)
 	typer.sound = null
 	var text_font := typer.get_theme_font("normal_font") as FontVariation
-	check(text_font != null and not text_font.fallbacks.is_empty() and text_font.fallbacks[0].has_char(0x68c0), "the typewriter has a Chinese font fallback")
+	check(text_font != null and not text_font.fallbacks.is_empty() and text_font.fallbacks[0].has_char(0x68c0) and text_font.fallbacks[0].has_char(0x5b58), "the typewriter has a Chinese font fallback")
 	for fps in [30, 60, 144]:
 		typer.clear_text()
 		typer.text_add("abcdefghijklmnopqrstuvwxyz0123456789")
