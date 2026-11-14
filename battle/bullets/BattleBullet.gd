@@ -9,8 +9,13 @@ enum Rule { WHITE, BLUE, ORANGE, HEAL }
 @export var karma_per_second := 6.0
 @export var destroy_on_contact := true
 @export var grazeable := true
+var _shootable_revision := 0
+var _shootable_activation_transform := Transform2D.IDENTITY
 @export var shootable := false:
 	set(value):
+		if value != shootable:
+			_shootable_revision += 1
+			if value and is_inside_tree(): _shootable_activation_transform = global_transform
 		shootable = value
 		if is_inside_tree():
 			if value: add_to_group("shootable_bullets")
@@ -25,6 +30,7 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 	area_exited.connect(_on_area_exited)
 	if shootable:
+		_shootable_activation_transform = global_transform
 		add_to_group("shootable_bullets")
 
 

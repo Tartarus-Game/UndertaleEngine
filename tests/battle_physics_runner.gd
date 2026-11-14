@@ -22,6 +22,7 @@ func run_physics_checks() -> void:
 	await test_short_beams()
 	await test_soul_projectile_order_and_lifetime()
 	await test_soul_projectile_target_shapes()
+	await test_soul_projectile_shootable_toggle()
 	await test_shootable_polygon()
 	await test_graze()
 	await test_targeted_pellet()
@@ -373,6 +374,54 @@ func test_soul_projectile_target_shapes() -> void:
 			if not moving.is_queued_for_deletion(): moving.queue_free()
 			if not shot.is_queued_for_deletion(): shot.queue_free()
 			await get_tree().process_frame
+
+
+func test_soul_projectile_shootable_toggle() -> void:
+	for observe_disabled in [false, true]:
+		var target: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		target.position = Vector2(50, 0)
+		target.velocity = Vector2.ZERO
+		target.shootable = true
+		add_child(target)
+		target.set_physics_process(false)
+		var shot := SoulProjectile.new()
+		shot.velocity = Vector2.ZERO
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / 60.0)
+		target.shootable = false
+		target.position = Vector2(-50, 0)
+		if observe_disabled: shot._physics_process(1.0 / 60.0)
+		target.shootable = true
+		shot._physics_process(1.0 / 60.0)
+		check(not target.is_queued_for_deletion() and not shot.is_queued_for_deletion(), "reactivating a target ignores motion while disabled (observed=%s)" % observe_disabled)
+		if not shot.is_queued_for_deletion():
+			target.position = Vector2(50, 0)
+			target.shootable = true # Reassigning the same value must not discard motion.
+			shot._physics_process(1.0 / 60.0)
+			check(target.is_queued_for_deletion(), "reactivated targets still detect subsequent motion")
+		if not target.is_queued_for_deletion(): target.queue_free()
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		await get_tree().process_frame
+	var target: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+	target.position = Vector2(50, 0)
+	target.velocity = Vector2.ZERO
+	target.shootable = true
+	add_child(target)
+	target.set_physics_process(false)
+	var shot := SoulProjectile.new()
+	shot.velocity = Vector2.ZERO
+	add_child(shot)
+	shot.set_physics_process(false)
+	target.shootable = false
+	target.position = Vector2(-50, 0)
+	target.shootable = true
+	target.position = Vector2(50, 0)
+	shot._physics_process(1.0 / 60.0)
+	check(target.is_queued_for_deletion(), "motion after reactivation is detected in the same update")
+	if not target.is_queued_for_deletion(): target.queue_free()
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	await get_tree().process_frame
 
 
 func test_shootable_polygon() -> void:

@@ -7,6 +7,7 @@ var battle: Battle
 var _shot_shape: CircleShape2D
 var _default_enemy_shape: CircleShape2D
 var _previous_transforms := {}
+var _shootable_revisions := {}
 var _polygon_cache := {}
 
 
@@ -18,7 +19,9 @@ func _ready() -> void:
 	_default_enemy_shape = CircleShape2D.new()
 	_default_enemy_shape.radius = 12.0
 	for target in get_tree().get_nodes_in_group("shootable_bullets"):
-		if target is BattleBullet: _previous_transforms[target.get_instance_id()] = target.global_transform
+		if target is BattleBullet:
+			_previous_transforms[target.get_instance_id()] = target.global_transform
+			_shootable_revisions[target.get_instance_id()] = target._shootable_revision
 	if is_instance_valid(battle):
 		for enemy in battle.battle_get_enemys():
 			_previous_transforms[enemy.get_instance_id()] = enemy.global_transform
@@ -39,8 +42,12 @@ func _physics_process(delta: float) -> void:
 	for bullet in get_tree().get_nodes_in_group("shootable_bullets"):
 		if not bullet is BattleBullet or bullet.is_queued_for_deletion(): continue
 		var current: Transform2D = bullet.global_transform
-		var prior: Transform2D = _previous_transforms.get(bullet.get_instance_id(), current)
-		_previous_transforms[bullet.get_instance_id()] = current
+		var id := bullet.get_instance_id()
+		var prior: Transform2D = _previous_transforms.get(id, current)
+		if _shootable_revisions.get(id, bullet._shootable_revision) != bullet._shootable_revision:
+			prior = bullet._shootable_activation_transform
+		_previous_transforms[id] = current
+		_shootable_revisions[id] = bullet._shootable_revision
 		var fraction := INF
 		for child in bullet.get_children():
 			var shapes: Array[Shape2D] = []
