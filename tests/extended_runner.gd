@@ -39,6 +39,7 @@ func run_extended() -> void:
 	await test_souls_and_rules()
 	await test_patterns_and_waves()
 	await test_invalid_saves()
+	await test_save_backup_recovery()
 	await test_world_save_restore()
 	InputMap.action_erase_events("ui_menu")
 	for event in menu_events: InputMap.action_add_event("ui_menu", event)
@@ -305,6 +306,56 @@ func test_patterns_and_waves() -> void:
 	if not distant_bullet.is_queued_for_deletion(): distant_bullet.queue_free()
 	if not shot.is_queued_for_deletion(): shot.queue_free()
 	target._hp = old_hp
+	var enemy_shape := RectangleShape2D.new()
+	enemy_shape.size = Vector2(8, 60)
+	target.projectile_hit_shape = enemy_shape
+	target.global_position = Vector2(50, 0)
+	shot = SoulProjectile.new()
+	shot.position = Vector2(0, 20)
+	shot.velocity = Vector2(12000, 0)
+	shot.battle = battle
+	add_child(shot)
+	shot.set_physics_process(false)
+	shot._physics_process(1.0 / 60.0)
+	check(target.get_hp() < old_hp, "yellow shot uses a configured enemy hit shape")
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	target._hp = old_hp
+	target.projectile_hit_shape = null
+	for observe_disabled in [false, true]:
+		target.global_position = Vector2(50, 0)
+		shot = SoulProjectile.new()
+		shot.velocity = Vector2.ZERO
+		shot.battle = battle
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / 60.0)
+		target.projectile_target = false
+		target.global_position = Vector2(-50, 0)
+		if observe_disabled: shot._physics_process(1.0 / 60.0)
+		target.projectile_target = true
+		shot._physics_process(1.0 / 60.0)
+		check(target.get_hp() == old_hp and not shot.is_queued_for_deletion(), "reactivating an enemy ignores motion while disabled (observed=%s)" % observe_disabled)
+		if not shot.is_queued_for_deletion():
+			target.global_position = Vector2(50, 0)
+			target.projectile_target = true
+			shot._physics_process(1.0 / 60.0)
+			check(target.get_hp() < old_hp, "reactivated enemies detect subsequent motion")
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		target._hp = old_hp
+	target.global_position = Vector2(50, 0)
+	shot = SoulProjectile.new()
+	shot.velocity = Vector2.ZERO
+	shot.battle = battle
+	add_child(shot)
+	shot.set_physics_process(false)
+	target.projectile_target = false
+	target.global_position = Vector2(-50, 0)
+	target.projectile_target = true
+	target.global_position = Vector2(50, 0)
+	shot._physics_process(1.0 / 60.0)
+	check(target.get_hp() < old_hp, "enemy motion after reactivation is detected in the same update")
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	target._hp = old_hp
 	target.global_position = old_position
 	target.projectile_target = false
 	for index in range(1, 9): target.action_set(index, "Action %d" % index)
@@ -395,6 +446,92 @@ func test_invalid_saves() -> void:
 	restore_player(old_player)
 
 
+func test_save_backup_recovery() -> void:
+	var old_player: Dictionary = Global.player_data.duplicate(true)
+	var old_world: Dictionary = Global.world_state.duplicate(true)
+	var old_slot: int = Global.current_save_slot
+	var old_recovered: bool = Global.last_save_recovered
+	var directory := "user://backup_recovery_tests/"
+	var primary := directory.path_join("file72")
+	DirAccess.make_dir_recursive_absolute(directory)
+	for suffix in ["", ".bak", ".tmp", ".invalid"]:
+		if FileAccess.file_exists(primary + suffix): DirAccess.remove_absolute(primary + suffix)
+	Global.player_set_hp(10)
+	check(Global.storage_save(directory, 72), "first save is written")
+	Global.player_set_hp(14)
+	check(Global.storage_save(directory, 72) and FileAccess.file_exists(primary + ".bak"), "overwriting a save keeps the previous version as backup")
+	Global.player_set_hp(5)
+	check(Global.storage_load(directory, 72) and Global.player_data.hp == 14 and not Global.last_save_recovered, "valid primary save is preferred")
+	var file := FileAccess.open(primary, FileAccess.WRITE)
+	file.store_32(4096)
+	file.close()
+	var recoveries := [0]
+	var on_recovered := func(slot: int):
+		if slot == 72: recoveries[0] += 1
+	Global.save_recovered.connect(on_recovered)
+	check(Global.storage_load(directory, 72) and Global.player_data.hp == 10 and Global.last_save_recovered and recoveries[0] == 1, "truncated primary recovers the previous save and emits a signal")
+	DirAccess.remove_absolute(primary)
+	check(Global.storage_has_save(directory, 72) and Global.storage_load(directory, 72) and Global.player_data.hp == 10, "backup can be loaded if replacement was interrupted before the primary appeared")
+	var temporary := FileAccess.open(primary + ".tmp", FileAccess.WRITE)
+	temporary.store_32(4096)
+	temporary.close()
+	Global.player_set_hp(15)
+	check(Global.storage_save(directory, 72), "a later save replaces an interrupted temporary file")
+	Global.player_set_hp(5)
+	check(Global.storage_load(directory, 72) and Global.player_data.hp == 15, "new primary remains readable after interrupted write")
+	file = FileAccess.open(primary, FileAccess.WRITE)
+	file.store_32(4096)
+	file.close()
+	Global.player_set_hp(16)
+	check(Global.storage_save(directory, 72), "saving over a corrupt primary succeeds")
+	file = FileAccess.open(primary, FileAccess.WRITE)
+	file.store_32(4096)
+	file.close()
+	check(Global.storage_load(directory, 72) and Global.player_data.hp == 10, "saving over a corrupt primary preserves its valid backup")
+	file = FileAccess.open(primary, FileAccess.WRITE)
+	file.store_var({"version": 99, "player": {"hp": 18, "items": ["PROMISE"]}})
+	file.close()
+	Global.player_set_hp(16)
+	check(not Global.storage_load(directory, 72) and Global.player_data.hp == 16, "an unknown primary version is not silently downgraded to its backup")
+	check(not Global.storage_save(directory, 72), "a save from an unsupported version is not overwritten")
+	file = FileAccess.open(primary, FileAccess.READ)
+	var future_data: Dictionary = file.get_var()
+	file.close()
+	check(future_data.version == 99, "unsupported save data remains unchanged")
+	DirAccess.remove_absolute(primary)
+	file = FileAccess.open(primary + ".bak", FileAccess.WRITE)
+	file.store_var({"version": 99, "player": {"hp": 18, "items": ["PROMISE"]}})
+	file.close()
+	check(not Global.storage_save(directory, 72), "an unsupported backup blocks saving when the primary is missing")
+	check(not FileAccess.file_exists(primary), "an unsupported backup does not get shadowed by a new primary")
+	file = FileAccess.open(primary, FileAccess.WRITE)
+	file.store_var({"version": 1, "player": Global.player_data, "world": Global.world_state})
+	file.close()
+	check(not Global.storage_save(directory, 72), "an unsupported backup cannot be overwritten by primary rotation")
+	file = FileAccess.open(primary + ".bak", FileAccess.READ)
+	future_data = file.get_var()
+	file.close()
+	check(future_data.version == 99, "unsupported backup remains unchanged")
+	DirAccess.remove_absolute(primary + ".bak")
+	file = FileAccess.open(primary, FileAccess.WRITE)
+	file.store_var({"hp": 11, "items": []})
+	file.close()
+	check(Global.storage_save(directory, 72), "a legacy player-only save can be backed up")
+	file = FileAccess.open(primary, FileAccess.WRITE)
+	file.store_32(4096)
+	file.close()
+	check(Global.storage_load(directory, 72) and Global.player_data.hp == 11, "a backed-up legacy player-only save remains recoverable")
+	Global.save_recovered.disconnect(on_recovered)
+	for suffix in ["", ".bak", ".tmp", ".invalid"]:
+		if FileAccess.file_exists(primary + suffix): DirAccess.remove_absolute(primary + suffix)
+	DirAccess.remove_absolute(directory)
+	Global.world_state = old_world
+	Global.current_save_slot = old_slot
+	Global.last_save_recovered = old_recovered
+	restore_player(old_player)
+	await get_tree().process_frame
+
+
 func test_world_save_restore() -> void:
 	var previous_world: Dictionary = Global.world_state.duplicate(true)
 	var previous_player: Dictionary = Global.player_data.duplicate(true)
@@ -456,6 +593,31 @@ func test_world_save_restore() -> void:
 	var new_players := tree.get_nodes_in_group("overworld_player")
 	check(restored and Global.get_flag("saved_event") == 42, "loading restores the saved flag")
 	check(not new_players.is_empty() and new_players[0].global_position == Vector2(150, 175), "loading restores the saved room and position")
+	for suffix in ["", ".bak", ".tmp", ".invalid"]:
+		if FileAccess.file_exists(dir.path_join("file43" + suffix)): DirAccess.remove_absolute(dir.path_join("file43" + suffix))
+	Global.set_flag("backup_room", "previous")
+	check(Global.storage_save(dir, 43), "world save for backup recovery is written")
+	Global.set_flag("backup_room", "latest")
+	check(Global.storage_save(dir, 43), "world save creates a previous backup")
+	var bad_room := FileAccess.open(dir.path_join("file43"), FileAccess.WRITE)
+	bad_room.store_var({"version": 1, "player": Global.player_data, "world": {"flags": {}, "scene": "res://missing_room.tscn", "position": Vector2.ZERO}})
+	bad_room.close()
+	DialogueService.load_save_with_feedback(dir, 43)
+	await Global.save_recovered
+	await tree.process_frame
+	check(Global.last_save_recovered and Global.get_flag("backup_room") == "previous", "room backup restores its own flags and reports recovery")
+	check(DialogueService.busy, "recovery message survives the old room being freed")
+	DialogueService.typer.skip()
+	await action_event("ui_accept")
+	check(not DialogueService.busy, "recovery message can be dismissed")
+	check(Global.storage_save(dir, 43), "saving after recovering a missing room succeeds")
+	bad_room = FileAccess.open(dir.path_join("file43"), FileAccess.WRITE)
+	bad_room.store_32(4096)
+	bad_room.close()
+	var second_recovery := await Global.restore_world(dir, 43)
+	check(second_recovery and Global.get_flag("backup_room") == "previous", "saving after missing-room recovery preserves the last usable backup")
+	for suffix in ["", ".bak", ".tmp", ".invalid"]:
+		if FileAccess.file_exists(dir.path_join("file43" + suffix)): DirAccess.remove_absolute(dir.path_join("file43" + suffix))
 	var old_slot: int = Global.current_save_slot
 	var unused_slot := 100000
 	while FileAccess.file_exists("user://saves/file" + str(unused_slot)): unused_slot += 1
@@ -477,7 +639,8 @@ func test_world_save_restore() -> void:
 	tree.current_scene = runner
 	tree.root.remove_child(restored_scene)
 	restored_scene.queue_free()
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir.path_join("file42")))
+	for suffix in ["", ".bak", ".tmp", ".invalid"]:
+		if FileAccess.file_exists(dir.path_join("file42" + suffix)): DirAccess.remove_absolute(dir.path_join("file42" + suffix))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(dir))
 	Global.world_state = previous_world
 	restore_player(previous_player)

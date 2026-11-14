@@ -3,10 +3,11 @@
 [ext_resource type="FontFile" uid="uid://u67fw77nym7w" path="res://font/DTM-momo.otf" id="1_ot2r1"]
 [ext_resource type="Script" uid="uid://b6kfnt5v6kydf" path="res://auto_load/text/TextTyper.gd" id="1_wshua"]
 [ext_resource type="AudioStream" uid="uid://b5togwmgiyest" path="res://auto_load/text/typer_sound/text2.wav" id="3_3b3lk"]
-[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="4_cjk"]
+[ext_resource type="FontFile" path="res://font/NotoSansSC.ttf" id="4_cjk"]
+[ext_resource type="FontFile" uid="uid://dvys0rsfosc1e" path="res://font/SIMSUNB.TTF" id="5_cjk_ext"]
 
 [sub_resource type="FontVariation" id="FontVariation_cjk"]
-fallbacks = [ExtResource("4_cjk")]
+fallbacks = [ExtResource("4_cjk"), ExtResource("5_cjk_ext")]
 base_font = ExtResource("1_ot2r1")
 
 [node name="TextTyper" type="RichTextLabel" unique_id=1599626808]

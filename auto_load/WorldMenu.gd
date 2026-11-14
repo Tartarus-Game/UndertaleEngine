@@ -38,7 +38,7 @@ func _ready() -> void:
 	label.add_theme_font_size_override("normal_font_size", 18)
 	var font := FontVariation.new()
 	font.base_font = load("res://font/DTM-momo.otf")
-	font.fallbacks = [load("res://font/SIMSUNB.TTF")]
+	font.fallbacks = [load("res://font/NotoSansSC.ttf"), load("res://font/SIMSUNB.TTF")]
 	label.add_theme_font_override("normal_font", font)
 	panel.add_child(label)
 	hint = Label.new()

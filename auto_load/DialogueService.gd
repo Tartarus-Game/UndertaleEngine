@@ -44,7 +44,7 @@ func _ready() -> void:
 	choices.add_theme_font_size_override("font_size", 18)
 	var choice_font := FontVariation.new()
 	choice_font.base_font = load("res://font/DTM-momo.otf")
-	choice_font.fallbacks = [load("res://font/SIMSUNB.TTF")]
+	choice_font.fallbacks = [load("res://font/NotoSansSC.ttf"), load("res://font/SIMSUNB.TTF")]
 	choices.add_theme_font_override("font", choice_font)
 	panel.add_child(choices)
 
@@ -73,6 +73,14 @@ func present(message: String, choices_list: Array = [], face: Texture2D = null) 
 	visible = true
 	var result: int = await completed
 	return result
+
+
+func load_save_with_feedback(path: String, slot: int) -> void:
+	# The save point belongs to the old room and can be freed during loading.
+	if not await Global.restore_world(path, slot):
+		await present(SettingsService.text("save.load_failed"))
+	elif Global.last_save_recovered:
+		await present(SettingsService.text("save.recovered"))
 
 
 func _process(delta: float) -> void:

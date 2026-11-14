@@ -52,7 +52,7 @@ func test_timing() -> void:
 	typer.set_process(false)
 	typer.sound = null
 	var text_font := typer.get_theme_font("normal_font") as FontVariation
-	check(text_font != null and not text_font.fallbacks.is_empty() and text_font.fallbacks[0].has_char(0x68c0), "the typewriter has a Chinese font fallback")
+	check(text_font != null and not text_font.fallbacks.is_empty() and text_font.fallbacks[0].has_char(0x68c0) and text_font.fallbacks[0].has_char(0x5b58), "the typewriter has a Chinese font fallback")
 	for fps in [30, 60, 144]:
 		typer.clear_text()
 		typer.text_add("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -129,6 +129,8 @@ func test_inventory_save() -> void:
 	check(Global.player_data.items.size() == Global.player_get_item_count(), "loaded inventory stays linked to player data")
 	Global.player_get_items().pop_back()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(directory + "file991"))
+	if FileAccess.file_exists(directory + "file991.bak"):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(directory + "file991.bak"))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(directory))
 	Global.player_set_hp(20)
 	var candy := ItemManager.item_get("monster_candy")
