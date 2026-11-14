@@ -321,6 +321,41 @@ func test_patterns_and_waves() -> void:
 	if not shot.is_queued_for_deletion(): shot.queue_free()
 	target._hp = old_hp
 	target.projectile_hit_shape = null
+	for observe_disabled in [false, true]:
+		target.global_position = Vector2(50, 0)
+		shot = SoulProjectile.new()
+		shot.velocity = Vector2.ZERO
+		shot.battle = battle
+		add_child(shot)
+		shot.set_physics_process(false)
+		shot._physics_process(1.0 / 60.0)
+		target.projectile_target = false
+		target.global_position = Vector2(-50, 0)
+		if observe_disabled: shot._physics_process(1.0 / 60.0)
+		target.projectile_target = true
+		shot._physics_process(1.0 / 60.0)
+		check(target.get_hp() == old_hp and not shot.is_queued_for_deletion(), "reactivating an enemy ignores motion while disabled (observed=%s)" % observe_disabled)
+		if not shot.is_queued_for_deletion():
+			target.global_position = Vector2(50, 0)
+			target.projectile_target = true
+			shot._physics_process(1.0 / 60.0)
+			check(target.get_hp() < old_hp, "reactivated enemies detect subsequent motion")
+		if not shot.is_queued_for_deletion(): shot.queue_free()
+		target._hp = old_hp
+	target.global_position = Vector2(50, 0)
+	shot = SoulProjectile.new()
+	shot.velocity = Vector2.ZERO
+	shot.battle = battle
+	add_child(shot)
+	shot.set_physics_process(false)
+	target.projectile_target = false
+	target.global_position = Vector2(-50, 0)
+	target.projectile_target = true
+	target.global_position = Vector2(50, 0)
+	shot._physics_process(1.0 / 60.0)
+	check(target.get_hp() < old_hp, "enemy motion after reactivation is detected in the same update")
+	if not shot.is_queued_for_deletion(): shot.queue_free()
+	target._hp = old_hp
 	target.global_position = old_position
 	target.projectile_target = false
 	for index in range(1, 9): target.action_set(index, "Action %d" % index)

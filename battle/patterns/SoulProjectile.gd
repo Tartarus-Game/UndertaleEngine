@@ -8,6 +8,7 @@ var _shot_shape: CircleShape2D
 var _default_enemy_shape: CircleShape2D
 var _previous_transforms := {}
 var _shootable_revisions := {}
+var _enemy_target_revisions := {}
 var _polygon_cache := {}
 
 
@@ -25,6 +26,7 @@ func _ready() -> void:
 	if is_instance_valid(battle):
 		for enemy in battle.battle_get_enemys():
 			_previous_transforms[enemy.get_instance_id()] = enemy.global_transform
+			_enemy_target_revisions[enemy.get_instance_id()] = enemy._projectile_target_revision
 
 
 func _physics_process(delta: float) -> void:
@@ -68,8 +70,12 @@ func _physics_process(delta: float) -> void:
 		for enemy in battle.battle_get_enemys():
 			if not enemy.projectile_target or enemy.is_queued_for_deletion(): continue
 			var current: Transform2D = enemy.global_transform
-			var prior: Transform2D = _previous_transforms.get(enemy.get_instance_id(), current)
-			_previous_transforms[enemy.get_instance_id()] = current
+			var id: int = enemy.get_instance_id()
+			var prior: Transform2D = _previous_transforms.get(id, current)
+			if _enemy_target_revisions.get(id, enemy._projectile_target_revision) != enemy._projectile_target_revision:
+				prior = enemy._projectile_target_activation_transform
+			_previous_transforms[id] = current
+			_enemy_target_revisions[id] = enemy._projectile_target_revision
 			var old_shape := prior.translated_local(enemy.projectile_hit_offset)
 			var current_shape := current.translated_local(enemy.projectile_hit_offset)
 			var shape: Shape2D = enemy.projectile_hit_shape if enemy.projectile_hit_shape else _default_enemy_shape

@@ -3,7 +3,14 @@ class_name BattleEnemy extends Node2D
 var battle : Battle;
 @export var data: EnemyData
 @export var wave_scene: PackedScene
-@export var projectile_target := false
+var _projectile_target_revision := 0
+var _projectile_target_activation_transform := Transform2D.IDENTITY
+@export var projectile_target := false:
+	set(value):
+		if value != projectile_target:
+			_projectile_target_revision += 1
+			if value and is_inside_tree(): _projectile_target_activation_transform = global_transform
+		projectile_target = value
 @export var projectile_hit_shape: Shape2D
 @export var projectile_hit_offset := Vector2.ZERO
 
