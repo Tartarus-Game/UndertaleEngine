@@ -1,0 +1,18 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://battle/enemy/BattleEnemy.tscn" id="1"]
+[ext_resource type="Script" path="res://examples/custom_enemy/GuideEnemy.gd" id="2"]
+[ext_resource type="Script" path="res://battle/enemy/EnemyData.gd" id="3"]
+
+[sub_resource type="Resource" id="EnemyData_guide"]
+script = ExtResource("3")
+enemy_name = "Guide"
+description = "A friendly practice opponent."
+max_hp = 45.0
+attack = 3.0
+exp_reward = 8
+gold_reward = 18
+
+[node name="GuideEnemy" instance=ExtResource("1")]
+script = ExtResource("2")
+data = SubResource("EnemyData_guide")
