@@ -33,6 +33,7 @@ func run_physics_checks() -> void:
 	await test_jump_release()
 	await test_gravity_directions()
 	await test_ceiling_collision()
+	await test_contact_on_expiration_tick()
 	Engine.physics_ticks_per_second = old_tick_rate
 	Input.action_release("ui_up")
 	Global.player_data = old_player
@@ -838,3 +839,38 @@ func test_ceiling_collision() -> void:
 	wall.queue_free()
 	soul.queue_free()
 	await get_tree().process_frame
+
+
+func test_contact_on_expiration_tick() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for mode in ["damage", "karma", "expired"]:
+			Global.player_set_hp(20)
+			Global.player_data.kr = 0.0
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.movement_enabled = false
+			add_child(soul)
+			soul.set_physics_process(false)
+			var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+			bullet.velocity = Vector2.ZERO
+			bullet.destroy_on_contact = false
+			add_child(bullet)
+			bullet.set_physics_process(false)
+			for frame in range(4): await get_tree().physics_frame
+			var hurtbox := soul.get_node("HurtBox") as Area2D
+			check(bullet.get_overlapping_areas().has(hurtbox), "bullet and soul overlap before the expiration test")
+			soul.movement_enabled = true
+			bullet.lifetime = 0.0 if mode == "expired" else 0.5 / fps
+			if mode == "karma":
+				bullet.karma = true
+				bullet.karma_per_second = 4.0 * fps
+				bullet._contact_ticks[hurtbox.get_instance_id()] = 0.0
+			bullet._physics_process(1.0 / fps)
+			var expected_hp := 17 if mode == "damage" else 20
+			var expected_kr := 2.0 if mode == "karma" else 0.0
+			check(Global.player_data.hp == expected_hp and is_equal_approx(Global.player_data.kr, expected_kr),
+				"expiration tick applies %s only during the remaining lifetime at %d ticks/s (HP=%d, KR=%.2f)" % [mode, fps, Global.player_data.hp, Global.player_data.kr])
+			check(bullet.is_queued_for_deletion(), "bullet expires at the end of its lifetime")
+			soul.queue_free()
+			if not bullet.is_queued_for_deletion(): bullet.queue_free()
+			await get_tree().process_frame

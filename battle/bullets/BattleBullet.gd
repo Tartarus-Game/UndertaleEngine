@@ -41,24 +41,27 @@ func hit_by_soul_shot(amount: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var step := minf(delta, maxf(lifetime, 0.0))
+	if lifetime <= 0.0:
+		queue_free()
+		return
+	var step := minf(maxf(delta, 0.0), lifetime)
+	if step <= 0.0: return
 	var motion := _motion_for_step(step)
 	var swept_exits: Dictionary = {}
 	if motion.length_squared() > 16.0:
 		swept_exits = _sweep_contacts(motion)
 	if is_queued_for_deletion(): return
 	position += motion
-	lifetime -= delta
-	if lifetime <= 0.0:
-		queue_free()
-		return
+	lifetime = maxf(0.0, lifetime - step)
 	# A soul may start or stop moving while it remains inside a bullet.
 	for area in get_overlapping_areas():
 		if not swept_exits.has(area.get_instance_id()):
-			_try_contact(area, delta)
+			_try_contact(area, step)
 	# An instantaneous crossing may never emit area_exited.
 	for contact_id in swept_exits:
 		_contact_ticks.erase(contact_id)
+	# Process contacts for the live part of the last tick before removing the bullet.
+	if lifetime <= 0.0: queue_free()
 
 
 func _motion_for_step(step: float) -> Vector2:
