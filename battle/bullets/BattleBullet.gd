@@ -22,9 +22,13 @@ var _shootable_activation_transform := Transform2D.IDENTITY
 			else: remove_from_group("shootable_bullets")
 @export var projectile_health := 1.0
 var _contact_ticks: Dictionary = {}
+var _previous_parent_position := Vector2.ZERO
 
 
 func _ready() -> void:
+	var parent_2d := get_parent() as Node2D
+	if parent_2d:
+		_previous_parent_position = parent_2d.global_position
 	# Layer 5 is reserved for the optional graze sensor.
 	set_collision_layer_value(5, true)
 	area_entered.connect(_on_area_entered)
@@ -47,9 +51,19 @@ func _physics_process(delta: float) -> void:
 	var step := minf(maxf(delta, 0.0), lifetime)
 	if step <= 0.0: return
 	var motion := _motion_for_step(step)
+	var parent_2d := get_parent() as Node2D
+	var parent_motion := Vector2.ZERO
+	if parent_2d:
+		parent_motion = parent_2d.global_position - _previous_parent_position
+		_previous_parent_position = parent_2d.global_position
+	var own_world_motion := parent_2d.global_transform.basis_xform(motion) if parent_2d else motion
+	# The parent has already moved by the time its child processes. Sweep from
+	# the previous position and only include the part while this bullet is alive.
+	var live_parent_motion := parent_motion * (step / delta) if delta > 0.0 else Vector2.ZERO
+	var world_motion := live_parent_motion + own_world_motion
 	var swept_exits: Dictionary = {}
-	if motion.length_squared() > 16.0:
-		swept_exits = _sweep_contacts(motion)
+	if world_motion.length_squared() > 16.0:
+		swept_exits = _sweep_contacts(world_motion, -parent_motion)
 	if is_queued_for_deletion(): return
 	position += motion
 	lifetime = maxf(0.0, lifetime - step)
@@ -72,9 +86,7 @@ func is_graze_active() -> bool:
 	return true
 
 
-func _sweep_contacts(local_motion: Vector2) -> Dictionary:
-	var parent_2d := get_parent() as Node2D
-	var world_motion := parent_2d.global_transform.basis_xform(local_motion) if parent_2d else local_motion
+func _sweep_contacts(world_motion: Vector2, start_offset: Vector2 = Vector2.ZERO) -> Dictionary:
 	var space := get_world_2d().direct_space_state
 	var touched := {}
 	var shapes: Array[CollisionShape2D] = []
@@ -84,7 +96,7 @@ func _sweep_contacts(local_motion: Vector2) -> Dictionary:
 		shapes.append(child)
 		var query := PhysicsShapeQueryParameters2D.new()
 		query.shape = child.shape
-		query.transform = child.global_transform
+		query.transform = child.global_transform.translated(start_offset)
 		query.collision_mask = collision_mask
 		query.collide_with_areas = true
 		query.collide_with_bodies = false
@@ -111,7 +123,7 @@ func _sweep_contacts(local_motion: Vector2) -> Dictionary:
 	for shape_node in shapes:
 		var end_query := PhysicsShapeQueryParameters2D.new()
 		end_query.shape = shape_node.shape
-		end_query.transform = shape_node.global_transform.translated(world_motion)
+		end_query.transform = shape_node.global_transform.translated(start_offset + world_motion)
 		end_query.collision_mask = collision_mask
 		end_query.collide_with_areas = true
 		end_query.collide_with_bodies = false

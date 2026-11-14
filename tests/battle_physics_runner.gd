@@ -1,5 +1,12 @@
 extends "res://tests/test_runner.gd"
 
+class MovingCarrier extends Node2D:
+	var velocity := Vector2.ZERO
+
+	func _physics_process(delta: float) -> void:
+		position += velocity * delta
+
+
 func _ready() -> void:
 	call_deferred("run_physics_checks")
 
@@ -15,6 +22,8 @@ func run_physics_checks() -> void:
 	Global.player_data.kr_enabled = false
 	await test_platform_bounce()
 	await test_fast_bullets()
+	await test_parent_driven_bullets()
+	await test_parent_motion_physics()
 	await test_bullet_lifetime()
 	await test_repeated_fast_contact()
 	await test_fast_pulse()
@@ -95,6 +104,70 @@ func test_fast_bullets() -> void:
 			check(Global.player_data.hp == case.expected, "fast bullet obeys rule %d from x=%d at %d ticks/s (HP=%d)" % [case.rule, case.start, fps, Global.player_data.hp])
 			soul.queue_free()
 			if is_instance_valid(bullet): bullet.queue_free()
+			await get_tree().process_frame
+
+
+func test_parent_driven_bullets() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for case in [
+			{"y": 0.0, "own_motion": 0.0, "lifetime": 1.0, "expected": 17, "label": "crossing"},
+			{"y": 60.0, "own_motion": 0.0, "lifetime": 1.0, "expected": 20, "label": "near miss"},
+			{"y": 0.0, "own_motion": -150.0, "lifetime": 1.0, "expected": 20, "label": "opposing motion"},
+			{"y": 0.0, "own_motion": 0.0, "lifetime": 0.25 / fps, "expected": 20, "label": "expires before crossing"},
+			{"y": 0.0, "own_motion": 0.0, "lifetime": 0.75 / fps, "expected": 17, "label": "crosses before expiry"},
+		]:
+			Global.player_set_hp(20)
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.movement_enabled = false
+			add_child(soul)
+			soul.set_physics_process(false)
+			var carrier := Node2D.new()
+			add_child(carrier)
+			var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+			bullet.position = Vector2(-100.0, case.y)
+			bullet.velocity = Vector2(case.own_motion * fps, 0.0)
+			carrier.add_child(bullet)
+			bullet.set_physics_process(false)
+			for frame in range(3): await get_tree().physics_frame
+			soul.movement_enabled = true
+			bullet.lifetime = case.lifetime
+			carrier.position = Vector2(200.0, 0.0)
+			bullet._physics_process(1.0 / fps)
+			check(Global.player_data.hp == case.expected, "parent-driven bullet: %s at %d ticks/s (HP=%d)" % [case.label, fps, Global.player_data.hp])
+			soul.queue_free()
+			carrier.queue_free()
+			await get_tree().process_frame
+
+
+func test_parent_motion_physics() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for case in [
+			{"y": 0.0, "motion": 200.0, "lifetime": 1.0, "expected": 17, "label": "crossing"},
+			{"y": 60.0, "motion": 200.0, "lifetime": 1.0, "expected": 20, "label": "near miss"},
+			{"y": 0.0, "motion": 200.0, "lifetime": 0.25 / fps, "expected": 20, "label": "crossing after expiry"},
+			{"y": 0.0, "motion": 200.0, "lifetime": 0.75 / fps, "expected": 17, "label": "crossing before expiry"},
+			{"y": 0.0, "motion": 100.0, "lifetime": 0.25 / fps, "expected": 20, "label": "endpoint overlaps after expiry"},
+		]:
+			Global.player_set_hp(20)
+			var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+			soul.movement_enabled = true
+			soul.arena = Rect2(-1000, -1000, 2000, 2000)
+			add_child(soul)
+			var carrier := MovingCarrier.new()
+			add_child(carrier)
+			var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+			bullet.position = Vector2(-100, case.y)
+			bullet.velocity = Vector2.ZERO
+			carrier.add_child(bullet)
+			for frame in range(3): await get_tree().physics_frame
+			bullet.lifetime = case.lifetime
+			carrier.velocity = Vector2(case.motion * fps, 0.0)
+			for frame in range(3): await get_tree().physics_frame
+			check(Global.player_data.hp == case.expected, "physics-driven parent: %s at %d ticks/s (HP=%d)" % [case.label, fps, Global.player_data.hp])
+			soul.queue_free()
+			carrier.queue_free()
 			await get_tree().process_frame
 
 
