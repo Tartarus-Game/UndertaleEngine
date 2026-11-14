@@ -29,6 +29,7 @@ func _physics_process(delta: float) -> void:
 	if remaining <= 0.0:
 		queue_free()
 		return
+	var elapsed := 0.0
 	while remaining > 0.00000001 and not is_queued_for_deletion():
 		var difference := angle_difference(rotation, target_angle)
 		var angular_speed := signf(difference) * maxf(turn_speed, 0.0) if absf(difference) > 0.000001 else 0.0
@@ -43,7 +44,8 @@ func _physics_process(delta: float) -> void:
 		if moving: speed += acceleration * step
 		rotation = rotate_toward(start_angle, target_angle, absf(angular_speed) * step)
 		age += step
-		super._physics_process(step)
+		_advance_physics(step, elapsed / delta, (elapsed + step) / delta)
+		elapsed += step
 		remaining -= step
 	queue_redraw()
 

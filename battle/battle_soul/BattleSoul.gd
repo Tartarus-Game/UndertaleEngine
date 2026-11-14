@@ -38,9 +38,16 @@ var _jump_active := false
 var _graze_area: Area2D
 var _graze_shape: CircleShape2D
 var _graze_cooldown := 0.0
+var _sweep_frame := -1
+var _sweep_start := Vector2.ZERO
+var _sweep_end := Vector2.ZERO
+var _hurt_polygon_cache := {}
 
 
 func _ready() -> void:
+	# Record the soul's actual movement before bullets evaluate their sweeps.
+	if process_physics_priority == 0: process_physics_priority = -50
+	add_to_group("battle_souls")
 	_graze_area = Area2D.new()
 	_graze_area.name = "GrazeArea"
 	_graze_area.collision_layer = 0
@@ -81,6 +88,9 @@ func has_mode(name: String) -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	_sweep_frame = Engine.get_physics_frames()
+	_sweep_start = global_position
+	_sweep_end = _sweep_start
 	advance_invulnerability(delta)
 	advance_karma(delta)
 	_graze_cooldown = maxf(0.0, _graze_cooldown - delta)
@@ -130,9 +140,35 @@ func _physics_process(delta: float) -> void:
 			gravity_speed = 0.0
 			_jump_active = false
 	is_moving = global_position.distance_squared_to(before) > 0.000001
+	_sweep_end = global_position
 	_check_graze()
 	if has_mode("yellow") and Input.is_action_just_pressed("ui_accept"):
 		shot_requested.emit(global_position, last_direction)
+
+
+func sweep_motion() -> Vector2:
+	return _sweep_end - _sweep_start if _sweep_frame == Engine.get_physics_frames() else Vector2.ZERO
+
+
+func sweep_hurt_shapes() -> Array[Dictionary]:
+	var shapes: Array[Dictionary] = []
+	var hurtbox := get_node_or_null("HurtBox") as Area2D
+	if not hurtbox or not hurtbox.monitorable: return shapes
+	for child in hurtbox.get_children():
+		if child is CollisionShape2D and not child.disabled and child.shape:
+			shapes.append({"shape": child.shape, "transform": child.global_transform})
+		elif child is CollisionPolygon2D and not child.disabled and child.build_mode == CollisionPolygon2D.BUILD_SOLIDS:
+			var id := child.get_instance_id()
+			if not _hurt_polygon_cache.has(id) or _hurt_polygon_cache[id].polygon != child.polygon:
+				var parts: Array[ConvexPolygonShape2D] = []
+				for points in Geometry2D.decompose_polygon_in_convex(child.polygon):
+					var part := ConvexPolygonShape2D.new()
+					part.points = points
+					parts.append(part)
+				_hurt_polygon_cache[id] = {"polygon": child.polygon, "parts": parts}
+			for part in _hurt_polygon_cache[id].parts:
+				shapes.append({"shape": part, "transform": child.global_transform})
+	return shapes
 
 
 func _check_graze() -> void:
@@ -224,9 +260,13 @@ func advance_invulnerability(delta: float) -> void:
 
 
 func blocks_bullet(bullet_position: Vector2) -> bool:
+	return blocks_bullet_at(bullet_position, global_position)
+
+
+func blocks_bullet_at(bullet_position: Vector2, soul_position: Vector2) -> bool:
 	if not has_mode("green"):
 		return false
-	var incoming := (bullet_position - global_position).normalized()
+	var incoming := (bullet_position - soul_position).normalized()
 	return incoming.dot(shield_direction) >= 0.7
 
 

@@ -52,13 +52,15 @@ func _physics_process(delta: float) -> void:
 		boundaries.append(approach_end * (1.0 - 2.0 * 1.70158 / (3.0 * 2.70158)))
 	# Split an update at phase boundaries so a long frame follows the actual
 	# path instead of sweeping diagonally across a change of direction.
+	var elapsed := 0.0
 	while remaining > 0.00000001 and not is_queued_for_deletion():
 		var step := remaining
 		for boundary in boundaries:
 			if boundary > age + 0.00000001: step = minf(step, boundary - age)
 		_motion = _position_at(age + step) - _position_at(age)
 		age += step
-		super._physics_process(step)
+		_advance_physics(step, elapsed / delta, (elapsed + step) / delta)
+		elapsed += step
 		remaining -= step
 	queue_redraw()
 

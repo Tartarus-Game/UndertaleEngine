@@ -24,6 +24,8 @@ func run_physics_checks() -> void:
 	await test_fast_bullets()
 	await test_parent_driven_bullets()
 	await test_parent_motion_physics()
+	await test_relative_soul_motion()
+	await test_new_bullet_initial_overlap()
 	await test_bullet_lifetime()
 	await test_repeated_fast_contact()
 	await test_fast_pulse()
@@ -947,3 +949,108 @@ func test_contact_on_expiration_tick() -> void:
 			soul.queue_free()
 			if not bullet.is_queued_for_deletion(): bullet.queue_free()
 			await get_tree().process_frame
+
+
+func test_relative_soul_motion() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		for test in [
+			{"name": "soul crosses stationary bullet", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "hp": 17},
+			{"name": "opposite paths cross", "soul": Vector2(100, 0), "bullet": Vector2(-100, 0), "action": "ui_left", "bullet_motion": Vector2(200, 0), "hp": 17},
+			{"name": "same speed follows without meeting", "soul": Vector2.ZERO, "bullet": Vector2(-100, 0), "action": "ui_right", "bullet_motion": Vector2(200, 0), "hp": 20},
+			{"name": "paths intersect at different times", "soul": Vector2(0, -200), "bullet": Vector2(-100, 0), "action": "ui_down", "bullet_motion": Vector2(200, 0), "hp": 20},
+			{"name": "crossing after expiration", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "lifetime": 0.3, "hp": 20},
+			{"name": "crossing before expiration", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "lifetime": 0.7, "hp": 17},
+			{"name": "initial overlap moving together before expiration", "soul": Vector2.ZERO, "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2(200, 0), "lifetime": 0.5, "hp": 17},
+			{"name": "blue hits moving soul", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "rule": BattleBullet.Rule.BLUE, "hp": 17},
+			{"name": "orange spares moving soul", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "rule": BattleBullet.Rule.ORANGE, "hp": 20},
+			{"name": "shield faces incoming bullet at impact", "soul": Vector2(-100, 0), "bullet": Vector2(100, 0), "action": "ui_right", "bullet_motion": Vector2(-200, 0), "mode": "green+red", "hp": 20},
+			{"name": "shield does not face bullet arriving from behind", "soul": Vector2.ZERO, "bullet": Vector2(-100, 0), "action": "ui_right", "bullet_motion": Vector2(400, 0), "mode": "green+red", "hp": 17},
+			{"name": "tiny shapes cross below the old distance threshold", "soul": Vector2(-1, 0), "bullet": Vector2.ZERO, "action": "ui_right", "soul_distance": 2.0, "bullet_motion": Vector2.ZERO, "tiny": true, "hp": 17},
+			{"name": "disabled collision mask ignores sweep", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "mask": 0, "hp": 20},
+			{"name": "unmonitorable hurtbox ignores sweep", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "disabled_hurtbox": true, "hp": 20},
+			{"name": "arena clamp stops before a distant bullet", "soul": Vector2(-80, 0), "bullet": Vector2(80, 0), "action": "ui_right", "bullet_motion": Vector2.ZERO, "arena": Rect2(-100, -100, 120, 200), "hp": 20},
+			{"name": "arena clamp preserves earlier crossings", "soul": Vector2(-80, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "arena": Rect2(-100, -100, 120, 200), "hp": 17},
+			{"name": "explicit compatible priorities are preserved", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "priorities": true, "hp": 17},
+			{"name": "crossing before warning ends is harmless", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "warning": 0.75, "hp": 20},
+			{"name": "leaving initial overlap before warning ends is harmless", "soul": Vector2.ZERO, "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "warning": 0.75, "hp": 20},
+			{"name": "crossing after warning ends hits", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "warning": 0.25, "hp": 17},
+			{"name": "warning bullet remains harmless", "soul": Vector2(-100, 0), "bullet": Vector2.ZERO, "action": "ui_right", "bullet_motion": Vector2.ZERO, "warning": 3.0, "hp": 20},
+		]:
+			for soul_first in [true, false]:
+				Global.player_set_hp(20)
+				var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+				soul.position = test.soul
+				soul.speed = float(test.get("soul_distance", 200.0)) * fps
+				soul.arena = test.get("arena", Rect2(-1000, -1000, 2000, 2000))
+				var bullet: BattleBullet
+				if test.has("warning"):
+					var warning_bullet := PatternBullet.new()
+					warning_bullet.warning = float(test.warning) / fps
+					bullet = warning_bullet
+				else:
+					bullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+				bullet.position = test.bullet
+				bullet.velocity = Vector2.ZERO
+				bullet.destroy_on_contact = false
+				bullet.rule = test.get("rule", BattleBullet.Rule.WHITE)
+				if test.has("priorities"):
+					soul.process_physics_priority = 10
+					bullet.process_physics_priority = 40
+				if test.has("mask"): bullet.collision_mask = test.mask
+				if test.has("tiny"):
+					var tiny_circle := CircleShape2D.new()
+					tiny_circle.radius = 0.1
+					bullet.get_node("CollisionShape2D").shape = tiny_circle
+					var tiny_box := soul.get_node("HurtBox/HitBox") as CollisionPolygon2D
+					tiny_box.polygon = PackedVector2Array([Vector2(-0.1, -0.1), Vector2(-0.1, 0.1), Vector2(0.1, 0.1), Vector2(0.1, -0.1)])
+				if test.has("disabled_hurtbox"): soul.get_node("HurtBox").monitorable = false
+				if soul_first:
+					add_child(soul)
+					add_child(bullet)
+				else:
+					add_child(bullet)
+					add_child(soul)
+				if test.has("mode"): soul.set_mode(test.mode)
+				if test.has("priorities"): check(soul.process_physics_priority == 10 and bullet.process_physics_priority == 40, "explicit physics priorities remain unchanged")
+				soul.set_physics_process(false)
+				bullet.set_physics_process(false)
+				for i in range(3): await get_tree().physics_frame
+				soul.movement_enabled = true
+				bullet.velocity = test.bullet_motion * fps
+				bullet.lifetime = float(test.get("lifetime", 2.0)) / fps
+				Input.action_press(test.action)
+				soul.set_physics_process(true)
+				bullet.set_physics_process(true)
+				await get_tree().physics_frame
+				await get_tree().physics_frame
+				soul.set_physics_process(false)
+				if is_instance_valid(bullet): bullet.set_physics_process(false)
+				Input.action_release(test.action)
+				check(Global.player_data.hp == test.hp, "%s at %d Hz (soul first=%s, hp=%d)" % [test.name, fps, soul_first, Global.player_data.hp])
+				soul.queue_free()
+				if is_instance_valid(bullet) and not bullet.is_queued_for_deletion(): bullet.queue_free()
+				await get_tree().process_frame
+
+
+func test_new_bullet_initial_overlap() -> void:
+	for fps in [30, 60, 144]:
+		await set_physics_rate(fps)
+		Global.player_set_hp(20)
+		var soul: BattleSoulRed = preload("res://battle/battle_soul/BattleSoulRed.tscn").instantiate()
+		soul.movement_enabled = true
+		add_child(soul)
+		soul.set_physics_process(false)
+		await get_tree().physics_frame
+		var bullet: BattleBullet = preload("res://battle/bullets/BattleBullet.tscn").instantiate()
+		bullet.lifetime = 0.5 / fps
+		bullet.velocity = Vector2.ZERO
+		bullet.destroy_on_contact = false
+		add_child(bullet)
+		bullet.set_physics_process(false)
+		# Exercise the first update before the server has refreshed Area overlaps.
+		bullet._physics_process(1.0 / fps)
+		check(Global.player_data.hp == 17, "new short-lived bullet hits an initial overlap before Area signals at %d Hz" % fps)
+		soul.queue_free()
+		if is_instance_valid(bullet) and not bullet.is_queued_for_deletion(): bullet.queue_free()
+		await get_tree().process_frame

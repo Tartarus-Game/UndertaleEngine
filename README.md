@@ -80,7 +80,7 @@ Movement, acceleration, invulnerability, typing, attack scheduling, fades and da
 
 Blue-soul jump height can be shortened by releasing the jump key; `jump_release_speed_ratio` controls the remaining upward speed. Platforms created by `BattlePatterns.platform()` can set `bounce_in_arena = true` to reflect off the current rectangular arena bounds.
 
-Fast, linearly moving bullets sweep their `CollisionShape2D` shapes between physics updates, and fast expanding pulses check the swept ring. This reduces tunneling, but does not provide continuous collision for rotation, parent-driven motion, moving targets, or custom `CollisionPolygon2D` bullet shapes. Physics and input remain sampled at their configured rates, so different tick rates can still change collision precision.
+Bullets with `CollisionShape2D` shapes sweep their linear motion relative to the soul, including parent translation. The soul's actual start and end positions are interpolated over each physics update; a path that bends after hitting a wall is therefore approximated by a straight line. Soul hurtboxes support `CollisionShape2D` and solid `CollisionPolygon2D` shapes, but not polygon segments. Custom physics priorities must let the soul and moving bullet parents process before bullets. Rotating bullets, custom `CollisionPolygon2D` bullet shapes, and moving-soul contacts with expanding pulse rings are not continuously detected. Physics and input remain sampled at their configured rates, so different tick rates can still change collision precision.
 
 After importing once, run:
 

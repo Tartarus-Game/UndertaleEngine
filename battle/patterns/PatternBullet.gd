@@ -12,6 +12,7 @@ var radius := 2.0
 var circle: CircleShape2D
 var launch_velocity := Vector2.ZERO
 var _motion_delay := 0.0
+var _active_fraction := 0.0
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _physics_process(delta: float) -> void:
 	var step := minf(delta, maxf(lifetime, 0.0))
 	var previous_age := age
 	age += step
+	_active_fraction = clampf((warning - previous_age) / step, 0.0, 1.0) if step > 0.0 else 1.0
 	rotation += angular_velocity * step
 	if shape_type == Shape.PULSE:
 		var previous_radius := radius
@@ -55,6 +57,15 @@ func _physics_process(delta: float) -> void:
 
 func _motion_for_step(step: float) -> Vector2:
 	return velocity * maxf(0.0, step - _motion_delay)
+
+
+func _sweep_active_start_fraction() -> float:
+	return _active_fraction
+
+
+func _motion_before_active_fraction(world_motion: Vector2, fraction: float) -> Vector2:
+	if shape_type == Shape.PELLET and _motion_delay > 0.0: return Vector2.ZERO
+	return world_motion * fraction
 
 
 func _check_beam_activation() -> void:
